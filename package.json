@@ -1,0 +1,18 @@
+{
+  "name": "plan-plate",
+  "version": "1.0.0",
+  "description": "- **Cài đặt Git:**  \r   - Tải Git tại [git-scm.com](https://git-scm.com) và làm theo hướng dẫn cài đặt cho hệ điều hành của bạn.\r - **Tạo tài khoản GitHub:**  \r   - Truy cập [github.com](https://github.com) và đăng ký tài khoản miễn phí.\r   - Cấu hình Git với tên và email của bạn bằng cách chạy:\r     ```bash\r     git config --global user.name \"Tên của bạn\"\r     git config --global user.email \"email@example.com\"\r     ```",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "bootstrap": "^5.3.3",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "mssql": "^11.0.1"
+  }
+}
