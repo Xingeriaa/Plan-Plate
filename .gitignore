@@ -11,4 +11,3 @@ Thumbs.db
 dist/
 coverage/
 .npmrc
-package-lock.json
