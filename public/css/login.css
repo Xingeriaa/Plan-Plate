@@ -1,0 +1,25 @@
+/* Login Page Specific Styles */
+.login-container {
+    text-align: center;
+}
+
+.login-container .logo {
+    width: 80px;
+    margin-bottom: 15px;
+}
+
+.auth-form {
+    background-color: white;
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.auth-form h1 {
+    font-size: 2rem;
+    margin-bottom: 20px;
+}
+
+.social-login {
+    margin-top: 15px;
+}

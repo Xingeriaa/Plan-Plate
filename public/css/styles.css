@@ -1,0 +1,409 @@
+/* Custom Styles */
+
+/* Header Styles */
+header {
+    background-color: #ffffff; /* White background */
+    padding: 20px 0; /* More space for the header */
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+}
+
+header .navbar-nav {
+    font-weight: 500;
+}
+
+header .navbar-nav .nav-link {
+    font-weight: 600; /* Make links bolder */
+    color: #333; /* Dark color for nav links */
+    padding: 8px 12px;
+    text-transform: uppercase; /* Make links uppercase */
+}
+
+header .navbar-nav .nav-link:hover {
+    color: none;
+}
+
+header .btn-outline-primary {
+    border-radius: 25px;
+    font-weight: 600;
+}
+
+header .badge-circle {
+    font-size: 0.75rem;
+    border-radius: 50%;
+}
+
+/* Adjusting Search Bar */
+header .form-control {
+    max-width: 500px;
+    margin: auto;
+    padding: 10px 15px;
+    font-size: 1rem;
+    border-radius: 30px;
+    transition: all 0.3s ease-in-out;
+}
+
+/* Mobile Navbar Customization */
+@media (max-width: 768px) {
+    header .navbar-nav {
+        margin-top: 10px;
+        text-align: center;
+    }
+
+    header .navbar-nav .nav-link {
+        padding: 8px;
+    }
+}
+
+/* Navbar Brand (Logo and Title) */
+header h1 {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #333;
+    margin-left: 10px;
+}
+
+/* Navbar Links Styling */
+header .navbar-nav .nav-link {
+    color: #333; /* Dark color for the nav links */
+    font-size: 1rem;  /* Slightly larger text */
+    font-weight: 500; /* Bold to make it stand out */
+    padding: 8px 12px;
+    transition: color 0.3s ease, transform 0.3s ease;
+}
+
+/* Navbar links hover effects */
+header .navbar-nav .nav-link:hover {
+    color: #28a745;  /* Green color for hover effect */
+    transform: scale(1.1); /* Slightly enlarge on hover */
+}
+
+/* Active link styling */
+header .navbar-nav .nav-link.active {
+    color: #28a745;
+    font-weight: 600;
+}
+
+/* Search Bar */
+header .form-control {
+    max-width: 500px;
+    margin: auto;
+    padding: 10px 15px;
+    font-size: 1rem;
+    border-radius: 30px;
+    transition: all 0.3s ease-in-out;
+}
+
+/* Search bar focus effect */
+header .form-control:focus {
+    border-color: #28a745; /* Green color on focus */
+    outline: none;
+}
+
+
+/* Navbar Toggler (hamburger icon for mobile) */
+header .navbar-toggler {
+    border: none;
+    background-color: transparent;
+}
+
+header .navbar-toggler-icon {
+    background-color: #333; /* Dark icon color */
+}
+
+/* Navbar Button Styles (Account, Cart) */
+header .btn-outline-primary {
+    border-radius: 30px;  /* Rounded buttons */
+    font-weight: 600;
+    padding: 8px 20px;
+    color: #333; /* Dark text */
+    border: 2px solid #28a745; /* Green border */
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Button hover effect */
+header .btn-outline-primary:hover {
+    background-color: #28a745;  /* Green background on hover */
+    color: white;  /* White text */
+}
+
+/* Navbar active link or button */
+header .btn-outline-primary.active,
+header .navbar-nav .nav-link.active {
+    color: white;
+    background-color: #28a745;
+    border-color: #28a745;
+}
+
+/* Navbar Menu (Responsive) */
+header .navbar-collapse {
+    display: flex;
+    justify-content: center;  /* Center the menu items */
+}
+
+@media (max-width: 768px) {
+    header .navbar-nav {
+        text-align: center;  /* Center align the nav items in mobile view */
+    }
+
+    header .navbar-nav .nav-link {
+        padding: 12px 0;
+        font-size: 1.2rem;
+    }
+
+    header .navbar-toggler {
+        border: none;
+    }
+
+    header .navbar-toggler-icon {
+        background-color: #28a745;  /* Green icon for mobile */
+    }
+}
+
+/* Smooth transitions */
+header .navbar-nav .nav-link, header .btn-outline-primary {
+    transition: color 0.3s ease, transform 0.3s ease;
+}
+
+.card-body {
+    text-align: center;  /* Center-align text */
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+}
+
+
+/* Card Styling */
+.card {
+    position: relative;
+    overflow: hidden;
+    border: none;  /* Remove the default border */
+    border-radius: 10px;  /* Rounded corners */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);  /* Subtle shadow */
+    transition: transform 0.3s ease, box-shadow 0.3s ease;  /* Smooth transition for hover effect */
+}
+
+.card img {
+    width: 100%;  /* Full-width images */
+    height: 200px;  /* Fixed height for images */
+    object-fit: cover;  /* Ensure images are cropped correctly */
+}
+
+
+
+.card-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: white; /* White text color */
+    text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.5);  /* Text shadow for better readability */
+    margin-bottom: 10px; /* Space between title and product count */
+}
+
+.card-text {
+    font-size: 1rem;
+    font-weight: 500;
+    color: white;
+    background-color: rgba(0, 0, 0, 0.5); /* Background for the product count */
+    padding: 5px 10px;
+    border-radius: 20px;  /* Rounded corners for the product count box */
+}
+
+.card:hover {
+    transform: scale(1.125);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);  /* Darker shadow for the hover effect */
+    cursor: pointer;
+}
+
+/* Adjust for mobile responsiveness */
+@media (max-width: 768px) {
+    .card {
+        margin-bottom: 20px;  /* Add some margin at the bottom for mobile view */
+    }
+}
+
+/* Product Grid Section */
+.products-section .container {
+    margin-top: 50px;
+}
+
+.products-section .row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0px; /* Adds space between the cards */
+}
+
+.products-section .col {
+    flex: 1 0 calc(25% - 20px);
+    box-sizing: border-box;
+    margin-top: 25px;
+    /* border: 1px solid; */
+}
+
+/* Responsive Design for smaller screens */
+@media (max-width: 1200px) {
+    .products-section .col {
+        flex: 1 0 calc(33.33% - 20px); /* 3 columns for medium-sized screens */
+    }
+}
+
+@media (max-width: 768px) {
+    .products-section .col {
+        flex: 1 0 calc(50% - 20px); /* 2 columns for small screens */
+    }
+}
+
+@media (max-width: 576px) {
+    .products-section .col {
+        flex: 1 0 100%; /* 1 column for mobile screens */
+    }
+}
+
+
+/* Banner Section */
+.banner-section {
+    background-color: #f7f7f7;  /* Light gray background */
+    padding: 60px 0;
+    text-align: center;
+    margin-top: 5%;
+}
+
+.banner-content .row {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.banner-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #333;
+    margin-bottom: 15px;
+}
+
+.banner-description {
+    font-size: 1.2rem;
+    color: #666;
+    margin-bottom: 20px;
+    line-height: 1.5;
+}
+
+.banner-subtitle {
+    font-size: 1.6rem;
+    font-weight: 600;
+    color: #e74c3c;  /* Red color similar to the image's design */
+    margin-bottom: 20px;
+}
+
+.btn-shop-now {
+    font-size: 1rem;
+    font-weight: bold;
+    padding: 12px 30px;
+    border-radius: 25px;
+    text-transform: uppercase;
+    background-color: #28a745; /* Green color for the button */
+    color: white;
+    text-decoration: none;
+    transition: background-color 0.3s ease;
+}
+
+/* Hover effect for the button */
+.btn-shop-now:hover {
+    background-color: #218838;  /* Darker green for hover effect */
+}
+
+/* Image Styling */
+.banner-content img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);  /* Subtle shadow for the image */
+}
+
+@media (max-width: 768px) {
+    .banner-content .row {
+        flex-direction: column; /* Stack the content vertically on smaller screens */
+    }
+
+    .banner-title {
+        font-size: 2rem;
+    }
+
+    .banner-description {
+        font-size: 1rem;
+    }
+
+    .banner-subtitle {
+        font-size: 1.4rem;
+    }
+}
+
+.form-container {
+    background-color: white;
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    width: 300px;
+    text-align: center;
+}
+
+.auth-form input {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 15px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 1rem;
+}
+
+.auth-form button {
+    width: 100%;
+    padding: 12px;
+    background-color: #28a745;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-size: 1rem;
+    cursor: pointer;
+}
+
+.auth-form button:hover {
+    background-color: #218838;
+}
+
+.social-login {
+    margin-top: 15px;
+}
+
+.btn-social {
+    display: inline-block;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    color: white;
+    text-align: center;
+    line-height: 40px;
+    font-size: 1.5rem;
+    margin: 0 10px;
+    cursor: pointer;
+}
+
+.btn-google {
+    background-color: #db4437;
+}
+
+.btn-github {
+    background-color: #333;
+}
+
+.signup-link {
+    margin-top: 10px;
+    font-size: 0.9rem;
+}
+
+.signup-link a {
+    text-decoration: none;
+    color: #007bff;
+}
+
+.signup-link a:hover {
+    text-decoration: underline;
+}
