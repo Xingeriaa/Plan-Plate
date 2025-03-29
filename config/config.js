@@ -1,5 +1,5 @@
 module.exports = {
-    user: 'Xingeira_SQLLogin_1 ', // your SQL Server username (usually 'sa')
+    user: 'Xingeira_SQLLogin_1', // your SQL Server username (usually 'sa')
     password: '99bfhnecm6', // your SQL Server password
     server: 'plannplate.mssql.somee.com', // your SQL Server instance (use 'localhost\\SQLEXPRESS' if using SQL Express)
     database: 'plannplate', // replace with the name of your database

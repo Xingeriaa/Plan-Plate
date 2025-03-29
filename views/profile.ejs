@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PlannPlate - Profile</title>
+  <link rel="stylesheet" href="/css/profile.css">
+</head>
+<body>
+  <div class="profile-container">
+    <div class="logo-container">
+      <img src="/images/logo.png" alt="PlannPlate Logo" class="logo">
+      <h1>PlannPlate</h1>
+    </div>
+    
+    <div class="profile-info">
+      <h2>Welcome, <%= name %></h2>
+      <p><strong>Email:</strong> <span><%= email %></span></p>
+      <p><strong>Role:</strong> <span><%= user.VaiTro %></span></p>
+      <p><strong>Member since:</strong> <span><%= new Date(user.NgayTao).toLocaleDateString() %></span></p>
+    </div>
+    
+    <div class="profile-actions">
+      <a href="/" class="btn">Dashboard</a>
+      <a href="/logout" class="btn btn-logout">Logout</a>
+    </div>
+  </div>
+</body>
+</html>

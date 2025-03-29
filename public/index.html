@@ -26,9 +26,10 @@
                 <input type="text" class="form-control" placeholder="What are you looking for?">
             </div>
 
+            <!-- Header section with account button modification -->
             <!-- Account and Cart -->
             <div class="d-flex align-items-center">
-                <a href="#" class="btn btn-outline-primary me-3">My Account</a>
+                <a href="#" class="btn btn-outline-primary me-3" id="accountBtn">My Account</a>
                 <a href="#" class="btn btn-outline-primary position-relative">
                     Cart
                     <span class="badge bg-danger position-absolute top-0 start-100 translate-middle p-1 badge-circle"></span>
@@ -36,6 +37,24 @@
             </div>
         </div>
         <!-- Navbar (Mobile) -->
+
+<!-- Add this account sidebar after the header section -->
+<!-- Account Sidebar -->
+<div class="account-sidebar" id="accountSidebar">
+    <div class="account-sidebar-content">
+        <div class="account-header">
+            <h2>MY ACCOUNT</h2>
+            <button class="close-btn" id="closeSidebarBtn">&times;</button>
+        </div>
+        <div class="account-body">
+            <a href="/login" class="btn btn-primary w-100 mb-3">LOGIN</a>
+            <a href="#" class="return-link" id="returnToStoreBtn">RETURN TO STORE</a>
+        </div>
+    </div>
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+</div>
+
+<!-- Carousel Section -->
         <nav class="navbar navbar-expand-lg navbar-light">
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav mx-auto">
@@ -274,5 +293,74 @@
 <!-- Bootstrap JS and Dependencies -->
 <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.min.js"></script>
+
+<!-- Account Sidebar Script -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const accountBtn = document.getElementById('accountBtn');
+        const accountSidebar = document.getElementById('accountSidebar');
+        const closeSidebarBtn = document.getElementById('closeSidebarBtn');
+        const sidebarOverlay = document.getElementById('sidebarOverlay');
+        const returnToStoreBtn = document.getElementById('returnToStoreBtn');
+        
+        // Function to open sidebar
+        function openSidebar() {
+            accountSidebar.classList.add('active');
+            document.body.style.overflow = 'hidden'; // Prevent scrolling
+        }
+        
+        // Function to close sidebar
+        function closeSidebar() {
+            accountSidebar.classList.remove('active');
+            document.body.style.overflow = ''; // Restore scrolling
+        }
+        
+        // Function to check if user is logged in
+        function checkAuthStatus() {
+            return fetch('/auth/check', {
+                method: 'GET',
+                credentials: 'same-origin',
+                headers: {
+                    'Accept': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .catch(error => {
+                console.error('Authentication check failed:', error);
+                return { authenticated: false };
+            });
+        }
+        
+        // Event listeners
+        accountBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            // Check authentication status
+            checkAuthStatus().then(data => {
+                if (data.authenticated) {
+                    // If logged in, redirect to profile
+                    window.location.href = '/profile';
+                } else {
+                    // If not logged in, show sidebar
+                    openSidebar();
+                }
+            });
+        });
+        
+        closeSidebarBtn.addEventListener('click', closeSidebar);
+        sidebarOverlay.addEventListener('click', closeSidebar);
+        returnToStoreBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            closeSidebar();
+        });
+        
+        // Close sidebar when pressing Escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && accountSidebar.classList.contains('active')) {
+                closeSidebar();
+            }
+        });
+    });
+</script>
 </body>
 </html>
