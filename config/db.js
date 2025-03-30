@@ -1,5 +1,6 @@
 const sql = require('mssql');
 const dotenv = require('dotenv');
+const bcrypt = require('bcrypt'); // Add missing bcrypt import
 
 dotenv.config();
 
@@ -81,15 +82,15 @@ async function getDashboardStats() {
       WHERE TrangThai = 'ChoXuLy'
     `);
     
-    // Get total revenue
+    // Get total revenue - update column name from TongTien to ThanhTien
     const totalRevenueResult = await pool.request().query(`
-      SELECT ISNULL(SUM(TongTien), 0) AS total FROM DonHang
+      SELECT ISNULL(SUM(ThanhTien), 0) AS total FROM DonHang
       WHERE TrangThai != 'Huy'
     `);
     
-    // Get monthly revenue
+    // Get monthly revenue - update column name from TongTien to ThanhTien
     const monthlyRevenueResult = await pool.request().query(`
-      SELECT ISNULL(SUM(TongTien), 0) AS total FROM DonHang
+      SELECT ISNULL(SUM(ThanhTien), 0) AS total FROM DonHang
       WHERE MONTH(NgayDat) = MONTH(GETDATE()) 
       AND YEAR(NgayDat) = YEAR(GETDATE())
       AND TrangThai != 'Huy'
@@ -157,11 +158,11 @@ async function getSalesData(period = 'month') {
     let query = '';
     
     if (period === 'week') {
-      // Last 7 days
+      // Last 7 days - update column name from TongTien to ThanhTien
       query = `
         SELECT 
           CONVERT(VARCHAR(10), DATEADD(DAY, -numbers.number, GETDATE()), 120) AS date,
-          ISNULL(SUM(d.TongTien), 0) AS total
+          ISNULL(SUM(d.ThanhTien), 0) AS total
         FROM 
           (SELECT 0 AS number UNION SELECT 1 UNION SELECT 2 UNION SELECT 3 UNION SELECT 4 UNION SELECT 5 UNION SELECT 6) AS numbers
         LEFT JOIN 
@@ -173,11 +174,11 @@ async function getSalesData(period = 'month') {
           date ASC
       `;
     } else if (period === 'month') {
-      // Last 30 days
+      // Last 30 days - update column name from TongTien to ThanhTien
       query = `
         SELECT 
           DATEPART(DAY, d.NgayDat) AS day,
-          ISNULL(SUM(d.TongTien), 0) AS total
+          ISNULL(SUM(d.ThanhTien), 0) AS total
         FROM 
           DonHang d
         WHERE 
@@ -189,11 +190,11 @@ async function getSalesData(period = 'month') {
           day ASC
       `;
     } else if (period === 'year') {
-      // Last 12 months
+      // Last 12 months - update column name from TongTien to ThanhTien
       query = `
         SELECT 
           DATEPART(MONTH, d.NgayDat) AS month,
-          ISNULL(SUM(d.TongTien), 0) AS total
+          ISNULL(SUM(d.ThanhTien), 0) AS total
         FROM 
           DonHang d
         WHERE 
@@ -327,6 +328,23 @@ async function getUserById(id) {
     return result.recordset[0];
   } catch (error) {
     console.error('Error getting user by ID:', error);
+    throw error;
+  }
+}
+
+// Get user by email
+async function getUserByEmail(email) {
+  try {
+    const result = await pool.request()
+      .input('email', sql.NVarChar, email)
+      .query(`
+        SELECT * FROM TaiKhoan
+        WHERE Email = @email
+      `);
+    
+    return result.recordset[0];
+  } catch (error) {
+    console.error('Error getting user by email:', error);
     throw error;
   }
 }
@@ -570,6 +588,26 @@ async function updateOrderStatus(orderId, status) {
     return { success: true };
   } catch (error) {
     console.error('Error updating order status:', error);
+    throw error;
+  }
+}
+
+// Add new function to get products by category
+async function getProductsByCategory(categoryId) {
+  try {
+    const result = await pool.request()
+      .input('categoryId', sql.Int, categoryId)
+      .query(`
+        SELECT p.*, k.SoLuongTon 
+        FROM QuanLySanPham p
+        LEFT JOIN QuanLyKhoHang k ON p.IDSanPham = k.IDSanPham
+        WHERE p.IDDanhMuc = @categoryId
+        ORDER BY p.TenSanPham
+      `);
+    
+    return result.recordset;
+  } catch (error) {
+    console.error('Error getting products by category:', error);
     throw error;
   }
 }
@@ -901,7 +939,57 @@ async function getAllOrders(page = 1, pageSize = 10, status = '', search = '') {
   }
 }
 
-// Add the module exports section at the end of the file
+// Create new user (for signup)
+async function createUser(userData) {
+  try {
+    const { firstName, lastName, email, password } = userData;
+    const fullName = `${firstName} ${lastName}`.trim();
+    
+    const result = await pool.request()
+      .input('fullName', sql.NVarChar, fullName)
+      .input('email', sql.NVarChar, email)
+      .input('password', sql.NVarChar, password)
+      .input('role', sql.NVarChar, 'NguoiDung')
+      .input('createdAt', sql.DateTime, new Date())
+      .query(`
+        INSERT INTO TaiKhoan (TenNguoiDung, Email, MatKhau, VaiTro, NgayTao)
+        VALUES (@fullName, @email, @password, @role, @createdAt)
+        
+        SELECT SCOPE_IDENTITY() AS id
+      `);
+    
+    const userId = result.recordset[0].id;
+    return await getUserById(userId);
+  } catch (error) {
+    console.error('Error creating user:', error);
+    throw error;
+  }
+}
+
+// Add the missing searchProducts function
+async function searchProducts(query) {
+  try {
+    const result = await pool.request()
+      .input('query', sql.NVarChar, `%${query}%`)
+      .query(`
+        SELECT p.*, c.TenDanhMuc, k.SoLuongTon
+        FROM QuanLySanPham p
+        LEFT JOIN QuanLyDanhMuc c ON p.IDDanhMuc = c.IDDanhMuc
+        LEFT JOIN QuanLyKhoHang k ON p.IDSanPham = k.IDSanPham
+        WHERE p.TenSanPham LIKE @query 
+           OR p.MoTa LIKE @query
+           OR c.TenDanhMuc LIKE @query
+        ORDER BY p.TenSanPham
+      `);
+    
+    return result.recordset;
+  } catch (error) {
+    console.error('Error searching products:', error);
+    throw error;
+  }
+}
+
+// Update the module exports to include the new function
 module.exports = {
   query,
   connectDB,
@@ -911,6 +999,8 @@ module.exports = {
   getSalesData,
   getAllUsers,
   getUserById,
+  getUserByEmail,
+  createUser,
   addUser,
   updateUser,
   deleteUser,
@@ -925,5 +1015,7 @@ module.exports = {
   deleteProduct,
   getAllOrders,
   getOrderWithItems,
-  updateOrderStatus
+  updateOrderStatus,
+  getProductsByCategory,
+  searchProducts  // Now this function is properly defined
 };

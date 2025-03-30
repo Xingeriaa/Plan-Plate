@@ -257,12 +257,34 @@ const isAdmin = (req, res, next) => {
 };
 
 // Add these admin routes after your existing routes
-app.get('/admin', isAdmin, (req, res) => {
-  res.render('admin/dashboard', { 
-    user: req.user,
-    name: req.user.TenNguoiDung,
-    email: req.user.Email
-  });
+// Update the admin dashboard route to include the required data
+app.get('/admin', isAdmin, async (req, res) => {
+  try {
+    // Fetch dashboard statistics
+    const stats = await db.getDashboardStats();
+    
+    // Fetch recent orders
+    const recentOrders = await db.getRecentOrders(5); // Get 5 most recent orders
+    
+    // Fetch low stock products
+    const lowStockProducts = await db.getLowStockProducts(5); // Get 5 products with lowest stock
+    
+    // Fetch sales data for chart (default to month period)
+    const salesData = await db.getSalesData('month');
+    
+    res.render('admin/dashboard', { 
+      user: req.user,
+      name: req.user.TenNguoiDung,
+      email: req.user.Email,
+      stats,
+      recentOrders,
+      lowStockProducts,
+      salesData
+    });
+  } catch (error) {
+    console.error('Error loading admin dashboard:', error);
+    res.status(500).render('error', { message: 'Failed to load dashboard data' });
+  }
 });
 
 app.get('/admin/users', isAdmin, async (req, res) => {
