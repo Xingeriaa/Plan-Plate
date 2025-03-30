@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PlannPlate - About Us</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Custom Styles -->
+    <link rel="stylesheet" href="css/styles.css">
+    <style>
+        .about-hero {
+            background-color: #f8f9fa;
+            padding: 80px 0;
+            margin-bottom: 60px;
+        }
+        
+        .about-section {
+            margin-bottom: 70px;
+        }
+        
+        .about-section h2 {
+            margin-bottom: 25px;
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .team-member {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .team-member img {
+            width: 180px;
+            height: 180px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin-bottom: 15px;
+        }
+        
+        .team-member h4 {
+            margin-bottom: 5px;
+        }
+        
+        .team-member p {
+            color: #666;
+        }
+        
+        .value-card {
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            height: 100%;
+            transition: transform 0.3s ease;
+        }
+        
+        .value-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .value-card i {
+            font-size: 2.5rem;
+            margin-bottom: 15px;
+            color: #0d6efd;
+        }
+    </style>
+</head>
+<body>
+
+<!-- Header -->
+<header class="bg-light py-3">
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center">
+            <!-- Logo -->
+            <div class="d-flex align-items-center" style="cursor: pointer;" onclick="window.location.href='/'">
+                <img src="images/logo.png" alt="PlannPlate Logo" class="me-3" style="width: 60px;">
+                <h1>PlannPlate</h1>
+            </div>
+
+            <!-- Search Bar -->
+            <!-- Cart Sidebar -->
+            <div class="cart-sidebar" id="cartSidebar">
+                <div class="cart-sidebar-content">
+                    <div class="cart-header">
+                        <h2>VIEW CART</h2>
+                        <button class="close-btn" id="closeCartBtn">&times;</button>
+                    </div>
+                    <div class="cart-body" id="cartItems">
+                    </div>
+                    <div class="cart-footer">
+                        <div class="cart-summary">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Subtotal</span>
+                                <span id="cartSubtotal">$0.00</span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Tax <small>(calculated in checkout)</small></span>
+                                <span>-</span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-3">
+                                <span>Shipping</span>
+                                <span>-</span>
+                            </div>
+                            <div class="shipping-note mb-3">
+                                <small>Taxes, shipping and promotions calculated in checkout.</small>
+                            </div>
+                            <div class="mb-3">
+                                <label for="cartNotes" class="form-label">Delivery note or comments (Optional)</label>
+                                <textarea class="form-control" id="cartNotes" rows="3"></textarea>
+                            </div>
+                            <div class="d-flex justify-content-between mb-3">
+                                <span><strong>Estimated Total</strong></span>
+                                <span id="cartTotal"><strong>$0.00</strong></span>
+                            </div>
+                            <button class="btn btn-primary" id="checkoutBtn">CHECKOUT</button>
+                        </div>
+                    </div>
+                    <div class="sidebar-overlay" id="cartSidebarOverlay"></div>
+                </div>
+                <div class="flex-grow-1 mx-3 position-relative">
+                    <input type="text" class="form-control" id="searchInput" placeholder="What are you looking for?">
+                    <div id="searchResults" class="search-results d-none position-absolute w-100 mt-1"></div>
+                </div>
+
+            <!-- Account and Cart -->
+            <div class="d-flex align-items-center">
+                <a href="#" class="btn btn-outline-primary me-3" id="accountBtn">My Account</a>
+                <a href="#" class="btn btn-outline-primary position-relative" id="cartBtn">
+                    Cart
+                    <span class="badge bg-danger position-absolute top-0 start-100 translate-middle p-1 badge-circle" id="cartCount">0</span>
+                </a>
+            </div>
+        </div>
+        
+        <!-- Navbar -->
+        <nav class="navbar navbar-expand-lg navbar-light">
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav mx-auto">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="about.html">About Us</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="faq.html">FAQ</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="index.html">All</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">Bestsellers</a>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+    </div>
+</header>
+
+<!-- Account Sidebar -->
+<div class="account-sidebar" id="accountSidebar">
+    <div class="account-sidebar-content">
+        <div class="account-header">
+            <h2>MY ACCOUNT</h2>
+            <button class="close-btn" id="closeSidebarBtn">&times;</button>
+        </div>
+        <div class="account-body">
+            <a href="/login" class="btn btn-primary w-100 mb-3">LOGIN</a>
+            <a href="#" class="return-link" id="returnToStoreBtn">RETURN TO STORE</a>
+        </div>
+    </div>
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+</div>
+
+<!-- Hero Section -->
+<section class="about-hero fade-in">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-6">
+                <h1 class="display-4 mb-4">Our Story</h1>
+                <p class="lead mb-4">PlannPlate was founded with a simple mission: to provide high-quality, organic ingredients directly from producers to your kitchen.</p>
+                <p>Since our establishment in 2020, we've been committed to sourcing the finest organic ingredients while maintaining transparency, sustainability, and affordability.</p>
+            </div>
+            <div class="col-lg-6">
+                <img src="https://images.unsplash.com/photo-1542838132-92c53300491e?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1074&q=80" alt="Organic Ingredients" class="img-fluid rounded">
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Our Mission Section -->
+<section class="about-section slide-in">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-12 text-center mb-5">
+                <h2>Our Mission</h2>
+                <p class="lead">To revolutionize how people access high-quality organic ingredients by creating a direct connection between producers and consumers.</p>
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="col-md-4 mb-4">
+                <div class="value-card">
+                    <i class="bi bi-heart-fill"></i>
+                    <h3>Quality</h3>
+                    <p>We carefully select each ingredient to ensure it meets our rigorous standards for quality, freshness, and nutritional value.</p>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="value-card">
+                    <i class="bi bi-globe"></i>
+                    <h3>Sustainability</h3>
+                    <p>Our commitment to sustainable farming practices and eco-friendly packaging helps protect our planet for future generations.</p>
+                </div>
+            </div>
+            <div class="col-md-4 mb-4">
+                <div class="value-card">
+                    <i class="bi bi-people-fill"></i>
+                    <h3>Community</h3>
+                    <p>We support local farmers and producers, creating a community that values ethical sourcing and fair trade practices.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Our Journey Section -->
+<section class="about-section bg-light py-5">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-6 order-lg-2">
+                <h2>Our Journey</h2>
+                <p>What started as a small family business has grown into a trusted source for organic ingredients nationwide. Our journey has been guided by our passion for healthy, sustainable food and our desire to make it accessible to everyone.</p>
+                <p>Through partnerships with over 50 organic farms and producers, we've built a network that allows us to offer more than 600 different ingredients while maintaining our commitment to quality and sustainability.</p>
+                <p>Today, we continue to expand our selection while staying true to our core values of integrity, transparency, and customer satisfaction.</p>
+            </div>
+            <div class="col-lg-6 order-lg-1">
+                <img src="https://images.unsplash.com/photo-1589923188900-85dae523342b?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1170&q=80" alt="Our Journey" class="img-fluid rounded">
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Meet Our Team Section -->
+<section class="about-section">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-12 text-center mb-5">
+                <h2>Meet Our Team</h2>
+                <p class="lead">The passionate people behind PlannPlate</p>
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="col-lg-3 col-md-6">
+                <div class="team-member">
+                    <img src="https://i.pinimg.com/736x/2a/79/d2/2a79d2d06ec07afae8dbd3e715193673.jpg" alt="Team Member">
+                    <h4>Nguyễn Thái Triệu</h4>
+                    <p>Founder & CEO</p>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6">
+                <div class="team-member">
+                    <img src="https://i.pinimg.com/736x/de/dd/ad/deddad3fcf99af5342ca24e7aa2bac40.jpg" alt="Team Member">
+                    <h4>Nguyễn Duy Thiên Ân</h4>
+                    <p>Head of Sourcing</p>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6">
+                <div class="team-member">
+                    <img src="https://i.pinimg.com/736x/a6/3f/ee/a63fee4dcb2327a2419e7aa6101c83ac.jpg" alt="Team Member">
+                    <h4>Nguyễn Trần Anh Vỹ</h4>
+                    <p>Quality Assurance</p>
+                </div>
+            </div>
+            <div class="col-lg-3 col-md-6">
+                <div class="team-member">
+                    <img src="https://i.pinimg.com/736x/bd/92/b1/bd92b1595b495937e52fbca6760762bc.jpg" alt="Team Member">
+                    <h4>Hoàng Lê Minh</h4>
+                    <p>Customer Experience</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Contact Section -->
+<section class="about-section bg-light py-5">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-8 text-center">
+                <h2>Get In Touch</h2>
+                <p class="lead mb-5">Have questions or feedback? We'd love to hear from you!</p>
+                
+                <div class="row">
+                    <div class="col-md-4 mb-4 mb-md-0">
+                        <h5>Email Us</h5>
+                        <p><a href="mailto:info@plannplate.com" class="text-decoration-none">info@plannplate.com</a></p>
+                    </div>
+                    <div class="col-md-4 mb-4 mb-md-0">
+                        <h5>Call Us</h5>
+                        <p><a href="tel:+1234567890" class="text-decoration-none">(123) 456-7890</a></p>
+                    </div>
+                    <div class="col-md-4">
+                        <h5>Visit Us</h5>
+                        <p>123 Organic Way<br>Healthy City, HC 12345</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Footer -->
+<footer class="bg-dark text-white py-4 mt-5">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-4">
+                <h5>PlannPlate</h5>
+                <p>Your source for premium organic ingredients.</p>
+            </div>
+            <div class="col-md-4">
+                <h5>Quick Links</h5>
+                <ul class="list-unstyled">
+                    <li><a href="index.html" class="text-white">Home</a></li>
+                    <li><a href="about.html" class="text-white">About Us</a></li>
+                    <li><a href="#" class="text-white">Products</a></li>
+                    <li><a href="#" class="text-white">Contact</a></li>
+                </ul>
+            </div>
+            <div class="col-md-4">
+                <h5>Stay Connected</h5>
+                <div class="d-flex">
+                    <a href="#" class="text-white me-3"><i class="bi bi-facebook fs-4"></i></a>
+                    <a href="#" class="text-white me-3"><i class="bi bi-instagram fs-4"></i></a>
+                    <a href="#" class="text-white me-3"><i class="bi bi-twitter fs-4"></i></a>
+                    <a href="#" class="text-white me-3"><i class="bi bi-pinterest fs-4"></i></a>
+                    <a href="#" class="text-white"><i class="bi bi-youtube fs-4"></i></a>
+                </div>
+            </div>
+        </div>
+        <div class="row mt-3">
+            <div class="col-12 text-center">
+                <p class="mb-0">&copy; 2023 PlannPlate. All rights reserved.</p>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<!-- Bootstrap JS and Dependencies -->
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.3/font/bootstrap-icons.css"></script>
+
+<!-- Account Sidebar Script -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const accountBtn = document.getElementById('accountBtn');
+        const accountSidebar = document.getElementById('accountSidebar');
+        const closeSidebarBtn = document.getElementById('closeSidebarBtn');
+        const sidebarOverlay = document.getElementById('sidebarOverlay');
+        const returnToStoreBtn = document.getElementById('returnToStoreBtn');
+        
+        // Function to open sidebar
+        function openSidebar() {
+            accountSidebar.classList.add('active');
+            document.body.style.overflow = 'hidden'; // Prevent scrolling
+        }
+        
+        // Function to close sidebar
+        function closeSidebar() {
+            accountSidebar.classList.remove('active');
+            document.body.style.overflow = ''; // Restore scrolling
+        }
+        
+        // Function to check if user is logged in
+        function checkAuthStatus() {
+            return fetch('/auth/check', {
+                method: 'GET',
+                credentials: 'same-origin',
+                headers: {
+                    'Accept': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .catch(error => {
+                console.error('Authentication check failed:', error);
+                return { authenticated: false };
+            });
+        }
+        
+        // Event listeners
+        accountBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            // Check authentication status
+            checkAuthStatus().then(data => {
+                if (data.authenticated) {
+                    // If logged in, redirect to profile
+                    window.location.href = '/profile';
+                } else {
+                    // If not logged in, show sidebar
+                    openSidebar();
+                }
+            });
+        });
+        
+        closeSidebarBtn.addEventListener('click', closeSidebar);
+        sidebarOverlay.addEventListener('click', closeSidebar);
+        returnToStoreBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            closeSidebar();
+        });
+        
+        // Close sidebar when pressing Escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && accountSidebar.classList.contains('active')) {
+                closeSidebar();
+            }
+        });
+    });
+</script>
+</body>
+</html>

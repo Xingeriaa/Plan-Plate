@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PlannPlate - Organic Ingredients</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="css/styles.css" rel="stylesheet">
+</head>
+<body>
+
+<header class="bg-light py-3">
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center">
+            <div class="d-flex align-items-center" style="cursor: pointer;" onclick="window.location.href='/'">
+                <img src="images/logo.png" alt="PlannPlate Logo" class="me-3" style="width: 60px;">
+                <h1>PlannPlate</h1>
+            </div>
+
+            <div class="flex-grow-1 mx-3">
+                <input type="text" class="form-control" id="searchInput" placeholder="What are you looking for?">
+                <div id="searchResults" class="search-results d-none"></div>
+            </div>
+
+            <div class="d-flex align-items-center">
+                <a href="#" class="btn btn-outline-primary me-3" id="accountBtn">My Account</a>
+                <a href="#" class="btn btn-outline-primary position-relative" id="cartBtn">
+                    Cart
+                    <span class="badge bg-danger position-absolute top-0 start-100 translate-middle p-1 badge-circle" id="cartCount">0</span>
+                </a>
+            </div>
+        </div>
+
+<!-- Rest of the header remains the same -->
+<!-- ... -->
+
+<section class="products-section mt-5">
+    <div class="container">
+        <h2 class="text-center" style="font-weight: bold;">Organic Foods</h2>
+        <div class="row">
+            <% if (categories && categories.length > 0) { %>
+                <% categories.forEach(category => { %>
+                    <div class="col-md-4 col-lg-3 mb-4">
+                        <div class="card h-100">
+                            <img src="<%= category.HinhAnhSanPham %>" class="card-img-top" alt="<%= category.TenDanhMuc %>">
+                            <div class="card-body">
+                                <h5 class="card-title"><%= category.TenDanhMuc.toUpperCase() %></h5>
+                                <p class="card-text"><%= category.productCount %> PRODUCTS</p>
+                            </div>
+                        </div>
+                    </div>
+                <% }); %>
+            <% } else { %>
+                <div class="col-12 text-center">
+                    <p>No categories found</p>
+                </div>
+            <% } %>
+        </div>
+    </div>
+</section>
+
+<!-- Rest of the page content remains the same -->
+<!-- ... -->
+
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.min.js"></script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Your existing JavaScript code
+        // ...
+    });
+</script>
+
+<script src="js/sidebar.js"></script>
+</body>
+</html>

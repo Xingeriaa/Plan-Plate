@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PlannPlate - Frequently Asked Questions</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Custom Styles -->
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/faq.css">
+</head>
+<body>
+
+<!-- Header -->
+<header class="bg-light py-3">
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center">
+            <!-- Logo -->
+            <div class="d-flex align-items-center" style="cursor: pointer;" onclick="window.location.href='/'">
+                <img src="images/logo.png" alt="PlannPlate Logo" class="me-3" style="width: 60px;">
+                <h1>PlannPlate</h1>
+            </div>
+
+            <!-- Search Bar -->
+            <!-- Cart Sidebar -->
+            <div class="cart-sidebar" id="cartSidebar">
+                <div class="cart-sidebar-content">
+                    <div class="cart-header">
+                        <h2>VIEW CART</h2>
+                        <button class="close-btn" id="closeCartBtn">&times;</button>
+                    </div>
+                    <div class="cart-body" id="cartItems">
+                    </div>
+                    <div class="cart-footer">
+                        <div class="cart-summary">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Subtotal</span>
+                                <span id="cartSubtotal">$0.00</span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Tax <small>(calculated in checkout)</small></span>
+                                <span>-</span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-3">
+                                <span>Shipping</span>
+                                <span>-</span>
+                            </div>
+                            <div class="shipping-note mb-3">
+                                <small>Taxes, shipping and promotions calculated in checkout.</small>
+                            </div>
+                            <div class="mb-3">
+                                <label for="cartNotes" class="form-label">Delivery note or comments (Optional)</label>
+                                <textarea class="form-control" id="cartNotes" rows="3"></textarea>
+                            </div>
+                            <div class="d-flex justify-content-between mb-3">
+                                <span><strong>Estimated Total</strong></span>
+                                <span id="cartTotal"><strong>$0.00</strong></span>
+                            </div>
+                            <button class="btn btn-primary" id="checkoutBtn">CHECKOUT</button>
+                        </div>
+                    </div>
+                    <div class="sidebar-overlay" id="cartSidebarOverlay"></div>
+                </div>
+                <div class="flex-grow-1 mx-3 position-relative">
+                    <input type="text" class="form-control" id="searchInput" placeholder="What are you looking for?">
+                    <div id="searchResults" class="search-results d-none position-absolute w-100 mt-1"></div>
+                </div>
+
+            <!-- Account and Cart -->
+            <div class="d-flex align-items-center">
+                <a href="#" class="btn btn-outline-primary me-3" id="accountBtn">My Account</a>
+                <a href="#" class="btn btn-outline-primary position-relative" id="cartBtn">
+                    Cart
+                    <span class="badge bg-danger position-absolute top-0 start-100 translate-middle p-1 badge-circle" id="cartCount">0</span>
+                </a>
+            </div>
+        </div>
+        
+        <!-- Navbar -->
+        <nav class="navbar navbar-expand-lg navbar-light">
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav mx-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="about.html">About Us</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="faq.html">FAQ</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="index.html">All</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">Bestsellers</a>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+    </div>
+</header>
+
+<!-- Account Sidebar -->
+<div class="account-sidebar" id="accountSidebar">
+    <div class="account-sidebar-content">
+        <div class="account-header">
+            <h2>MY ACCOUNT</h2>
+            <button class="close-btn" id="closeSidebarBtn">&times;</button>
+        </div>
+        <div class="account-body">
+            <a href="/login" class="btn btn-primary w-100 mb-3">LOGIN</a>
+            <a href="#" class="return-link" id="returnToStoreBtn">RETURN TO STORE</a>
+        </div>
+    </div>
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+</div>
+
+<!-- Hero Section -->
+<section class="faq-hero">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-8 text-center">
+                <h1 class="display-4 mb-4">Frequently Asked Questions</h1>
+                <p class="lead">Find answers to the most common questions about our products, ordering process, and more.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- FAQ Content -->
+<div class="container mb-5">
+    <!-- Products & Ingredients Section -->
+    <div class="faq-section">
+        <h2>Products & Ingredients</h2>
+        <div class="accordion" id="accordionProducts">
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="headingOne">
+                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+                        Are all your products organic?
+                    </button>
+                </h2>
+                <div id="collapseOne" class="accordion-collapse collapse show" aria-labelledby="headingOne" data-bs-parent="#accordionProducts">
+                    <div class="accordion-body">
+                        <p>Yes, all of our products are certified organic. We work directly with farmers and producers who follow strict organic farming practices. Each product comes with proper certification to ensure you're getting genuine organic ingredients.</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="headingTwo">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
+                        How do you source your ingredients?
+                    </button>
+                </h2>
+                <div id="collapseTwo" class="accordion-collapse collapse" aria-labelledby="headingTwo" data-bs-parent="#accordionProducts">
+                    <div class="accordion-body">
+                        <p>We source our ingredients directly from organic farmers and producers around the world. We prioritize fair trade practices and sustainable farming methods. By cutting out middlemen, we're able to offer higher quality products at better prices while ensuring farmers receive fair compensation.</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="headingThree">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
+                        Do your products contain allergens?
+                    </button>
+                </h2>
+                <div id="collapseThree" class="accordion-collapse collapse" aria-labelledby="headingThree" data-bs-parent="#accordionProducts">
+                    <div class="accordion-body">
+                        <p>We provide detailed allergen information for each product on its individual product page. Many of our products naturally contain allergens such as nuts, seeds, or gluten. We process different ingredients in separate facilities to minimize cross-contamination, but we always recommend checking the specific allergen information for each product if you have allergies or sensitivities.</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="headingFour">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFour" aria-expanded="false" aria-controls="collapseFour">
+                        What's the shelf life of your products?
+                    </button>
+                </h2>
+                <div id="collapseFour" class="accordion-collapse collapse" aria-labelledby="headingFour" data-bs-parent="#accordionProducts">
+                    <div class="accordion-body">
+                        <p>The shelf life varies by product. Dried herbs, spices, and grains typically have a shelf life of 12-24 months when stored properly. Oils, nuts, and seeds generally have a shorter shelf life of 6-12 months. Each product comes with a best-by date and storage instructions to help you maximize freshness. We recommend storing most products in airtight containers in a cool, dry place away from direct sunlight.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Ordering & Shipping Section -->
+    <div class="faq-section">
+        <h2>Ordering & Shipping</h2>
+        <div class="accordion" id="accordionOrdering">
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="headingFive">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFive" aria-expanded="false" aria-controls="collapseFive">
+                        How long will it take to receive my order?
+                    </button>
+                </h2>
+                <div id="collapseFive" class="accordion-collapse collapse" aria-labelledby="headingFive" data-bs-parent="#accordionOrdering">
+                    <div class="accordion-body">
+                        <p>Standard shipping typically takes 3-5 business days within the continental US. Expedited shipping options are available at checkout for 1-2 day delivery. International shipping times vary by location, generally taking 7-14 business days. You'll receive tracking information via email once your order ships.</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="headingSix">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSix" aria-expanded="false" aria-controls="collapseSix">
+                        Do you ship internationally?
+                    </button>
+                </h2>
+                <div id="collapseSix" class="accordion-collapse collapse" aria-labelledby="headingSix" data-bs-parent="#accordionOrdering">
+                    <div class="accordion-body">
+                        <p>Yes, we ship to most countries worldwide. International shipping rates and delivery times vary by location. Please note that customers are responsible for any customs fees, import taxes, or duties that may apply when receiving international shipments. These fees are not included in our shipping charges and will be collected by your local postal service.</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="headingSeven">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSeven" aria-expanded="false" aria-controls="collapseSeven">
+                        What is your return policy?
+                    </button>
+                </h2>
+                <div id="collapseSeven" class="accordion-collapse collapse" aria-labelledby="headingSeven" data-bs-parent="#accordionOrdering">
+                    <div class="accordion-body">
+                        <p>We accept returns within 30 days of delivery for unopened products in their original packaging. If you receive damaged or defective items, please contact our customer service team within 7 days of receipt. For food safety reasons, we cannot accept returns of opened food products unless they're defective. Refunds will be issued to the original payment method within 5-7 business days after we receive and process your return.</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="headingEight">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseEight" aria-expanded="false" aria-controls="collapseEight">
+                        Is there a minimum order amount?
+                    </button>
+                </h2>
+                <div id="collapseEight" class="accordion-collapse collapse" aria-labelledby="headingEight" data-bs-parent="#accordionOrdering">
+                    <div class="accordion-body">
+                        <p>There is no minimum order amount required to place an order. However, orders over $50 qualify for free standard shipping within the continental US. We offer bulk discounts for larger orders, with 5% off orders over $100, 10% off orders over $250, and 15% off orders over $500.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Account & Payment Section -->
+    <div class="faq-section">
+        <h2>Account & Payment</h2>
+        <div class="accordion" id="accordionAccount">
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="headingNine">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseNine" aria-expanded="false" aria-controls="collapseNine">
+                        Do I need to create an account to place an order?
+                    </button>
+                </h2>
+                <div id="collapseNine" class="accordion-collapse collapse" aria-labelledby="headingNine" data-bs-parent="#accordionAccount">
+                    <div class="accordion-body">
+                        <p>While you can check out as a guest, creating an account offers several benefits: you can track your orders, save your shipping information for faster checkout, view your order history, and receive personalized recommendations. Account creation is free and only takes a minute.</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="headingTen">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTen" aria-expanded="false" aria-controls="collapseTen">
+                        What payment methods do you accept?
+                    </button>
+                </h2>
+                <div id="collapseTen" class="accordion-collapse collapse" aria-labelledby="headingTen" data-bs-parent="#accordionAccount">
+                    <div class="accordion-body">
+                        <p>We accept all major credit cards (Visa, Mastercard, American Express, Discover), PayPal, Apple Pay, and Google Pay. For business customers, we also offer purchase orders and bank transfers for larger orders. All payments are processed securely through encrypted connections.</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="headingEleven">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseEleven" aria-expanded="false" aria-controls="collapseEleven">
+                        Is my payment information secure?
+                    </button>
+                </h2>
+                <div id="collapseEleven" class="accordion-collapse collapse" aria-labelledby="headingEleven" data-bs-parent="#accordionAccount">
+                    <div class="accordion-body">
+                        <p>Yes, we take security seriously. Our website uses SSL encryption to protect your personal and payment information. We are PCI DSS compliant and never store your full credit card details on our servers. All payment processing is handled by trusted third-party payment processors with industry-standard security measures.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Still Have Questions? -->
+    <div class="contact-box">
+        <h3>Still Have Questions?</h3>
+        <p class="mb-4">Our customer service team is here to help you with any questions or concerns.</p>
+        <div class="row justify-content-center">
+            <div class="col-md-4 mb-3 mb-md-0">
+                <h5>Email Us</h5>
+                <p><a href="mailto:support@plannplate.com" class="text-decoration-none">support@plannplate.com</a></p>
+            </div>
+            <div class="col-md-4 mb-3 mb-md-0">
+                <h5>Call Us</h5>
+                <p><a href="tel:+1234567890" class="text-decoration-none">(123) 456-7890</a></p>
+                <p class="small text-muted">Mon-Fri, 9am-5pm EST</p>
+            </div>
+            <div class="col-md-4">
+                <h5>Live Chat</h5>
+                <p>Available on our website during business hours</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Footer -->
+<footer class="bg-dark text-white py-4">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-4">
+                <h5>PlannPlate</h5>
+                <p>Your source for premium organic ingredients.</p>
+            </div>
+            <div class="col-md-4">
+                <h5>Quick Links</h5>
+                <ul class="list-unstyled">
+                    <li><a href="index.html" class="text-white">Home</a></li>
+                    <li><a href="about.html" class="text-white">About Us</a></li>
+                    <li><a href="faq.html" class="text-white">FAQ</a></li>
+                    <li><a href="#" class="text-white">Products</a></li>
+                </ul>
+            </div>
+            <div class="col-md-4">
+                <h5>Stay Connected</h5>
+                <div class="d-flex">
+                    <a href="#" class="text-white me-3">Facebook</a>
+                    <a href="#" class="text-white me-3">Instagram</a>
+                    <a href="#" class="text-white">Twitter</a>
+                </div>
+            </div>
+        </div>
+        <div class="row mt-3">
+            <div class="col-12 text-center">
+                <p class="mb-0">&copy; 2023 PlannPlate. All rights reserved.</p>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<!-- Bootstrap JS and Dependencies -->
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.min.js"></script>
+
+<!-- Custom JavaScript -->
+<script src="js/faq.js"></script>
+
+</body>
+</html>

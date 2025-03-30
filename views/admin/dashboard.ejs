@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard - PlannPlate</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+  <style>
+    .sidebar {
+      min-height: calc(100vh - 56px);
+      background-color: #f8f9fa;
+    }
+    .card-dashboard {
+      border-radius: 10px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      transition: transform 0.2s;
+    }
+    .card-dashboard:hover {
+      transform: translateY(-5px);
+    }
+    .stat-icon {
+      font-size: 2rem;
+      padding: 15px;
+      border-radius: 50%;
+      margin-right: 15px;
+    }
+    .chart-container {
+      height: 300px;
+      margin-bottom: 20px;
+    }
+  </style>
+</head>
+<body>
+  <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <div class="container-fluid">
+      <a class="navbar-brand" href="/admin">PlannPlate Admin</a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav me-auto">
+          <li class="nav-item">
+            <a class="nav-link active" href="/admin">Dashboard</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="/admin/users">Users</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="/admin/products">Products</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="/admin/orders">Orders</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="/admin/categories">Categories</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="/admin/reports">Reports</a>
+          </li>
+        </ul>
+        <ul class="navbar-nav">
+          <li class="nav-item">
+            <a class="nav-link" href="/profile">Back to Profile</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="/logout">Logout</a>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container-fluid">
+    <div class="row">
+      <div class="col-md-3 col-lg-2 d-md-block sidebar p-3">
+        <div class="list-group">
+          <a href="/admin" class="list-group-item list-group-item-action active">Dashboard</a>
+          <a href="/admin/users" class="list-group-item list-group-item-action">Users</a>
+          <a href="/admin/products" class="list-group-item list-group-item-action">Products</a>
+          <a href="/admin/orders" class="list-group-item list-group-item-action">Orders</a>
+          <a href="/admin/categories" class="list-group-item list-group-item-action">Categories</a>
+          <a href="/admin/reports" class="list-group-item list-group-item-action">Reports</a>
+        </div>
+      </div>
+      <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 py-4">
+        <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+          <h1>Dashboard</h1>
+          <div class="btn-toolbar mb-2 mb-md-0">
+            <div class="btn-group me-2">
+              <a href="/admin/reports" class="btn btn-sm btn-outline-secondary">View Reports</a>
+            </div>
+            <button type="button" class="btn btn-sm btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
+              <i class="bi bi-calendar"></i> This Month
+            </button>
+            <ul class="dropdown-menu">
+              <li><a class="dropdown-item" href="#">This Week</a></li>
+              <li><a class="dropdown-item" href="#">This Month</a></li>
+              <li><a class="dropdown-item" href="#">This Year</a></li>
+            </ul>
+          </div>
+        </div>
+        
+        <!-- Stats Cards -->
+        <div class="row mb-4">
+          <div class="col-md-6 col-lg-3 mb-3">
+            <div class="card card-dashboard h-100 bg-light">
+              <div class="card-body d-flex align-items-center">
+                <div class="stat-icon bg-primary text-white">
+                  <i class="bi bi-people"></i>
+                </div>
+                <div>
+                  <h6 class="card-title text-muted mb-0">Total Users</h6>
+                  <h2 class="mt-2 mb-0"><%= stats.userCount %></h2>
+                  <p class="text-success mb-0">
+                    <i class="bi bi-arrow-up"></i> <%= stats.newUsers %> new this month
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6 col-lg-3 mb-3">
+            <div class="card card-dashboard h-100 bg-light">
+              <div class="card-body d-flex align-items-center">
+                <div class="stat-icon bg-success text-white">
+                  <i class="bi bi-cart"></i>
+                </div>
+                <div>
+                  <h6 class="card-title text-muted mb-0">Total Orders</h6>
+                  <h2 class="mt-2 mb-0"><%= stats.orderCount %></h2>
+                  <p class="text-warning mb-0">
+                    <i class="bi bi-clock"></i> <%= stats.pendingOrders %> pending
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6 col-lg-3 mb-3">
+            <div class="card card-dashboard h-100 bg-light">
+              <div class="card-body d-flex align-items-center">
+                <div class="stat-icon bg-warning text-white">
+                  <i class="bi bi-box"></i>
+                </div>
+                <div>
+                  <h6 class="card-title text-muted mb-0">Products</h6>
+                  <h2 class="mt-2 mb-0"><%= stats.productCount %></h2>
+                  <p class="text-danger mb-0">
+                    <i class="bi bi-exclamation-triangle"></i> <%= stats.lowStockCount %> low stock
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6 col-lg-3 mb-3">
+            <div class="card card-dashboard h-100 bg-light">
+              <div class="card-body d-flex align-items-center">
+                <div class="stat-icon bg-info text-white">
+                  <i class="bi bi-currency-dollar"></i>
+                </div>
+                <div>
+                  <h6 class="card-title text-muted mb-0">Revenue</h6>
+                  <h2 class="mt-2 mb-0">₫<%= stats.totalRevenue.toLocaleString('vi-VN') %></h2>
+                  <p class="text-info mb-0">
+                    <i class="bi bi-calendar"></i> ₫<%= stats.monthlyRevenue.toLocaleString('vi-VN') %> this month
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Charts Row -->
+        <div class="row mb-4">
+          <div class="col-lg-8 mb-4">
+            <div class="card">
+              <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">Sales Overview</h5>
+                <div class="btn-group btn-group-sm">
+                  <button type="button" class="btn btn-outline-secondary active" data-period="week">Week</button>
+                  <button type="button" class="btn btn-outline-secondary" data-period="month">Month</button>
+                  <button type="button" class="btn btn-outline-secondary" data-period="year">Year</button>
+                </div>
+              </div>
+              <div class="card-body">
+                <div class="chart-container">
+                  <canvas id="salesChart"></canvas>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-lg-4 mb-4">
+            <div class="card h-100">
+              <div class="card-header">
+                <h5 class="card-title mb-0">Low Stock Products</h5>
+              </div>
+              <div class="card-body p-0">
+                <ul class="list-group list-group-flush">
+                  <% if (lowStockProducts && lowStockProducts.length > 0) { %>
+                    <% lowStockProducts.forEach(product => { %>
+                      <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <div class="d-flex align-items-center">
+                          <img src="<%= product.HinhAnhSanPham %>" alt="<%= product.TenSanPham %>" class="rounded me-3" style="width: 40px; height: 40px; object-fit: cover;">
+                          <div>
+                            <h6 class="mb-0"><%= product.TenSanPham %></h6>
+                            <small class="text-muted"><%= product.TenDanhMuc %></small>
+                          </div>
+                        </div>
+                        <span class="badge bg-danger rounded-pill"><%= product.SoLuongTon %> left</span>
+                      </li>
+                    <% }); %>
+                  <% } else { %>
+                    <li class="list-group-item text-center">No low stock products</li>
+                  <% } %>
+                </ul>
+              </div>
+              <div class="card-footer text-center">
+                <a href="/admin/products?filter=low-stock" class="btn btn-sm btn-outline-primary">View All</a>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Recent Orders -->
+        <div class="card mb-4">
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="card-title mb-0">Recent Orders</h5>
+            <a href="/admin/orders" class="btn btn-sm btn-outline-primary">View All</a>
+          </div>
+          <div class="card-body p-0">
+            <div class="table-responsive">
+              <table class="table table-hover mb-0">
+                <thead class="table-light">
+                  <tr>
+                    <th>Order ID</th>
+                    <th>Customer</th>
+                    <th>Date</th>
+                    <th>Amount</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <% if (recentOrders && recentOrders.length > 0) { %>
+                    <% recentOrders.forEach(order => { %>
+                      <tr>
+                        <td>#<%= order.IDDonHang %></td>
+                        <td><%= order.TenKhachHang %></td>
+                        <td><%= new Date(order.NgayDat).toLocaleDateString('vi-VN') %></td>
+                        <td>₫<%= order.TongTien.toLocaleString('vi-VN') %></td>
+                        <td>
+                          <% if (order.TrangThai === 'ChoXuLy') { %>
+                            <span class="badge bg-warning">Pending</span>
+                          <% } else if (order.TrangThai === 'DangGiao') { %>
+                            <span class="badge bg-info">Shipping</span>
+                          <% } else if (order.TrangThai === 'DaGiao') { %>
+                            <span class="badge bg-success">Delivered</span>
+                          <% } else if (order.TrangThai === 'Huy') { %>
+                            <span class="badge bg-danger">Cancelled</span>
+                          <% } %>
+                        </td>
+                        <td>
+                          <a href="/admin/orders/<%= order.IDDonHang %>" class="btn btn-sm btn-outline-secondary">
+                            <i class="bi bi-eye"></i>
+                          </a>
+                        </td>
+                      </tr>
+                    <% }); %>
+                  <% } else { %>
+                    <tr>
+                      <td colspan="6" class="text-center">No recent orders</td>
+                    </tr>
+                  <% } %>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // Sales chart
+      const ctx = document.getElementById('salesChart').getContext('2d');
+      
+      const salesData = JSON.parse('<%- JSON.stringify(salesData) %>');
+      
+      const salesChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: salesData.labels,
+          datasets: [{
+            label: 'Revenue (₫)',
+            data: salesData.values,
+            backgroundColor: 'rgba(13, 110, 253, 0.2)',
+            borderColor: 'rgba(13, 110, 253, 1)',
+            borderWidth: 2,
+            tension: 0.3,
+            fill: true
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: {
+                callback: function(value) {
+                  return '₫' + value.toLocaleString('vi-VN');
+                }
+              }
+            }
+          },
+          plugins: {
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  return '₫' + context.parsed.y.toLocaleString('vi-VN');
+                }
+              }
+            }
+          }
+        }
+      });
+      
+      // Period buttons
+      const periodButtons = document.querySelectorAll('[data-period]');
+      periodButtons.forEach(button => {
+        button.addEventListener('click', function() {
+          const period = this.getAttribute('data-period');
+          
+          // Remove active class from all buttons
+          periodButtons.forEach(btn => btn.classList.remove('active'));
+          
+          // Add active class to clicked button
+          this.classList.add('active');
+          
+          // Update chart data (this would normally fetch new data from server)
+          // For demo purposes, we'll just simulate different data
+          fetch(`/admin/api/sales-data?period=${period}`)
+            .then(response => response.json())
+            .then(data => {
+              salesChart.data.labels = data.labels;
+              salesChart.data.datasets[0].data = data.values;
+              salesChart.update();
+            })
+            .catch(error => console.error('Error fetching sales data:', error));
+        });
+      });
+    });
+  </script>
+</body>
+</html>

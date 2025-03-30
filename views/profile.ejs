@@ -23,6 +23,12 @@
     <div class="profile-actions">
       <a href="/" class="btn">Dashboard</a>
       <a href="/logout" class="btn btn-logout">Logout</a>
+      <!-- Add this button in your profile.ejs file where appropriate -->
+      <% if (isAdmin) { %>
+        <div class="mt-4">
+          <a href="/admin" class="btn btn-primary">Admin Dashboard</a>
+        </div>
+      <% } %>
     </div>
   </div>
 </body>
