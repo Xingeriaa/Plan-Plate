@@ -467,7 +467,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Render products to the product container
-    // Find the function that renders products and update the "View" button to redirect to product-detail.html
     function renderProducts(products) {
         const productContainer = document.getElementById('productContainer');
         productContainer.innerHTML = '';
@@ -495,7 +494,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             <a href="/product-detail.html?id=${product.IDSanPham}" class="btn btn-outline-primary btn-sm">View</a>
                             <button class="btn btn-primary btn-sm ${isOutOfStock ? 'disabled' : ''}" 
                                 ${isOutOfStock ? 'disabled' : ''} 
-                                onclick="addToCart(${product.IDSanPham}, '${product.TenSanPham}', ${product.Gia}, '${product.HinhAnhSanPham || 'images/placeholder.png'}', 1)">
+                                onclick="addToCartHandler(${JSON.stringify(product).replace(/"/g, '&quot;')})">
                                 Add to Cart
                             </button>
                         </div>
@@ -637,4 +636,9 @@ document.addEventListener('DOMContentLoaded', function() {
     loadCategories();
     updateCartCount();
     setupHeaderButtons();
+    
+    // Make addToCart function available globally
+    window.addToCartHandler = function(product) {
+        addToCart(product);
+    };
 });

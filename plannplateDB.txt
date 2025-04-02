@@ -1,0 +1,139 @@
+
+Table name: TaiKhoan
+IDTaiKhoan 	TenNguoiDung 	Email 	MatKhau 	VaiTro 	NgayTao
+1 	Nguyễn Thái Thịt 	thit@example.com 	12345 	Admin 	3/30/2025 2:25:28 PM
+2 	Nguyễn Duy Thằng Ân 	an@example.com 	12345 	Admin 	3/30/2025 2:25:28 PM
+3 	Nguyễn Văn A 	a@example.com 	111 	NguoiDung 	3/30/2025 2:25:28 PM
+4 	Trần Văn B 	b@example.com 	222 	NguoiDung 	3/30/2025 2:25:28 PM
+5 	Lê Thị C 	c@example.com 	333 	NguoiDung 	3/30/2025 2:25:28 PM
+6 	Phạm Thanh D 	d@example.com 	444 	NguoiDung 	3/30/2025 2:25:28 PM
+7 	Bùi Quang E 	e@example.com 	555 	NguoiDung 	3/30/2025 2:25:28 PM
+8 	Đỗ Hoàng F 	f@example.com 	666 	NguoiDung 	3/30/2025 2:25:28 PM
+9 	Lý Minh G 	g@example.com 	777 	NguoiDung 	3/30/2025 2:25:28 PM
+10 	Nguyễn Thái Triệu 	nguyenthaitrieu2302@gmail.com 	$2b$10$X7t9PVpndhqNdJl0IlvB/Ou/ft5pl3sOPH7MT5oAja5QbnG1JmxAy 	NguoiDung 	3/30/2025 1:58:52 PM 
+
+Table name: QuanLyDanhMuc
+IDDanhMuc 	TenDanhMuc 	HinhAnhSanPham
+1 	Nguyên liệu thực phẩm 	https://www.asia-shine.com.vn/Upload/images/Products/blog-13-700x470.jpg
+2 	Các loại hạt và ngũ cốc 	https://hoanggiaft.com.vn/upload/filemanager/thong-tin-ve-ngu-coc-20-loai-hat.jpg
+3 	Bơ thực vật 	https://cdn.tgdd.vn/2023/08/CookDish/bep-tu-ih-la-gi-uu-nhuoc-diem-cua-bep-tu-ih-avt-1200x676.jpeg
+4 	Các loại đậu 	https://static.kinhtedothi.vn/images/upload//2023/07/28/cac-loai-dau.jpeg
+5 	Gia vị và đường 	https://suckhoedoisong.qltns.mediacdn.vn/Images/duylinh/2020/09/15/unnamed_1_resize.jpg
+6 	Cacao và Coffee 	https://www.ice.edu/sites/default/files/content/blog-article/header-image/coffee%20v%20cacao%20header.jpg
+7 	Dầu thực vật 	https://img.websosanh.vn/v10/users/review/images/1hfg8rf72xpp1/156696546127_4257080.jpg?compress=85
+8 	Gạo và nếp 	https://nongsansachphuongnam.com/upload/filemanager/gao-nep-va-gao-te%20(6).jpg
+9 	Hoa quả sấy khô 	https://ews.com.vn/wp-content/uploads/2020/04/hoa-qua-say-kho.jpg
+10 	Nấm 	https://bazaarvietnam.vn/wp-content/uploads/2021/03/cong-dung-cua-nam_1018487401.jpg 
+
+Table name: QuanLySanPham
+IDSanPham 	TenSanPham 	Gia 	MoTa 	IDDanhMuc 	HinhAnhSanPham 	DonViBan
+1 	Bột mì 	15000.00 	Bột mì đa dụng 	1 	https://cdn.tgdd.vn/Files/2020/05/23/1257697/bot-mi-la-gi-6-loai-bot-mi-lam-banh-thong-dung-hien-nay-202202151057525470.jpg 	Bịch 1kg
+2 	Bột gạo 	12000.00 	Bột gạo làm bánh 	1 	https://cdn.tgdd.vn/2020/12/CookProduct/Bot-gao-la-gi-cach-phan-biet-bot-gao-te-va-bot-gao-nep-0-1200x676.jpg 	Bịch 500g
+3 	Tinh bột nghệ 	50000.00 	Tinh bột nghệ nguyên chất 	1 	https://cdn.tgdd.vn/Files/2019/12/09/1225929/uong-tinh-bot-nghe-dung-cach-6_800x450.jpg 	Lọ 100g
+4 	Bột năng 	10000.00 	Bột năng nguyên chất 	1 	https://daotaobeptruong.vn/wp-content/uploads/2020/04/bot-nang-la-gi.jpg 	Bịch 500g
+5 	Bột sắn dây 	60000.00 	Bột sắn dây nguyên chất 	1 	https://cdn.nhathuoclongchau.com.vn/unsafe/https://cms-prod.s3-sgn09.fptcloud.com/bot_san_day_0_bc14fddbd3.jpg 	Bịch 500g
+6 	Tinh dầu quế 	80000.00 	Tinh dầu quế nguyên chất 	1 	https://dryer.vn/wp-content/uploads/2024/01/tinh-dau-que.jpg 	Chai 100ml
+7 	Bột đậu xanh 	25000.00 	Bột đậu xanh nguyên chất 	1 	https://cdn.nhathuoclongchau.com.vn/unsafe/https://cms-prod.s3-sgn09.fptcloud.com/giai_dap_uong_bot_dau_xanh_co_tang_can_khong_1_b211ac3dd0.jpg 	Bịch 1kg
+8 	Bột sữa dừa 	70000.00 	Bột sữa dừa nguyên chất 	1 	https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRObmDp4eLiSfZYrFpI1AsnXkK7dfSXjKg-8w&s 	Bịch 200g
+9 	Bột hạnh nhân 	180000.00 	Bột hạnh nhân nguyên chất 	1 	https://bizweb.dktcdn.net/100/169/223/products/0006050-bot-hanh-nhan-100g-1-jpeg.jpg?v=1541149466377 	Bịch 100g
+10 	Bột ca cao đen 	130000.00 	Bột ca cao đen nguyên chất 	1 	https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT5GAw_btwoJzU-GOTSVlB-9RurD9tGvFNApQ&s 	Bịch 500g 
+
+Table name: DonHang
+IDDonHang 	IDTaiKhoan 	NgayDatHang 	TrangThai
+3 	1 	3/1/2025 12:00:00 AM 	ChoXuLy
+4 	2 	3/2/2025 12:00:00 AM 	DangGiao
+5 	3 	3/3/2025 12:00:00 AM 	HoanThanh
+6 	4 	3/4/2025 12:00:00 AM 	Huy
+7 	5 	3/5/2025 12:00:00 AM 	ChoXuLy
+8 	6 	3/6/2025 12:00:00 AM 	DangGiao
+9 	7 	3/7/2025 12:00:00 AM 	HoanThanh
+10 	8 	3/8/2025 12:00:00 AM 	Huy
+11 	9 	3/9/2025 12:00:00 AM 	ChoXuLy
+12 	1 	3/10/2025 12:00:00 AM 	DangGiao 
+
+Table name: ChiTietDonHang
+IDChiTietDonHang 	IDDonHang 	IDSanPham 	SoLuong 	Gia
+6 	11 	1 	2 	40000.00
+7 	12 	3 	1 	60000.00
+8 	3 	2 	3 	75000.00
+9 	4 	4 	2 	90000.00
+10 	5 	5 	1 	70000.00
+11 	6 	6 	4 	80000.00
+12 	7 	7 	3 	65000.00
+13 	8 	8 	2 	50000.00
+14 	9 	9 	1 	30000.00 
+
+Table name: QuanLyKhoHang
+IDKhoHang 	IDSanPham 	SoLuongTon 	NgayNhapKho
+1 	1 	100 	2/28/2025 12:00:00 AM
+2 	2 	150 	2/28/2025 12:00:00 AM
+3 	3 	120 	2/28/2025 12:00:00 AM
+4 	4 	80 	2/28/2025 12:00:00 AM
+5 	5 	200 	2/28/2025 12:00:00 AM
+6 	6 	90 	2/28/2025 12:00:00 AM
+7 	7 	110 	2/28/2025 12:00:00 AM
+8 	8 	130 	2/28/2025 12:00:00 AM
+9 	9 	140 	2/28/2025 12:00:00 AM
+10 	10 	77 	3/30/2025 8:01:04 AM 
+
+Table name: BaoCaoThongKe
+IDBaoCao 	IDSanPham 	IDKhoHang 	SoLuongNhap 	SoLuongXuat 	SoLuongTon 	NgayBaoCao
+1 	1 	1 	50 	10 	90 	3/5/2025 12:00:00 AM
+2 	2 	2 	60 	15 	135 	3/5/2025 12:00:00 AM
+3 	3 	3 	40 	5 	115 	3/5/2025 12:00:00 AM
+4 	4 	4 	30 	8 	72 	3/5/2025 12:00:00 AM
+5 	5 	5 	80 	20 	180 	3/5/2025 12:00:00 AM
+6 	6 	6 	35 	10 	80 	3/5/2025 12:00:00 AM
+7 	7 	7 	45 	12 	98 	3/5/2025 12:00:00 AM
+8 	8 	8 	55 	18 	112 	3/5/2025 12:00:00 AM
+9 	9 	9 	65 	22 	118 	3/5/2025 12:00:00 AM 
+
+Table name: QuanLyTinTuc
+IDTinTuc 	TieuDe 	NoiDung 	NgayDang 	IDTaiKhoan
+1 	Cách làm bánh mì truyền thống 	Hướng dẫn làm bánh mì đơn giản tại nhà với nguyên liệu cơ bản. 	3/1/2025 12:00:00 AM 	1
+2 	Pha cà phê ngon như Barista 	Bí quyết pha cà phê chuẩn gu Ý từ cacao và cà phê nguyên chất. 	3/2/2025 12:00:00 AM 	2
+3 	Làm sữa hạt tại nhà 	Công thức làm sữa hạt ngon và bổ dưỡng từ các loại hạt như óc chó, hạnh nhân. 	3/3/2025 12:00:00 AM 	3
+4 	Chế biến các loại hạt dinh dưỡng 	Hướng dẫn rang hạt ngon mà không mất chất dinh dưỡng. 	3/4/2025 12:00:00 AM 	4
+5 	Bí quyết chọn nguyên liệu sạch 	Làm sao để nhận biết thực phẩm hữu cơ chuẩn và an toàn. 	3/5/2025 12:00:00 AM 	5
+6 	Nấu ăn với dầu thực vật 	Công thức món ngon sử dụng dầu thực vật lành mạnh. 	3/6/2025 12:00:00 AM 	6
+7 	Bánh ngọt từ cacao 	Cách làm bánh socola ngon nhất với cacao nguyên chất. 	3/7/2025 12:00:00 AM 	7
+8 	Làm bơ thực vật tại nhà 	Công thức đơn giản làm bơ thực vật ngon và lành mạnh. 	3/8/2025 12:00:00 AM 	8
+9 	Matcha - Công dụng và cách sử dụng 	Lợi ích sức khỏe của matcha và cách pha chế chuẩn Nhật Bản. 	3/9/2025 12:00:00 AM 	9
+10 	Nấm và cách chế biến 	Các món ngon từ nấm, cách sơ chế và bảo quản nấm đúng cách. 	3/10/2025 12:00:00 AM 	1 
+
+Table name: QuanLyTaiKhoan
+IDQuanLyTaiKhoan 	IDTaiKhoan 	HanhDong 	ThoiGian
+1 	1 	Đăng nhập 	3/1/2025 8:00:00 AM
+2 	2 	Tạo đơn hàng 	3/2/2025 9:30:00 AM
+3 	3 	Xem sản phẩm 	3/3/2025 10:15:00 AM
+4 	4 	Thanh toán đơn hàng 	3/4/2025 11:00:00 AM
+5 	5 	Hủy đơn hàng 	3/5/2025 12:20:00 PM
+6 	6 	Thêm sản phẩm vào giỏ hàng 	3/6/2025 1:15:00 PM
+7 	7 	Đăng xuất 	3/7/2025 2:00:00 PM
+8 	8 	Cập nhật thông tin cá nhân 	3/8/2025 3:10:00 PM
+9 	9 	Đánh giá sản phẩm 	3/9/2025 4:25:00 PM 
+
+Table name: GioHang
+IDGioHang 	IDTaiKhoan 	IDSanPham 	SoLuong 	NgayThem
+1 	1 	1 	2 	3/1/2025 12:00:00 AM
+2 	2 	3 	1 	3/2/2025 12:00:00 AM
+3 	3 	2 	3 	3/3/2025 12:00:00 AM
+4 	4 	4 	2 	3/4/2025 12:00:00 AM
+5 	5 	5 	1 	3/5/2025 12:00:00 AM
+6 	6 	6 	3 	3/6/2025 12:00:00 AM
+7 	7 	7 	2 	3/7/2025 12:00:00 AM
+8 	8 	8 	1 	3/8/2025 12:00:00 AM
+9 	9 	9 	4 	3/9/2025 12:00:00 AM 
+
+Table name: ThanhToan 
+IDThanhToan 	IDDonHang 	PhuongThucThanhToan 	TrangThaiThanhToan 	NgayThanhToan
+7 	11 	TienMat 	ChuaThanhToan 	
+8 	12 	ChuyenKhoan 	DaThanhToan 	3/2/2025 12:00:00 AM
+9 	3 	ViDienTu 	DaThanhToan 	3/3/2025 12:00:00 AM
+10 	4 	TienMat 	HoanTien 	3/4/2025 12:00:00 AM
+11 	5 	ChuyenKhoan 	ChuaThanhToan 	
+12 	6 	ViDienTu 	DaThanhToan 	3/6/2025 12:00:00 AM
+13 	7 	TienMat 	DaThanhToan 	3/7/2025 12:00:00 AM
+14 	8 	ChuyenKhoan 	ChuaThanhToan 	
+15 	9 	ViDienTu 	HoanTien 	3/9/2025 12:00:00 AM
+16 	10 	TienMat 	DaThanhToan 	3/10/2025 12:00:00 AM 

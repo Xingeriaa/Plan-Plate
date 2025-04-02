@@ -11,27 +11,74 @@
       min-height: calc(100vh - 56px);
       background-color: #f8f9fa;
     }
-    .order-status {
-      width: 12px;
-      height: 12px;
-      border-radius: 50%;
-      display: inline-block;
-      margin-right: 5px;
+    .table th {
+      border-top: none;
+      border-bottom: 1px solid #dee2e6;
+      font-weight: 600;
     }
-    .status-pending {
+    
+    .table td {
+      vertical-align: middle;
+    }
+    
+    .badge {
+      font-weight: 500;
+      padding: 0.4em 0.6em;
+    }
+    
+    .btn-group .btn {
+      padding: 0.25rem 0.5rem;
+      border-radius: 4px;
+      margin: 0 2px;
+    }
+    
+    .btn-outline-primary {
+      color: #0d6efd;
+      border-color: #0d6efd;
+    }
+    
+    .btn-outline-danger {
+      color: #dc3545;
+      border-color: #dc3545;
+    }
+    
+    .pagination {
+      margin-bottom: 0;
+    }
+    
+    .card {
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    
+    .price-column {
+      text-align: right;
+    }
+    
+    .status-badge {
+      padding: 0.5em 0.75em;
+      border-radius: 4px;
+      font-weight: 500;
+    }
+    
+    .status-ChoXuLy {
       background-color: #ffc107;
+      color: #212529;
     }
-    .status-processing {
-      background-color: #0dcaf0;
+    
+    .status-DangGiao {
+      background-color: #0d6efd;
+      color: white;
     }
-    .status-shipped {
-      background-color: #6c757d;
-    }
-    .status-delivered {
+    
+    .status-HoanThanh {
       background-color: #198754;
+      color: white;
     }
-    .status-cancelled {
+    
+    .status-Huy {
       background-color: #dc3545;
+      color: white;
     }
   </style>
 </head>
@@ -55,6 +102,12 @@
           </li>
           <li class="nav-item">
             <a class="nav-link active" href="/admin/orders">Orders</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="/admin/categories">Categories</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="/admin/reports">Reports</a>
           </li>
         </ul>
         <ul class="navbar-nav">
@@ -84,28 +137,13 @@
       <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 py-4">
         <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
           <h1>Order Management</h1>
-          <div class="btn-toolbar mb-2 mb-md-0">
-            <div class="btn-group me-2">
-              <button type="button" class="btn btn-sm btn-outline-secondary" id="exportCSV">Export CSV</button>
-              <button type="button" class="btn btn-sm btn-outline-secondary" id="printOrders">Print</button>
-            </div>
-            <button type="button" class="btn btn-sm btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
-              <i class="bi bi-calendar"></i> Time Period
-            </button>
-            <ul class="dropdown-menu">
-              <li><a class="dropdown-item" href="/admin/orders?period=today">Today</a></li>
-              <li><a class="dropdown-item" href="/admin/orders?period=week">This Week</a></li>
-              <li><a class="dropdown-item" href="/admin/orders?period=month">This Month</a></li>
-              <li><a class="dropdown-item" href="/admin/orders?period=all">All Time</a></li>
-            </ul>
-          </div>
         </div>
         
         <!-- Search and Filter -->
         <div class="row mb-4">
-          <div class="col-md-4">
+          <div class="col-md-6">
             <div class="input-group">
-              <input type="text" class="form-control" id="searchOrder" placeholder="Search by order ID or customer...">
+              <input type="text" class="form-control" id="searchOrder" placeholder="Search orders..." value="<%= search %>">
               <button class="btn btn-outline-secondary" type="button" id="searchButton">
                 <i class="bi bi-search"></i>
               </button>
@@ -115,22 +153,16 @@
             <select class="form-select" id="statusFilter">
               <option value="">All Statuses</option>
               <option value="ChoXuLy" <%= status === 'ChoXuLy' ? 'selected' : '' %>>Pending</option>
-              <option value="DangXuLy" <%= status === 'DangXuLy' ? 'selected' : '' %>>Processing</option>
-              <option value="DangGiao" <%= status === 'DangGiao' ? 'selected' : '' %>>Shipped</option>
-              <option value="DaGiao" <%= status === 'DaGiao' ? 'selected' : '' %>>Delivered</option>
+              <option value="DangGiao" <%= status === 'DangGiao' ? 'selected' : '' %>>Shipping</option>
+              <option value="HoanThanh" <%= status === 'HoanThanh' ? 'selected' : '' %>>Completed</option>
               <option value="Huy" <%= status === 'Huy' ? 'selected' : '' %>>Cancelled</option>
             </select>
           </div>
           <div class="col-md-3">
             <select class="form-select" id="sortOrders">
-              <option value="newest">Newest First</option>
-              <option value="oldest">Oldest First</option>
-              <option value="highest">Highest Amount</option>
-              <option value="lowest">Lowest Amount</option>
+              <option value="newest" <%= sort === 'newest' ? 'selected' : '' %>>Newest First</option>
+              <option value="oldest" <%= sort === 'oldest' ? 'selected' : '' %>>Oldest First</option>
             </select>
-          </div>
-          <div class="col-md-2">
-            <button class="btn btn-outline-secondary w-100" id="resetFilters">Reset</button>
           </div>
         </div>
         
@@ -144,9 +176,9 @@
                     <th>Order ID</th>
                     <th>Customer</th>
                     <th>Date</th>
+                    <th>Items</th>
                     <th>Total</th>
                     <th>Status</th>
-                    <th>Payment</th>
                     <th>Actions</th>
                   </tr>
                 </thead>
@@ -154,38 +186,31 @@
                   <% if (orders && orders.length > 0) { %>
                     <% orders.forEach(order => { %>
                       <tr>
-                        <td>#<%= order.IDDonHang %></td>
-                        <td><%= order.TenKhachHang %></td>
-                        <td><%= new Date(order.NgayDat).toLocaleDateString() %></td>
-                        <td>₫<%= order.TongTien.toLocaleString('vi-VN') %></td>
+                        <td><%= order.IDDonHang %></td>
+                        <td>
+                          <div><%= order.TenNguoiDung %></div>
+                          <small class="text-muted"><%= order.Email %></small>
+                        </td>
+                        <td><%= new Date(order.NgayDatHang).toLocaleDateString('vi-VN') %></td>
+                        <td><%= order.SoLuongSanPham %> items</td>
+                        <td class="price-column"><%= order.TongTien ? order.TongTien.toLocaleString('vi-VN') : 0 %> đ</td>
                         <td>
                           <% if (order.TrangThai === 'ChoXuLy') { %>
-                            <span class="order-status status-pending"></span> Pending
-                          <% } else if (order.TrangThai === 'DangXuLy') { %>
-                            <span class="order-status status-processing"></span> Processing
+                            <span class="badge status-ChoXuLy">Pending</span>
                           <% } else if (order.TrangThai === 'DangGiao') { %>
-                            <span class="order-status status-shipped"></span> Shipped
-                          <% } else if (order.TrangThai === 'DaGiao') { %>
-                            <span class="order-status status-delivered"></span> Delivered
+                            <span class="badge status-DangGiao">Shipping</span>
+                          <% } else if (order.TrangThai === 'HoanThanh') { %>
+                            <span class="badge status-HoanThanh">Completed</span>
                           <% } else if (order.TrangThai === 'Huy') { %>
-                            <span class="order-status status-cancelled"></span> Cancelled
-                          <% } %>
-                        </td>
-                        <td>
-                          <% if (order.PhuongThucThanhToan === 'COD') { %>
-                            COD
-                          <% } else if (order.PhuongThucThanhToan === 'Banking') { %>
-                            Banking
-                          <% } else { %>
-                            <%= order.PhuongThucThanhToan %>
+                            <span class="badge status-Huy">Cancelled</span>
                           <% } %>
                         </td>
                         <td>
                           <div class="btn-group btn-group-sm">
-                            <button class="btn btn-outline-primary" onclick="viewOrder('<%= order.IDDonHang %>')"></button>
+                            <button class="btn btn-outline-primary" onclick="viewOrder('<%= order.IDDonHang %>')">
                               <i class="bi bi-eye"></i>
                             </button>
-                            <button class="btn btn-outline-secondary" onclick="updateStatus('<%- order.IDDonHang %>', '<%- order.TrangThai %>')"></button>
+                            <button class="btn btn-outline-secondary" onclick="updateStatus('<%= order.IDDonHang %>')">
                               <i class="bi bi-arrow-repeat"></i>
                             </button>
                           </div>
@@ -202,23 +227,23 @@
             </div>
             
             <!-- Pagination -->
-            <% if (pagination && pagination.totalPages > 1) { %>
+            <% if (typeof pagination !== 'undefined' && pagination && pagination.totalPages > 1) { %>
               <nav aria-label="Page navigation" class="mt-4">
                 <ul class="pagination justify-content-center">
                   <li class="page-item <%= pagination.currentPage === 1 ? 'disabled' : '' %>">
-                    <a class="page-link" href="/admin/orders?page=<%= pagination.currentPage - 1 %><%= status ? '&status=' + status : '' %>" aria-label="Previous">
+                    <a class="page-link" href="/admin/orders?page=<%= pagination.currentPage - 1 %><%= search ? '&search=' + search : '' %><%= status ? '&status=' + status : '' %><%= sort ? '&sort=' + sort : '' %>" aria-label="Previous">
                       <span aria-hidden="true">&laquo;</span>
                     </a>
                   </li>
                   
                   <% for(let i = 1; i <= pagination.totalPages; i++) { %>
                     <li class="page-item <%= pagination.currentPage === i ? 'active' : '' %>">
-                      <a class="page-link" href="/admin/orders?page=<%= i %><%= status ? '&status=' + status : '' %>"><%= i %></a>
+                      <a class="page-link" href="/admin/orders?page=<%= i %><%= search ? '&search=' + search : '' %><%= status ? '&status=' + status : '' %><%= sort ? '&sort=' + sort : '' %>"><%= i %></a>
                     </li>
                   <% } %>
                   
                   <li class="page-item <%= pagination.currentPage === pagination.totalPages ? 'disabled' : '' %>">
-                    <a class="page-link" href="/admin/orders?page=<%= pagination.currentPage + 1 %><%= status ? '&status=' + status : '' %>" aria-label="Next">
+                    <a class="page-link" href="/admin/orders?page=<%= pagination.currentPage + 1 %><%= search ? '&search=' + search : '' %><%= status ? '&status=' + status : '' %><%= sort ? '&sort=' + sort : '' %>" aria-label="Next">
                       <span aria-hidden="true">&raquo;</span>
                     </a>
                   </li>
@@ -231,8 +256,8 @@
     </div>
   </div>
 
-  <!-- Order Details Modal -->
-  <div class="modal fade" id="orderDetailsModal" tabindex="-1" aria-hidden="true">
+  <!-- View Order Modal -->
+  <div class="modal fade" id="viewOrderModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg">
       <div class="modal-content">
         <div class="modal-header">
@@ -240,71 +265,17 @@
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body">
-          <div class="row mb-4">
-            <div class="col-md-6">
-              <h6>Order Information</h6>
-              <p class="mb-1"><strong>Order ID:</strong> <span id="orderID"></span></p>
-              <p class="mb-1"><strong>Date:</strong> <span id="orderDate"></span></p>
-              <p class="mb-1"><strong>Status:</strong> <span id="orderStatus"></span></p>
-              <p class="mb-1"><strong>Payment Method:</strong> <span id="paymentMethod"></span></p>
-            </div>
-            <div class="col-md-6">
-              <h6>Customer Information</h6>
-              <p class="mb-1"><strong>Name:</strong> <span id="customerName"></span></p>
-              <p class="mb-1"><strong>Email:</strong> <span id="customerEmail"></span></p>
-              <p class="mb-1"><strong>Phone:</strong> <span id="customerPhone"></span></p>
-              <p class="mb-1"><strong>Address:</strong> <span id="customerAddress"></span></p>
-            </div>
-          </div>
-          
-          <h6>Order Items</h6>
-          <div class="table-responsive">
-            <table class="table table-sm">
-              <thead>
-                <tr>
-                  <th>Product</th>
-                  <th>Price</th>
-                  <th>Quantity</th>
-                  <th class="text-end">Subtotal</th>
-                </tr>
-              </thead>
-              <tbody id="orderItems">
-                <!-- Order items will be inserted here -->
-              </tbody>
-              <tfoot>
-                <tr>
-                  <td colspan="3" class="text-end"><strong>Subtotal:</strong></td>
-                  <td class="text-end" id="subtotal"></td>
-                </tr>
-                <tr>
-                  <td colspan="3" class="text-end"><strong>Shipping:</strong></td>
-                  <td class="text-end" id="shipping"></td>
-                </tr>
-                <tr>
-                  <td colspan="3" class="text-end"><strong>Total:</strong></td>
-                  <td class="text-end" id="total"></td>
-                </tr>
-              </tfoot>
-            </table>
-          </div>
-          
-          <div class="mt-3">
-            <h6>Update Status</h6>
-            <div class="input-group">
-              <select class="form-select" id="updateOrderStatus">
-                <option value="ChoXuLy">Pending</option>
-                <option value="DangXuLy">Processing</option>
-                <option value="DangGiao">Shipped</option>
-                <option value="DaGiao">Delivered</option>
-                <option value="Huy">Cancelled</option>
-              </select>
-              <button class="btn btn-outline-primary" type="button" id="saveStatusBtn">Update</button>
+          <div id="orderDetails">
+            <div class="text-center">
+              <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+              </div>
+              <p>Loading order details...</p>
             </div>
           </div>
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-          <button type="button" class="btn btn-primary" id="printOrderBtn">Print Order</button>
         </div>
       </div>
     </div>
@@ -319,21 +290,22 @@
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body">
-          <input type="hidden" id="updateOrderId">
-          <div class="mb-3">
-            <label for="newStatus" class="form-label">New Status</label>
-            <select class="form-select" id="newStatus">
-              <option value="ChoXuLy">Pending</option>
-              <option value="DangXuLy">Processing</option>
-              <option value="DangGiao">Shipped</option>
-              <option value="DaGiao">Delivered</option>
-              <option value="Huy">Cancelled</option>
-            </select>
-          </div>
+          <form id="updateStatusForm" action="/admin/orders/update-status" method="POST">
+            <input type="hidden" id="updateOrderId" name="orderId">
+            <div class="mb-3">
+              <label for="orderStatus" class="form-label">Status</label>
+              <select class="form-select" id="orderStatus" name="status" required>
+                <option value="ChoXuLy">Pending</option>
+                <option value="DangGiao">Shipping</option>
+                <option value="HoanThanh">Completed</option>
+                <option value="Huy">Cancelled</option>
+              </select>
+            </div>
+          </form>
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-          <button type="button" class="btn btn-primary" id="confirmStatusUpdate">Update</button>
+          <button type="submit" form="updateStatusForm" class="btn btn-primary">Update Status</button>
         </div>
       </div>
     </div>
@@ -341,187 +313,219 @@
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
   <script>
-    // View order details
+    // View order function
     function viewOrder(orderId) {
+      console.log(`Viewing order with ID: ${orderId}`);
+      
+      // Show the modal
+      const modal = new bootstrap.Modal(document.getElementById('viewOrderModal'));
+      modal.show();
+      
+      // Reset the order details container
+      document.getElementById('orderDetails').innerHTML = `
+        <div class="text-center">
+          <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+          </div>
+          <p>Loading order details...</p>
+        </div>
+      `;
+      
+      // Fetch order details
       fetch(`/admin/orders/${orderId}`)
-        .then(response => response.json())
-        .then(data => {
-          // Fill order information
-          document.getElementById('orderID').textContent = '#' + data.order.IDDonHang;
-          document.getElementById('orderDate').textContent = new Date(data.order.NgayDat).toLocaleString();
-          
-          // Set status with appropriate styling
-          let statusText = '';
-          let statusClass = '';
-          
-          if (data.order.TrangThai === 'ChoXuLy') {
-            statusText = 'Pending';
-            statusClass = 'text-warning';
-          } else if (data.order.TrangThai === 'DangXuLy') {
-            statusText = 'Processing';
-            statusClass = 'text-info';
-          } else if (data.order.TrangThai === 'DangGiao') {
-            statusText = 'Shipped';
-            statusClass = 'text-secondary';
-          } else if (data.order.TrangThai === 'DaGiao') {
-            statusText = 'Delivered';
-            statusClass = 'text-success';
-          } else if (data.order.TrangThai === 'Huy') {
-            statusText = 'Cancelled';
-            statusClass = 'text-danger';
+        .then(response => {
+          if (!response.ok) {
+            throw new Error(`Server returned ${response.status}: ${response.statusText}`);
           }
+          return response.json();
+        })
+        .then(order => {
+          console.log('Order data received:', order);
           
-          document.getElementById('orderStatus').textContent = statusText;
-          document.getElementById('orderStatus').className = statusClass;
-          
-          // Set payment method
-          document.getElementById('paymentMethod').textContent = data.order.PhuongThucThanhToan || 'N/A';
-          
-          // Fill customer information
-          document.getElementById('customerName').textContent = data.order.TenKhachHang || 'N/A';
-          document.getElementById('customerEmail').textContent = data.order.Email || 'N/A';
-          document.getElementById('customerPhone').textContent = data.order.SoDienThoai || 'N/A';
-          document.getElementById('customerAddress').textContent = data.order.DiaChi || 'N/A';
-          
-          // Fill order items
-          const orderItemsContainer = document.getElementById('orderItems');
-          orderItemsContainer.innerHTML = '';
-          
-          let subtotal = 0;
-          
-          data.items.forEach(item => {
-            const row = document.createElement('tr');
-            
-            const itemSubtotal = item.Gia * item.SoLuong;
-            subtotal += itemSubtotal;
-            
-            row.innerHTML = `
-              <td>${item.TenSanPham}</td>
-              <td>₫${item.Gia.toLocaleString('vi-VN')}</td>
-              <td>${item.SoLuong}</td>
-              <td class="text-end">₫${itemSubtotal.toLocaleString('vi-VN')}</td>
-            `;
-            
-            orderItemsContainer.appendChild(row);
+          // Format the date
+          const orderDate = new Date(order.NgayDatHang).toLocaleDateString('vi-VN', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
           });
           
-          // Fill totals
-          const shipping = data.order.PhiVanChuyen || 0;
-          const total = subtotal + shipping;
+          // Get status badge class
+          let statusClass = '';
+          let statusText = '';
           
-          document.getElementById('subtotal').textContent = '₫' + subtotal.toLocaleString('vi-VN');
-          document.getElementById('shipping').textContent = '₫' + shipping.toLocaleString('vi-VN');
-          document.getElementById('total').textContent = '₫' + total.toLocaleString('vi-VN');
+          if (order.TrangThai === 'ChoXuLy') {
+            statusClass = 'status-ChoXuLy';
+            statusText = 'Pending';
+          } else if (order.TrangThai === 'DangGiao') {
+            statusClass = 'status-DangGiao';
+            statusText = 'Shipping';
+          } else if (order.TrangThai === 'HoanThanh') {
+            statusClass = 'status-HoanThanh';
+            statusText = 'Completed';
+          } else if (order.TrangThai === 'Huy') {
+            statusClass = 'status-Huy';
+            statusText = 'Cancelled';
+          }
           
-          // Set current status in dropdown
-          document.getElementById('updateOrderStatus').value = data.order.TrangThai;
+          // Build the HTML for order details
+          let html = `
+            <div class="row mb-4">
+              <div class="col-md-6">
+                <h6>Order Information</h6>
+                <p><strong>Order ID:</strong> #${order.IDDonHang}</p>
+                <p><strong>Date:</strong> ${orderDate}</p>
+                <p><strong>Status:</strong> <span class="badge ${statusClass}">${statusText}</span></p>
+              </div>
+              <div class="col-md-6">
+                <h6>Customer Information</h6>
+                <p><strong>Name:</strong> ${order.TenNguoiDung}</p>
+                <p><strong>Email:</strong> ${order.Email}</p>
+              </div>
+            </div>
+            
+            <h6>Order Items</h6>
+            <div class="table-responsive">
+              <table class="table table-striped">
+                <thead>
+                  <tr>
+                    <th>Product</th>
+                    <th>Unit Price</th>
+                    <th>Quantity</th>
+                    <th class="text-end">Total</th>
+                  </tr>
+                </thead>
+                <tbody>
+          `;
           
-          // Set order ID for status update
-          document.getElementById('saveStatusBtn').setAttribute('data-order-id', data.order.IDDonHang);
+          // Add order items
+          if (order.items && order.items.length > 0) {
+            order.items.forEach(item => {
+              const itemTotal = item.SoLuong * item.Gia;
+              html += `
+                <tr>
+                  <td>
+                    <div class="d-flex align-items-center">
+                      <img src="${item.HinhAnhSanPham}" alt="${item.TenSanPham}" class="me-2" style="width: 40px; height: 40px; object-fit: cover; border-radius: 4px;">
+                      <div>
+                        <div>${item.TenSanPham}</div>
+                        <small class="text-muted">${item.DonViBan}</small>
+                      </div>
+                    </div>
+                  </td>
+                  <td>${item.Gia.toLocaleString('vi-VN')} đ</td>
+                  <td>${item.SoLuong}</td>
+                  <td class="text-end">${itemTotal.toLocaleString('vi-VN')} đ</td>
+                </tr>
+              `;
+            });
+          } else {
+            html += `
+              <tr>
+                <td colspan="4" class="text-center">No items found</td>
+              </tr>
+            `;
+          }
           
-          // Show modal
-          const modal = new bootstrap.Modal(document.getElementById('orderDetailsModal'));
-          modal.show();
+          // Add order total
+          html += `
+                </tbody>
+                <tfoot>
+                  <tr>
+                    <td colspan="3" class="text-end"><strong>Total:</strong></td>
+                    <td class="text-end"><strong>${order.TongTien.toLocaleString('vi-VN')} đ</strong></td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+          `;
+          
+          // Update the order details container
+          document.getElementById('orderDetails').innerHTML = html;
         })
         .catch(error => {
-          console.error('Error:', error);
-          alert('An error occurred while loading order details');
+          console.error('Error fetching order data:', error);
+          document.getElementById('orderDetails').innerHTML = `
+            <div class="alert alert-danger">
+              <i class="bi bi-exclamation-triangle-fill me-2"></i>
+              Error loading order details: ${error.message}
+            </div>
+          `;
         });
     }
     
-    // Update order status from quick button
-    function updateStatus(orderId, currentStatus) {
-      document.getElementById('updateOrderId').value = orderId;
-      document.getElementById('newStatus').value = currentStatus;
+    // Update status function
+    function updateStatus(orderId) {
+      console.log(`Updating status for order with ID: ${orderId}`);
       
+      // Set the order ID in the form
+      document.getElementById('updateOrderId').value = orderId;
+      
+      // Show the modal
       const modal = new bootstrap.Modal(document.getElementById('updateStatusModal'));
       modal.show();
+      
+      // Fetch current order status to pre-select in dropdown
+      fetch(`/admin/orders/${orderId}`)
+        .then(response => {
+          if (!response.ok) {
+            throw new Error(`Server returned ${response.status}: ${response.statusText}`);
+          }
+          return response.json();
+        })
+        .then(order => {
+                  // Set the current status in the dropdown
+                  document.getElementById('orderStatus').value = order.TrangThai;
+        })
+        .catch(error => {
+          console.error('Error fetching order data:', error);
+        });
     }
     
-    // Event listeners
-    document.addEventListener('DOMContentLoaded', function() {
-      // Status filter change
-      document.getElementById('statusFilter').addEventListener('change', function() {
-        const status = this.value;
-        window.location.href = `/admin/orders${status ? '?status=' + status : ''}`;
-      });
-      
-      // Sort orders change
-      document.getElementById('sortOrders').addEventListener('change', function() {
-        const sort = this.value;
-        const status = new URLSearchParams(window.location.search).get('status') || '';
-        window.location.href = `/admin/orders?sort=${sort}${status ? '&status=' + status : ''}`;
-      });
-      
-      // Reset filters
-      document.getElementById('resetFilters').addEventListener('click', function() {
-        window.location.href = '/admin/orders';
-      });
-      
-      // Search button
-      document.getElementById('searchButton').addEventListener('click', function() {
-        const search = document.getElementById('searchOrder').value.trim();
-        if (search) {
-          window.location.href = `/admin/orders?search=${encodeURIComponent(search)}`;
-        }
-      });
-      
-      // Search on Enter key
-      document.getElementById('searchOrder').addEventListener('keyup', function(event) {
-        if (event.key === 'Enter') {
-          document.getElementById('searchButton').click();
-        }
-      });
-      
-      // Save status update from order details modal
-      document.getElementById('saveStatusBtn').addEventListener('click', function() {
-        const orderId = this.getAttribute('data-order-id');
-        const status = document.getElementById('updateOrderStatus').value;
-        
-        updateOrderStatus(orderId, status);
-      });
-      
-      // Confirm status update from quick update modal
-      document.getElementById('confirmStatusUpdate').addEventListener('click', function() {
-        const orderId = document.getElementById('updateOrderId').value;
-        const status = document.getElementById('newStatus').value;
-        
-        updateOrderStatus(orderId, status);
-      });
-      
-      // Print order
-      document.getElementById('printOrderBtn').addEventListener('click', function() {
-        window.print();
-      });
-      
-      // Export CSV
-      document.getElementById('exportCSV').addEventListener('click', function() {
-        window.location.href = '/admin/orders/export-csv';
-      });
+    // Search functionality
+    document.getElementById('searchButton').addEventListener('click', function() {
+      applyFilters();
     });
     
-    // Function to update order status
-    function updateOrderStatus(orderId, status) {
-      fetch(`/admin/orders/${orderId}/status`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ status })
-      })
-      .then(response => {
-        if (response.ok) {
-          window.location.reload();
-        } else {
-          return response.json().then(data => {
-            throw new Error(data.error || 'Failed to update order status');
-          });
-        }
-      })
-      .catch(error => {
-        console.error('Error:', error);
-        alert(error.message || 'An error occurred while updating the order status');
-      });
+    // Enter key for search
+    document.getElementById('searchOrder').addEventListener('keyup', function(event) {
+      if (event.key === 'Enter') {
+        applyFilters();
+      }
+    });
+    
+    // Status filter change
+    document.getElementById('statusFilter').addEventListener('change', function() {
+      applyFilters();
+    });
+    
+    // Sort orders change
+    document.getElementById('sortOrders').addEventListener('change', function() {
+      applyFilters();
+    });
+    
+    // Apply all filters and redirect
+    function applyFilters() {
+      const search = document.getElementById('searchOrder').value.trim();
+      const status = document.getElementById('statusFilter').value;
+      const sort = document.getElementById('sortOrders').value;
+      
+      let url = '/admin/orders?page=1';
+      
+      if (search) {
+        url += `&search=${encodeURIComponent(search)}`;
+      }
+      
+      if (status) {
+        url += `&status=${encodeURIComponent(status)}`;
+      }
+      
+      if (sort) {
+        url += `&sort=${encodeURIComponent(sort)}`;
+      }
+      
+      window.location.href = url;
     }
   </script>
 </body>

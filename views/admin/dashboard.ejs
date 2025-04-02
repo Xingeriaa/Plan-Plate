@@ -245,8 +245,8 @@
                       <tr>
                         <td>#<%= order.IDDonHang %></td>
                         <td><%= order.TenKhachHang %></td>
-                        <td><%= new Date(order.NgayDat).toLocaleDateString('vi-VN') %></td>
-                        <td>₫<%= order.TongTien.toLocaleString('vi-VN') %></td>
+                        <td><%= new Date(order.NgayDatHang).toLocaleDateString('vi-VN') %></td>
+                        <td>₫<%= order.TongTien ? order.TongTien.toLocaleString('vi-VN') : '0' %></td>
                         <td>
                           <% if (order.TrangThai === 'ChoXuLy') { %>
                             <span class="badge bg-warning">Pending</span>

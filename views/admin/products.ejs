@@ -12,13 +12,54 @@
       background-color: #f8f9fa;
     }
     .product-image {
-      width: 60px;
-      height: 60px;
+      width: 50px;
+      height: 50px;
       object-fit: cover;
       border-radius: 4px;
     }
-    .stock-badge {
-      font-size: 0.8rem;
+    
+    .table th {
+      border-top: none;
+      border-bottom: 1px solid #dee2e6;
+      font-weight: 600;
+    }
+    
+    .table td {
+      vertical-align: middle;
+    }
+    
+    .badge {
+      font-weight: 500;
+      padding: 0.4em 0.6em;
+    }
+    
+    .btn-group .btn {
+      padding: 0.25rem 0.5rem;
+      border-radius: 4px;
+      margin: 0 2px;
+    }
+    
+    .btn-outline-primary {
+      color: #0d6efd;
+      border-color: #0d6efd;
+    }
+    
+    .btn-outline-danger {
+      color: #dc3545;
+      border-color: #dc3545;
+    }
+    
+    .pagination {
+      margin-bottom: 0;
+    }
+    
+    .card {
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    
+    .price-column {
+      text-align: right;
     }
   </style>
 </head>
@@ -79,45 +120,38 @@
           <h1>Product Management</h1>
           <div class="btn-toolbar mb-2 mb-md-0">
             <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addProductModal">
-              <i class="bi bi-plus-lg"></i> Add New Product
+              <i class="bi bi-plus-circle"></i> Add New Product
             </button>
           </div>
         </div>
         
         <!-- Search and Filter -->
-        <div class="card mb-4">
-          <div class="card-body">
-            <form action="/admin/products" method="GET" class="row g-3">
-              <div class="col-md-4">
-                <div class="input-group">
-                  <input type="text" class="form-control" placeholder="Search products..." name="search" value="<%= search || '' %>">
-                  <button class="btn btn-outline-secondary" type="submit">
-                    <i class="bi bi-search"></i>
-                  </button>
-                </div>
-              </div>
-              <div class="col-md-3">
-                <select class="form-select" name="category" onchange="this.form.submit()">
-                  <option value="">All Categories</option>
-                  <% categories.forEach(category => { %>
-                    <option value="<%= category.IDDanhMuc %>" <%= selectedCategory == category.IDDanhMuc ? 'selected' : '' %>>
-                      <%= category.TenDanhMuc %>
-                    </option>
-                  <% }); %>
-                </select>
-              </div>
-              <div class="col-md-3">
-                <select class="form-select" name="stock" onchange="this.form.submit()">
-                  <option value="">All Stock Status</option>
-                  <option value="in-stock" <%= stockFilter === 'in-stock' ? 'selected' : '' %>>In Stock</option>
-                  <option value="low-stock" <%= stockFilter === 'low-stock' ? 'selected' : '' %>>Low Stock</option>
-                  <option value="out-of-stock" <%= stockFilter === 'out-of-stock' ? 'selected' : '' %>>Out of Stock</option>
-                </select>
-              </div>
-              <div class="col-md-2">
-                <a href="/admin/products" class="btn btn-outline-secondary w-100">Reset</a>
-              </div>
-            </form>
+        <div class="row mb-4">
+          <div class="col-md-5">
+            <div class="input-group">
+              <input type="text" class="form-control" id="searchProduct" placeholder="Search products..." value="<%= search %>">
+              <button class="btn btn-outline-secondary" type="button" id="searchButton">
+                <i class="bi bi-search"></i>
+              </button>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <select class="form-select" id="categoryFilter">
+              <option value="">All Categories</option>
+              <% if (categories && categories.length > 0) { %>
+                <% categories.forEach(cat => { %>
+                  <option value="<%= cat.IDDanhMuc %>" <%= category == cat.IDDanhMuc ? 'selected' : '' %>><%= cat.TenDanhMuc %></option>
+                <% }); %>
+              <% } %>
+            </select>
+          </div>
+          <div class="col-md-3">
+            <select class="form-select" id="sortProducts">
+              <option value="name" <%= sort === 'name' ? 'selected' : '' %>>Name (A-Z)</option>
+              <option value="price_high" <%= sort === 'price_high' ? 'selected' : '' %>>Price (High to Low)</option>
+              <option value="price_low" <%= sort === 'price_low' ? 'selected' : '' %>>Price (Low to High)</option>
+              <option value="newest" <%= sort === 'newest' ? 'selected' : '' %>>Newest First</option>
+            </select>
           </div>
         </div>
         
@@ -125,15 +159,14 @@
         <div class="card">
           <div class="card-body">
             <div class="table-responsive">
-              <table class="table table-hover">
+              <table class="table table-striped table-hover">
                 <thead>
                   <tr>
-                    <th>Image</th>
+                    <th style="width: 60px;">Image</th>
                     <th>Product Name</th>
                     <th>Category</th>
-                    <th>Price</th>
-                    <th>Stock</th>
-                    <th>Status</th>
+                    <th class="price-column">Price</th>
+                    <th>Unit</th>
                     <th>Actions</th>
                   </tr>
                 </thead>
@@ -145,30 +178,15 @@
                           <img src="<%= product.HinhAnhSanPham %>" alt="<%= product.TenSanPham %>" class="product-image">
                         </td>
                         <td><%= product.TenSanPham %></td>
-                        <td><%= product.TenDanhMuc %></td>
-                        <td>₫<%= product.Gia.toLocaleString('vi-VN') %></td>
-                        <td>
-                          <% if (product.SoLuongTon <= 0) { %>
-                            <span class="badge bg-danger stock-badge">Out of Stock</span>
-                          <% } else if (product.SoLuongTon <= 10) { %>
-                            <span class="badge bg-warning text-dark stock-badge">Low: <%= product.SoLuongTon %></span>
-                          <% } else { %>
-                            <span class="badge bg-success stock-badge"><%= product.SoLuongTon %> in stock</span>
-                          <% } %>
-                        </td>
-                        <td>
-                          <% if (product.TrangThai === 'Active') { %>
-                            <span class="badge bg-success">Active</span>
-                          <% } else { %>
-                            <span class="badge bg-secondary">Inactive</span>
-                          <% } %>
-                        </td>
+                        <td><%= product.CategoryName %></td>
+                        <td class="price-column"><%= product.Gia.toLocaleString('vi-VN') %> đ</td>
+                        <td><%= product.DonViBan %></td>
                         <td>
                           <div class="btn-group btn-group-sm">
-                            <button class="btn btn-outline-primary" onclick="editProduct('<%= product.IDSanPham %>')"></button>
+                            <button class="btn btn-outline-primary" onclick="editProduct('<%= product.IDSanPham %>')">
                               <i class="bi bi-pencil"></i>
                             </button>
-                            <button class="btn btn-outline-danger" onclick="deleteProduct('<%= product.IDSanPham %>')"></button>
+                            <button class="btn btn-outline-danger" onclick="deleteProduct('<%= product.IDSanPham %>')">
                               <i class="bi bi-trash"></i>
                             </button>
                           </div>
@@ -177,7 +195,7 @@
                     <% }); %>
                   <% } else { %>
                     <tr>
-                      <td colspan="7" class="text-center">No products found</td>
+                      <td colspan="6" class="text-center">No products found</td>
                     </tr>
                   <% } %>
                 </tbody>
@@ -185,21 +203,25 @@
             </div>
             
             <!-- Pagination -->
-            <% if (pagination && pagination.totalPages > 1) { %>
+            <% if (typeof pagination !== 'undefined' && pagination && pagination.totalPages > 1) { %>
               <nav aria-label="Page navigation" class="mt-4">
                 <ul class="pagination justify-content-center">
                   <li class="page-item <%= pagination.currentPage === 1 ? 'disabled' : '' %>">
-                    <a class="page-link" href="/admin/products?page=<%= pagination.currentPage - 1 %><%= search ? '&search=' + search : '' %><%= selectedCategory ? '&category=' + selectedCategory : '' %><%= stockFilter ? '&stock=' + stockFilter : '' %>">Previous</a>
+                    <a class="page-link" href="/admin/products?page=<%= pagination.currentPage - 1 %><%= search ? '&search=' + search : '' %><%= category ? '&category=' + category : '' %><%= sort ? '&sort=' + sort : '' %>" aria-label="Previous">
+                      <span aria-hidden="true">&laquo;</span>
+                    </a>
                   </li>
                   
                   <% for(let i = 1; i <= pagination.totalPages; i++) { %>
                     <li class="page-item <%= pagination.currentPage === i ? 'active' : '' %>">
-                      <a class="page-link" href="/admin/products?page=<%= i %><%= search ? '&search=' + search : '' %><%= selectedCategory ? '&category=' + selectedCategory : '' %><%= stockFilter ? '&stock=' + stockFilter : '' %>"><%= i %></a>
+                      <a class="page-link" href="/admin/products?page=<%= i %><%= search ? '&search=' + search : '' %><%= category ? '&category=' + category : '' %><%= sort ? '&sort=' + sort : '' %>"><%= i %></a>
                     </li>
                   <% } %>
                   
                   <li class="page-item <%= pagination.currentPage === pagination.totalPages ? 'disabled' : '' %>">
-                    <a class="page-link" href="/admin/products?page=<%= pagination.currentPage + 1 %><%= search ? '&search=' + search : '' %><%= selectedCategory ? '&category=' + selectedCategory : '' %><%= stockFilter ? '&stock=' + stockFilter : '' %>">Next</a>
+                    <a class="page-link" href="/admin/products?page=<%= pagination.currentPage + 1 %><%= search ? '&search=' + search : '' %><%= category ? '&category=' + category : '' %><%= sort ? '&sort=' + sort : '' %>" aria-label="Next">
+                      <span aria-hidden="true">&raquo;</span>
+                    </a>
                   </li>
                 </ul>
               </nav>
@@ -219,50 +241,47 @@
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body">
-          <form id="addProductForm" action="/admin/products/add" method="POST" enctype="multipart/form-data">
-            <div class="row mb-3">
+          <form id="addProductForm" action="/admin/products/add" method="POST">
+            <div class="row">
               <div class="col-md-6">
-                <label for="productName" class="form-label">Product Name</label>
-                <input type="text" class="form-control" id="productName" name="productName" required>
+                <div class="mb-3">
+                  <label for="name" class="form-label">Product Name</label>
+                  <input type="text" class="form-control" id="name" name="name" required>
+                </div>
+                <div class="mb-3">
+                  <label for="price" class="form-label">Price</label>
+                  <div class="input-group">
+                    <input type="number" class="form-control" id="price" name="price" min="0" step="1000" required>
+                    <span class="input-group-text">đ</span>
+                  </div>
+                </div>
+                <div class="mb-3">
+                  <label for="categoryId" class="form-label">Category</label>
+                  <select class="form-select" id="categoryId" name="categoryId" required>
+                    <option value="">Select Category</option>
+                    <% if (categories && categories.length > 0) { %>
+                      <% categories.forEach(cat => { %>
+                        <option value="<%= cat.IDDanhMuc %>"><%= cat.TenDanhMuc %></option>
+                      <% }); %>
+                    <% } %>
+                  </select>
+                </div>
+                <div class="mb-3">
+                  <label for="unit" class="form-label">Unit</label>
+                  <input type="text" class="form-control" id="unit" name="unit" placeholder="e.g., Bịch 1kg">
+                </div>
               </div>
               <div class="col-md-6">
-                <label for="category" class="form-label">Category</label>
-                <select class="form-select" id="category" name="category" required>
-                  <option value="">Select Category</option>
-                  <% categories.forEach(category => { %>
-                    <option value="<%= category.IDDanhMuc %>"><%= category.TenDanhMuc %></option>
-                  <% }); %>
-                </select>
+                <div class="mb-3">
+                  <label for="imageUrl" class="form-label">Image URL</label>
+                  <input type="url" class="form-control" id="imageUrl" name="imageUrl" placeholder="https://example.com/image.jpg">
+                  <div class="form-text">Enter a URL for the product image</div>
+                </div>
+                <div class="mb-3">
+                  <label for="description" class="form-label">Description</label>
+                  <textarea class="form-control" id="description" name="description" rows="5"></textarea>
+                </div>
               </div>
-            </div>
-            
-            <div class="row mb-3">
-              <div class="col-md-4">
-                <label for="price" class="form-label">Price (₫)</label>
-                <input type="number" class="form-control" id="price" name="price" min="0" step="1000" required>
-              </div>
-              <div class="col-md-4">
-                <label for="stock" class="form-label">Stock Quantity</label>
-                <input type="number" class="form-control" id="stock" name="stock" min="0" required>
-              </div>
-              <div class="col-md-4">
-                <label for="status" class="form-label">Status</label>
-                <select class="form-select" id="status" name="status">
-                  <option value="Active">Active</option>
-                  <option value="Inactive">Inactive</option>
-                </select>
-              </div>
-            </div>
-            
-            <div class="mb-3">
-              <label for="description" class="form-label">Description</label>
-              <textarea class="form-control" id="description" name="description" rows="3" required></textarea>
-            </div>
-            
-            <div class="mb-3">
-              <label for="productImage" class="form-label">Product Image</label>
-              <input type="file" class="form-control" id="productImage" name="productImage" accept="image/*" required>
-              <div class="form-text">Recommended size: 800x800 pixels</div>
             </div>
           </form>
         </div>
@@ -283,56 +302,48 @@
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body">
-          <form id="editProductForm" action="/admin/products/update" method="POST" enctype="multipart/form-data">
+          <form id="editProductForm" action="/admin/products/update" method="POST">
             <input type="hidden" id="editProductId" name="productId">
-            
-            <div class="row mb-3">
+            <div class="row">
               <div class="col-md-6">
-                <label for="editProductName" class="form-label">Product Name</label>
-                <input type="text" class="form-control" id="editProductName" name="productName" required>
+                <div class="mb-3">
+                  <label for="editName" class="form-label">Product Name</label>
+                  <input type="text" class="form-control" id="editName" name="name" required>
+                </div>
+                <div class="mb-3">
+                  <label for="editPrice" class="form-label">Price</label>
+                  <div class="input-group">
+                    <input type="number" class="form-control" id="editPrice" name="price" min="0" step="1000" required>
+                    <span class="input-group-text">đ</span>
+                  </div>
+                </div>
+                <div class="mb-3">
+                  <label for="editCategoryId" class="form-label">Category</label>
+                  <select class="form-select" id="editCategoryId" name="categoryId" required>
+                    <option value="">Select Category</option>
+                    <% if (categories && categories.length > 0) { %>
+                      <% categories.forEach(cat => { %>
+                        <option value="<%= cat.IDDanhMuc %>"><%= cat.TenDanhMuc %></option>
+                      <% }); %>
+                    <% } %>
+                  </select>
+                </div>
+                <div class="mb-3">
+                  <label for="editUnit" class="form-label">Unit</label>
+                  <input type="text" class="form-control" id="editUnit" name="unit" placeholder="e.g., Bịch 1kg">
+                </div>
               </div>
               <div class="col-md-6">
-                <label for="editCategory" class="form-label">Category</label>
-                <select class="form-select" id="editCategory" name="category" required>
-                  <option value="">Select Category</option>
-                  <% categories.forEach(category => { %>
-                    <option value="<%= category.IDDanhMuc %>"><%= category.TenDanhMuc %></option>
-                  <% }); %>
-                </select>
+                <div class="mb-3">
+                  <label for="editImageUrl" class="form-label">Image URL</label>
+                  <input type="url" class="form-control" id="editImageUrl" name="imageUrl" placeholder="https://example.com/image.jpg">
+                  <div class="form-text">Enter a URL for the product image</div>
+                </div>
+                <div class="mb-3">
+                  <label for="editDescription" class="form-label">Description</label>
+                  <textarea class="form-control" id="editDescription" name="description" rows="5"></textarea>
+                </div>
               </div>
-            </div>
-            
-            <div class="row mb-3">
-              <div class="col-md-4">
-                <label for="editPrice" class="form-label">Price (₫)</label>
-                <input type="number" class="form-control" id="editPrice" name="price" min="0" step="1000" required>
-              </div>
-              <div class="col-md-4">
-                <label for="editStock" class="form-label">Stock Quantity</label>
-                <input type="number" class="form-control" id="editStock" name="stock" min="0" required>
-              </div>
-              <div class="col-md-4">
-                <label for="editStatus" class="form-label">Status</label>
-                <select class="form-select" id="editStatus" name="status">
-                  <option value="Active">Active</option>
-                  <option value="Inactive">Inactive</option>
-                </select>
-              </div>
-            </div>
-            
-            <div class="mb-3">
-              <label for="editDescription" class="form-label">Description</label>
-              <textarea class="form-control" id="editDescription" name="description" rows="3" required></textarea>
-            </div>
-            
-            <div class="mb-3">
-              <div class="d-flex align-items-center mb-2">
-                <label class="form-label mb-0 me-3">Current Image:</label>
-                <img id="currentProductImage" src="" alt="Current product image" style="height: 100px; width: auto;">
-              </div>
-              <label for="editProductImage" class="form-label">Change Image (leave empty to keep current)</label>
-              <input type="file" class="form-control" id="editProductImage" name="productImage" accept="image/*">
-              <div class="form-text">Recommended size: 800x800 pixels</div>
             </div>
           </form>
         </div>
@@ -348,24 +359,43 @@
   <script>
     // Edit product function
     function editProduct(productId) {
+      console.log(`Editing product with ID: ${productId}`);
+      
+      // Show loading indicator or message
+      const loadingMessage = document.createElement('div');
+      loadingMessage.className = 'alert alert-info';
+      loadingMessage.textContent = 'Loading product data...';
+      document.body.appendChild(loadingMessage);
+      
       fetch(`/admin/products/${productId}`)
-        .then(response => response.json())
-        .then(product => {
-          document.getElementById('editProductId').value = product.IDSanPham;
-          document.getElementById('editProductName').value = product.TenSanPham;
-          document.getElementById('editCategory').value = product.IDDanhMuc;
-          document.getElementById('editPrice').value = product.Gia;
-          document.getElementById('editStock').value = product.SoLuongTon;
-          document.getElementById('editStatus').value = product.TrangThai;
-          document.getElementById('editDescription').value = product.MoTa;
-          document.getElementById('currentProductImage').src = product.HinhAnhSanPham;
+        .then(response => {
+          // Remove loading message
+          document.body.removeChild(loadingMessage);
           
+          if (!response.ok) {
+            throw new Error(`Server returned ${response.status}: ${response.statusText}`);
+          }
+          return response.json();
+        })
+        .then(product => {
+          console.log('Product data received:', product);
+          
+          // Populate the edit form with product data
+          document.getElementById('editProductId').value = product.IDSanPham;
+          document.getElementById('editName').value = product.TenSanPham;
+          document.getElementById('editPrice').value = product.Gia;
+          document.getElementById('editCategoryId').value = product.IDDanhMuc;
+          document.getElementById('editUnit').value = product.DonViBan || '';
+          document.getElementById('editImageUrl').value = product.HinhAnhSanPham || '';
+          document.getElementById('editDescription').value = product.MoTa || '';
+          
+          // Show the modal
           const modal = new bootstrap.Modal(document.getElementById('editProductModal'));
           modal.show();
         })
         .catch(error => {
-          console.error('Error:', error);
-          alert('An error occurred while loading product data');
+          console.error('Error fetching product data:', error);
+          alert(`Error loading product data: ${error.message}`);
         });
     }
     
@@ -393,6 +423,62 @@
         });
       }
     }
+    
+    // Search and filter functionality
+    document.addEventListener('DOMContentLoaded', function() {
+      const searchInput = document.getElementById('searchProduct');
+      const searchButton = document.getElementById('searchButton');
+      const categoryFilter = document.getElementById('categoryFilter');
+      const sortSelect = document.getElementById('sortProducts');
+      
+      // Function to build query string from current filters
+      function buildQueryString() {
+        const params = new URLSearchParams();
+        
+        const searchValue = searchInput.value.trim();
+        if (searchValue) {
+          params.append('search', searchValue);
+        }
+        
+        const categoryValue = categoryFilter.value;
+        if (categoryValue) {
+          params.append('category', categoryValue);
+        }
+        
+        const sortValue = sortSelect.value;
+        if (sortValue && sortValue !== 'name') {
+          params.append('sort', sortValue);
+        }
+        
+        return params.toString();
+      }
+      
+      // Search button click handler
+      searchButton.addEventListener('click', function() {
+        const queryString = buildQueryString();
+        window.location.href = `/admin/products${queryString ? '?' + queryString : ''}`;
+      });
+      
+      // Search input enter key handler
+      searchInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+          const queryString = buildQueryString();
+          window.location.href = `/admin/products${queryString ? '?' + queryString : ''}`;
+        }
+      });
+      
+      // Category filter change handler
+      categoryFilter.addEventListener('change', function() {
+        const queryString = buildQueryString();
+        window.location.href = `/admin/products${queryString ? '?' + queryString : ''}`;
+      });
+      
+      // Sort select change handler
+      sortSelect.addEventListener('change', function() {
+        const queryString = buildQueryString();
+        window.location.href = `/admin/products${queryString ? '?' + queryString : ''}`;
+      });
+    });
   </script>
 </body>
 </html>

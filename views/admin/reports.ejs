@@ -3,17 +3,33 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Reports - PlannPlate Admin</title>
+  <title>Sales Reports - PlannPlate Admin</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     .sidebar {
       min-height: calc(100vh - 56px);
       background-color: #f8f9fa;
     }
-    .chart-container {
-      height: 400px;
+    .card {
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
       margin-bottom: 20px;
+    }
+    .product-image {
+      width: 40px;
+      height: 40px;
+      object-fit: cover;
+      border-radius: 4px;
+    }
+    .table th {
+      border-top: none;
+      border-bottom: 1px solid #dee2e6;
+      font-weight: 600;
+    }
+    .table td {
+      vertical-align: middle;
     }
   </style>
 </head>
@@ -71,148 +87,143 @@
       </div>
       <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 py-4">
         <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-          <h1>Reports</h1>
+          <h1 class="h2">Sales Reports</h1>
           <div class="btn-toolbar mb-2 mb-md-0">
             <div class="btn-group me-2">
-              <a href="/admin/reports/generate?format=pdf<%= reportType ? '&type=' + reportType : '' %>" class="btn btn-sm btn-outline-secondary">Export PDF</a>
-              <a href="/admin/reports/generate?format=excel<%= reportType ? '&type=' + reportType : '' %>" class="btn btn-sm btn-outline-secondary">Export Excel</a>
+              <button type="button" class="btn btn-sm btn-outline-secondary" onclick="printReport()">
+                <i class="bi bi-printer"></i> Print
+              </button>
+              <button type="button" class="btn btn-sm btn-outline-secondary" onclick="exportCSV()">
+                <i class="bi bi-file-earmark-excel"></i> Export
+              </button>
             </div>
-            <button type="button" class="btn btn-sm btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
-              <i class="bi bi-calendar"></i> Time Period
-            </button>
-            <ul class="dropdown-menu">
-              <li><a class="dropdown-item" href="/admin/reports?period=week<%= reportType ? '&type=' + reportType : '' %>">This Week</a></li>
-              <li><a class="dropdown-item" href="/admin/reports?period=month<%= reportType ? '&type=' + reportType : '' %>">This Month</a></li>
-              <li><a class="dropdown-item" href="/admin/reports?period=year<%= reportType ? '&type=' + reportType : '' %>">This Year</a></li>
-            </ul>
+            <div class="dropdown">
+              <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                <i class="bi bi-calendar3"></i> Time Period
+              </button>
+              <ul class="dropdown-menu">
+                <li><a class="dropdown-item" href="#" onclick="showChart('week')">Last 7 Days</a></li>
+                <li><a class="dropdown-item" href="#" onclick="showChart('month')">Last 30 Days</a></li>
+                <li><a class="dropdown-item" href="#" onclick="showChart('year')">Last 12 Months</a></li>
+              </ul>
+            </div>
           </div>
         </div>
         
-        <!-- Report Type Tabs -->
-        <ul class="nav nav-tabs mb-4">
-          <li class="nav-item">
-            <a class="nav-link <%= reportType === 'sales' ? 'active' : '' %>" href="/admin/reports?type=sales">Sales Report</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link <%= reportType === 'products' ? 'active' : '' %>" href="/admin/reports?type=products">Product Performance</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link <%= reportType === 'customers' ? 'active' : '' %>" href="/admin/reports?type=customers">Customer Analysis</a>
-          </li>
-        </ul>
-        
-        <!-- Report Content -->
-        <div class="card">
-          <div class="card-body">
-            <% if (reportType === 'sales') { %>
-              <h5 class="card-title">Sales Overview</h5>
-              <p class="text-muted">
-                <%= period === 'week' ? 'Last 7 days' : period === 'month' ? 'Last 30 days' : 'Last 12 months' %>
-              </p>
-              
-              <div class="chart-container">
-                <canvas id="salesChart"></canvas>
+        <!-- Sales Overview -->
+        <div class="row">
+          <div class="col-12">
+            <div class="card">
+              <div class="card-header">
+                <h5 class="card-title mb-0">Sales Overview</h5>
               </div>
-              
-              <div class="table-responsive mt-4">
-                <table class="table table-striped">
-                  <thead>
-                    <tr>
-                      <th>Period</th>
-                      <th>Orders</th>
-                      <th>Revenue</th>
-                      <th>Avg. Order Value</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <% if (reportData.labels && reportData.labels.length > 0) { %>
-                      <% for(let i = 0; i < reportData.labels.length; i++) { %>
+              <div class="card-body">
+                <canvas id="salesChart" height="100"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Top Selling Products -->
+        <div class="row">
+          <div class="col-md-6">
+            <div class="card">
+              <div class="card-header">
+                <h5 class="card-title mb-0">Top Selling Products</h5>
+              </div>
+              <div class="card-body">
+                <div class="table-responsive">
+                  <table class="table table-striped">
+                    <thead>
+                      <tr>
+                        <th>Product</th>
+                        <th>Quantity</th>
+                        <th>Revenue</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <% if (topProducts && topProducts.length > 0) { %>
+                        <% topProducts.forEach(product => { %>
+                          <tr>
+                            <td>
+                              <div class="d-flex align-items-center">
+                                <% if (product.HinhAnhSanPham) { %>
+                                  <img src="<%= product.HinhAnhSanPham %>" alt="<%= product.TenSanPham %>" class="product-image me-2">
+                                <% } else { %>
+                                  <div class="product-image bg-secondary d-flex align-items-center justify-content-center text-white me-2">
+                                    <i class="bi bi-image"></i>
+                                  </div>
+                                <% } %>
+                                <span><%= product.TenSanPham %></span>
+                              </div>
+                            </td>
+                            <td><%= product.TotalQuantity %></td>
+                            <td><%= new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(product.TotalRevenue) %></td>
+                          </tr>
+                        <% }); %>
+                      <% } else { %>
                         <tr>
-                          <td><%= reportData.labels[i] %></td>
-                          <td><%= reportData.orderCounts && reportData.orderCounts[i] ? reportData.orderCounts[i] : 'N/A' %></td>
-                          <td>₫<%= reportData.values && reportData.values[i] ? reportData.values[i].toLocaleString('vi-VN') : '0' %></td>
-                          <td>₫<%= (reportData.orderCounts && reportData.orderCounts[i] && reportData.values && reportData.values[i]) ? Math.round(reportData.values[i] / reportData.orderCounts[i]).toLocaleString('vi-VN') : 'N/A' %></td>
+                          <td colspan="3" class="text-center">No data available</td>
                         </tr>
                       <% } %>
-                    <% } else { %>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Sales by Category -->
+          <div class="col-md-6">
+            <div class="card">
+              <div class="card-header">
+                <h5 class="card-title mb-0">Sales by Category</h5>
+              </div>
+              <div class="card-body">
+                <canvas id="categoryChart" height="300"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Category Sales Table -->
+        <div class="row mt-4">
+          <div class="col-12">
+            <div class="card">
+              <div class="card-header">
+                <h5 class="card-title mb-0">Category Performance</h5>
+              </div>
+              <div class="card-body">
+                <div class="table-responsive">
+                  <table class="table table-striped">
+                    <thead>
                       <tr>
-                        <td colspan="4" class="text-center">No data available</td>
+                        <th>Category</th>
+                        <th>Orders</th>
+                        <th>Items Sold</th>
+                        <th>Revenue</th>
                       </tr>
-                    <% } %>
-                  </tbody>
-                </table>
-              </div>
-            <% } else if (reportType === 'products') { %>
-              <h5 class="card-title">Top Selling Products</h5>
-              
-              <div class="chart-container">
-                <canvas id="productsChart"></canvas>
-              </div>
-              
-              <div class="table-responsive mt-4">
-                <table class="table table-striped">
-                  <thead>
-                    <tr>
-                      <th>Product</th>
-                      <th>Category</th>
-                      <th>Units Sold</th>
-                      <th>Revenue</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <% if (reportData.products && reportData.products.length > 0) { %>
-                      <% reportData.products.forEach(product => { %>
+                    </thead>
+                    <tbody>
+                      <% if (categorySales && categorySales.length > 0) { %>
+                        <% categorySales.forEach(category => { %>
+                          <tr>
+                            <td><%= category.TenDanhMuc %></td>
+                            <td><%= category.OrderCount || 0 %></td>
+                            <td><%= category.TotalQuantity || 0 %></td>
+                            <td><%= new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(category.TotalRevenue || 0) %></td>
+                          </tr>
+                        <% }); %>
+                      <% } else { %>
                         <tr>
-                          <td><%= product.TenSanPham %></td>
-                          <td><%= product.TenDanhMuc %></td>
-                          <td><%= product.SoLuongBan %></td>
-                          <td>₫<%= product.DoanhThu.toLocaleString('vi-VN') %></td>
+                          <td colspan="4" class="text-center">No data available</td>
                         </tr>
-                      <% }); %>
-                    <% } else { %>
-                      <tr>
-                        <td colspan="4" class="text-center">No data available</td>
-                      </tr>
-                    <% } %>
-                  </tbody>
-                </table>
+                      <% } %>
+                    </tbody>
+                  </table>
+                </div>
               </div>
-            <% } else if (reportType === 'customers') { %>
-              <h5 class="card-title">Top Customers</h5>
-              
-              <div class="chart-container">
-                <canvas id="customersChart"></canvas>
-              </div>
-              
-              <div class="table-responsive mt-4">
-                <table class="table table-striped">
-                  <thead>
-                    <tr>
-                      <th>Customer</th>
-                      <th>Orders</th>
-                      <th>Total Spent</th>
-                      <th>Avg. Order Value</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <% if (reportData.customers && reportData.customers.length > 0) { %>
-                      <% reportData.customers.forEach(customer => { %>
-                        <tr>
-                          <td><%= customer.TenNguoiDung %></td>
-                          <td><%= customer.SoDonHang %></td>
-                          <td>₫<%= customer.TongChiTieu.toLocaleString('vi-VN') %></td>
-                          <td>₫<%= Math.round(customer.TongChiTieu / customer.SoDonHang).toLocaleString('vi-VN') %></td>
-                        </tr>
-                      <% }); %>
-                    <% } else { %>
-                      <tr>
-                        <td colspan="4" class="text-center">No data available</td>
-                      </tr>
-                    <% } %>
-                  </tbody>
-                </table>
-              </div>
-            <% } %>
+            </div>
           </div>
         </div>
       </main>
@@ -220,162 +231,186 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script>
+    // Sales chart data
+    const weekData = {
+      labels: <%- weekSales && weekSales.labels ? JSON.stringify(weekSales.labels) : '[]' %>,
+      values: <%- weekSales && weekSales.values ? JSON.stringify(weekSales.values) : '[]' %>
+    };
+    
+    const monthData = {
+      labels: <%- monthSales && monthSales.labels ? JSON.stringify(monthSales.labels) : '[]' %>,
+      values: <%- monthSales && monthSales.values ? JSON.stringify(monthSales.values) : '[]' %>
+    };
+    
+    const yearData = {
+      labels: <%- yearSales && yearSales.labels ? JSON.stringify(yearSales.labels) : '[]' %>,
+      values: <%- yearSales && yearSales.values ? JSON.stringify(yearSales.values) : '[]' %>
+    };
+    
+    // Category chart data
+    const categoryData = {
+      labels: <%- categorySales && categorySales.length ? JSON.stringify(categorySales.map(c => c.TenDanhMuc)) : '[]' %>,
+      values: <%- categorySales && categorySales.length ? JSON.stringify(categorySales.map(c => c.TotalRevenue || 0)) : '[]' %>
+    };
+    
+    // Initialize charts
+    let salesChart;
+    let categoryChart;
+    
     document.addEventListener('DOMContentLoaded', function() {
-      <% if (typeof reportType !== 'undefined' && reportType === 'sales') { %>
-        // Sales chart
-        const ctx = document.getElementById('salesChart').getContext('2d');
-        
-        new Chart(ctx, {
-          type: 'line',
-          data: {
-            labels: <%= JSON.stringify(reportData.labels || []) %>,
-            datasets: [{
-              label: 'Revenue (₫)',
-              data: <%- JSON.stringify(reportData.values || []) %>,
-              backgroundColor: 'rgba(13, 110, 253, 0.2)',
-              borderColor: 'rgba(13, 110, 253, 1)',
-              borderWidth: 2,
-              tension: 0.3,
-              fill: true
-            }]
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: {
-              y: {
-                beginAtZero: true,
-                ticks: {
-                  callback: function(value) {
-                    return '₫' + value.toLocaleString('vi-VN');
-                  }
-                }
-              }
-            },
-            plugins: {
-              title: {
-                display: true,
-                text: '<%= period === "week" ? "Last 7 days" : period === "month" ? "Last 30 days" : "Last 12 months" %> Sales',
-                font: {
-                  size: 16
-                }
-              },
-              tooltip: {
-                callbacks: {
-                  label: function(context) {
-                    return '₫' + context.parsed.y.toLocaleString('vi-VN');
-                  }
-                }
-              }
-            }
-          }
-        });
-      <% } else if (typeof reportType !== 'undefined' && reportType === 'products') { %>
-        // Products chart
-        const ctx = document.getElementById('productsChart').getContext('2d');
-        
-        new Chart(ctx, {
-          type: 'bar',
-          data: {
-            labels: <%- JSON.stringify(reportData.products && reportData.products.length > 0 ? reportData.products.map(p => p.TenSanPham) : []) %>,
-            datasets: [{
-              label: 'Units Sold',
-              data: <%- JSON.stringify(reportData.products && reportData.products.length > 0 ? reportData.products.map(p => p.SoLuongBan) : []) %>,
-              backgroundColor: 'rgba(40, 167, 69, 0.7)',
-              borderColor: 'rgba(40, 167, 69, 1)',
-              borderWidth: 1
-            }]
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: {
-              y: {
-                beginAtZero: true,
-                title: {
-                  display: true,
-                  text: 'Units Sold'
-                }
-              },
-              x: {
-                ticks: {
-                  maxRotation: 45,
-                  minRotation: 45
-                }
-              }
-            },
-            plugins: {
-              title: {
-                display: true,
-                text: 'Top Selling Products - <%= period === "week" ? "Last 7 days" : period === "month" ? "Last 30 days" : "Last 12 months" %>',
-                font: {
-                  size: 16
-                }
-              }
-            }
-          }
-        });
-      <% } else if (typeof reportType !== 'undefined' && reportType === 'customers') { %>
-        // Customers chart
-        const ctx = document.getElementById('customersChart').getContext('2d');
-        
-        new Chart(ctx, {
-          type: 'bar',
-          data: {
-            labels: <%- JSON.stringify(reportData.customers && reportData.customers.length > 0 ? reportData.customers.map(c => c.TenNguoiDung) : []) %>,
-            datasets: [{
-              label: 'Total Spent (₫)',
-              data: <%- JSON.stringify(reportData.customers && reportData.customers.length > 0 ? reportData.customers.map(c => c.TongChiTieu) : []) %>,
-              backgroundColor: 'rgba(220, 53, 69, 0.7)',
-              borderColor: 'rgba(220, 53, 69, 1)',
-              borderWidth: 1
-            }]
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: {
-              y: {
-                beginAtZero: true,
-                ticks: {
-                  callback: function(value) {
-                    return '₫' + value.toLocaleString('vi-VN');
-                  }
-                },
-                title: {
-                  display: true,
-                  text: 'Total Spent (₫)'
-                }
-              },
-              x: {
-                ticks: {
-                  maxRotation: 45,
-                  minRotation: 45
-                }
-              }
-            },
-            plugins: {
-              title: {
-                display: true,
-                text: 'Top Customers - <%= period === "week" ? "Last 7 days" : period === "month" ? "Last 30 days" : "Last 12 months" %>',
-                font: {
-                  size: 16
-                }
-              },
-              tooltip: {
-                callbacks: {
-                  label: function(context) {
-                    return '₫' + context.parsed.y.toLocaleString('vi-VN');
-                  }
-                }
-              }
-            }
-          }
-        });
-      <% } %>
+      // Initialize sales chart with week data by default
+      initSalesChart('week');
+      
+      // Initialize category chart
+      initCategoryChart();
     });
+    
+    function initSalesChart(period) {
+      const ctx = document.getElementById('salesChart').getContext('2d');
+      
+      // Destroy existing chart if it exists
+      if (salesChart) {
+        salesChart.destroy();
+      }
+      
+      let data;
+      let title;
+      
+      if (period === 'week') {
+        data = weekData;
+        title = 'Last 7 Days Sales';
+      } else if (period === 'month') {
+        data = monthData;
+        title = 'Last 30 Days Sales';
+      } else {
+        data = yearData;
+        title = 'Last 12 Months Sales';
+      }
+      
+      salesChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: data.labels,
+          datasets: [{
+            label: 'Sales (VND)',
+            data: data.values,
+            backgroundColor: 'rgba(54, 162, 235, 0.2)',
+            borderColor: 'rgba(54, 162, 235, 1)',
+            borderWidth: 2,
+            tension: 0.1
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            title: {
+              display: true,
+              text: title
+            },
+            legend: {
+              position: 'top',
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: {
+                callback: function(value) {
+                  return new Intl.NumberFormat('vi-VN', { 
+                    style: 'currency', 
+                    currency: 'VND',
+                    maximumFractionDigits: 0
+                  }).format(value);
+                }
+              }
+            }
+          }
+        }
+      });
+    }
+    
+    function initCategoryChart() {
+      const ctx = document.getElementById('categoryChart').getContext('2d');
+      
+      categoryChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: categoryData.labels,
+          datasets: [{
+            data: categoryData.values,
+            backgroundColor: [
+              'rgba(255, 99, 132, 0.7)',
+              'rgba(54, 162, 235, 0.7)',
+              'rgba(255, 206, 86, 0.7)',
+              'rgba(75, 192, 192, 0.7)',
+              'rgba(153, 102, 255, 0.7)',
+              'rgba(255, 159, 64, 0.7)',
+              'rgba(199, 199, 199, 0.7)',
+              'rgba(83, 102, 255, 0.7)',
+              'rgba(40, 159, 64, 0.7)',
+              'rgba(210, 199, 199, 0.7)'
+            ],
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: {
+              position: 'right',
+            },
+            title: {
+              display: true,
+              text: 'Revenue by Category'
+            },
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  const label = context.label || '';
+                  const value = context.raw;
+                  const formattedValue = new Intl.NumberFormat('vi-VN', { 
+                    style: 'currency', 
+                    currency: 'VND',
+                    maximumFractionDigits: 0
+                  }).format(value);
+                  return `${label}: ${formattedValue}`;
+                }
+              }
+            }
+          }
+        }
+      });
+    }
+    
+    function showChart(period) {
+      initSalesChart(period);
+    }
+    
+    function printReport() {
+      window.print();
+    }
+    
+    function exportCSV() {
+      // Simple CSV export for category sales
+      let csvContent = "data:text/csv;charset=utf-8,";
+      csvContent += "Category,Orders,Items Sold,Revenue\n";
+      
+      const categories = <%- categorySales && categorySales.length ? JSON.stringify(categorySales) : '[]' %>;
+      if (categories && categories.length > 0) { 
+        categories.forEach(category => { 
+          csvContent += `${category.TenDanhMuc},${category.OrderCount || 0},${category.TotalQuantity || 0},${category.TotalRevenue || 0}\n`;
+        }); 
+      } 
+      
+      const encodedUri = encodeURI(csvContent);
+      const link = document.createElement("a");
+      link.setAttribute("href", encodedUri);
+      link.setAttribute("download", "category_sales_report.csv");
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
   </script>
 </body>
 </html>

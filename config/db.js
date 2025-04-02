@@ -49,62 +49,53 @@ async function query(sqlQuery) {
 // Get dashboard statistics
 async function getDashboardStats() {
   try {
-    // Get user count
-    const userCountResult = await pool.request().query(`
-      SELECT COUNT(*) AS total FROM TaiKhoan
+    // Get total revenue - using SoLuong * Gia from ChiTietDonHang instead of ThanhTien
+    const totalRevenueResult = await pool.request().query(`
+      SELECT ISNULL(SUM(c.SoLuong * c.Gia), 0) AS total 
+      FROM DonHang d
+      JOIN ChiTietDonHang c ON d.IDDonHang = c.IDDonHang
+      WHERE d.TrangThai != 'Huy'
     `);
     
-    // Get new users this month
-    const newUsersResult = await pool.request().query(`
-      SELECT COUNT(*) AS total FROM TaiKhoan
-      WHERE MONTH(NgayTao) = MONTH(GETDATE()) AND YEAR(NgayTao) = YEAR(GETDATE())
+    // Get monthly revenue - using SoLuong * Gia from ChiTietDonHang instead of ThanhTien
+    const monthlyRevenueResult = await pool.request().query(`
+      SELECT ISNULL(SUM(c.SoLuong * c.Gia), 0) AS total 
+      FROM DonHang d
+      JOIN ChiTietDonHang c ON d.IDDonHang = c.IDDonHang
+      WHERE MONTH(d.NgayDatHang) = MONTH(GETDATE()) 
+      AND YEAR(d.NgayDatHang) = YEAR(GETDATE())
+      AND d.TrangThai != 'Huy'
     `);
     
-    // Get product count
-    const productCountResult = await pool.request().query(`
-      SELECT COUNT(*) AS total FROM QuanLySanPham
-    `);
-    
-    // Get low stock products count
-    const lowStockResult = await pool.request().query(`
-      SELECT COUNT(*) AS total FROM QuanLyKhoHang
-      WHERE SoLuongTon <= 5
-    `);
-    
-    // Get order count
-    const orderCountResult = await pool.request().query(`
+    // Get total orders
+    const totalOrdersResult = await pool.request().query(`
       SELECT COUNT(*) AS total FROM DonHang
     `);
     
-    // Get pending orders count
+    // Get pending orders
     const pendingOrdersResult = await pool.request().query(`
       SELECT COUNT(*) AS total FROM DonHang
       WHERE TrangThai = 'ChoXuLy'
     `);
     
-    // Get total revenue - update column name from TongTien to ThanhTien
-    const totalRevenueResult = await pool.request().query(`
-      SELECT ISNULL(SUM(ThanhTien), 0) AS total FROM DonHang
-      WHERE TrangThai != 'Huy'
+    // Get total products
+    const totalProductsResult = await pool.request().query(`
+      SELECT COUNT(*) AS total FROM QuanLySanPham
     `);
     
-    // Get monthly revenue - update column name from TongTien to ThanhTien
-    const monthlyRevenueResult = await pool.request().query(`
-      SELECT ISNULL(SUM(ThanhTien), 0) AS total FROM DonHang
-      WHERE MONTH(NgayDat) = MONTH(GETDATE()) 
-      AND YEAR(NgayDat) = YEAR(GETDATE())
-      AND TrangThai != 'Huy'
+    // Get total users
+    const totalUsersResult = await pool.request().query(`
+      SELECT COUNT(*) AS total FROM TaiKhoan
+      WHERE VaiTro = 'NguoiDung'
     `);
     
     return {
-      userCount: userCountResult.recordset[0].total,
-      newUsers: newUsersResult.recordset[0].total,
-      productCount: productCountResult.recordset[0].total,
-      lowStockCount: lowStockResult.recordset[0].total,
-      orderCount: orderCountResult.recordset[0].total,
-      pendingOrders: pendingOrdersResult.recordset[0].total,
       totalRevenue: totalRevenueResult.recordset[0].total,
-      monthlyRevenue: monthlyRevenueResult.recordset[0].total
+      monthlyRevenue: monthlyRevenueResult.recordset[0].total,
+      totalOrders: totalOrdersResult.recordset[0].total,
+      pendingOrders: pendingOrdersResult.recordset[0].total,
+      totalProducts: totalProductsResult.recordset[0].total,
+      totalUsers: totalUsersResult.recordset[0].total
     };
   } catch (error) {
     console.error('Error getting dashboard stats:', error);
@@ -113,15 +104,21 @@ async function getDashboardStats() {
 }
 
 // Get recent orders for dashboard
+// Get recent orders for dashboard
+// Get recent orders for dashboard
 async function getRecentOrders(limit = 5) {
   try {
     const result = await pool.request()
       .input('limit', sql.Int, limit)
       .query(`
-        SELECT TOP (@limit) d.*, t.TenNguoiDung as TenKhachHang
+        SELECT d.*, 
+               t.TenNguoiDung as TenKhachHang,
+               (SELECT SUM(c.SoLuong * c.Gia) 
+                FROM ChiTietDonHang c 
+                WHERE c.IDDonHang = d.IDDonHang) as TongTien
         FROM DonHang d
-        LEFT JOIN TaiKhoan t ON d.IDKhachHang = t.IDTaiKhoan
-        ORDER BY d.NgayDat DESC
+        LEFT JOIN TaiKhoan t ON d.IDTaiKhoan = t.IDTaiKhoan
+        ORDER BY d.NgayDatHang DESC
       `);
     
     return result.recordset;
@@ -153,55 +150,62 @@ async function getLowStockProducts(limit = 5) {
 }
 
 // Get sales data for chart
+// Get sales data for chart
 async function getSalesData(period = 'month') {
   try {
     let query = '';
     
     if (period === 'week') {
-      // Last 7 days - update column name from TongTien to ThanhTien
+      // Last 7 days - using SoLuong * Gia from ChiTietDonHang instead of ThanhTien
       query = `
         SELECT 
           CONVERT(VARCHAR(10), DATEADD(DAY, -numbers.number, GETDATE()), 120) AS date,
-          ISNULL(SUM(d.ThanhTien), 0) AS total
+          ISNULL(SUM(c.SoLuong * c.Gia), 0) AS total
         FROM 
           (SELECT 0 AS number UNION SELECT 1 UNION SELECT 2 UNION SELECT 3 UNION SELECT 4 UNION SELECT 5 UNION SELECT 6) AS numbers
         LEFT JOIN 
-          DonHang d ON CONVERT(DATE, d.NgayDat) = CONVERT(DATE, DATEADD(DAY, -numbers.number, GETDATE()))
+          DonHang d ON CONVERT(DATE, d.NgayDatHang) = CONVERT(DATE, DATEADD(DAY, -numbers.number, GETDATE()))
           AND d.TrangThai != 'Huy'
+        LEFT JOIN
+          ChiTietDonHang c ON d.IDDonHang = c.IDDonHang
         GROUP BY 
           DATEADD(DAY, -numbers.number, GETDATE())
         ORDER BY 
           date ASC
       `;
     } else if (period === 'month') {
-      // Last 30 days - update column name from TongTien to ThanhTien
+      // Last 30 days - using SoLuong * Gia from ChiTietDonHang instead of ThanhTien
       query = `
         SELECT 
-          DATEPART(DAY, d.NgayDat) AS day,
-          ISNULL(SUM(d.ThanhTien), 0) AS total
+          DATEPART(DAY, d.NgayDatHang) AS day,
+          ISNULL(SUM(c.SoLuong * c.Gia), 0) AS total
         FROM 
           DonHang d
+        JOIN
+          ChiTietDonHang c ON d.IDDonHang = c.IDDonHang
         WHERE 
-          d.NgayDat >= DATEADD(DAY, -30, GETDATE())
+          d.NgayDatHang >= DATEADD(DAY, -30, GETDATE())
           AND d.TrangThai != 'Huy'
         GROUP BY 
-          DATEPART(DAY, d.NgayDat)
+          DATEPART(DAY, d.NgayDatHang)
         ORDER BY 
           day ASC
       `;
     } else if (period === 'year') {
-      // Last 12 months - update column name from TongTien to ThanhTien
+      // Last 12 months - using SoLuong * Gia from ChiTietDonHang instead of ThanhTien
       query = `
         SELECT 
-          DATEPART(MONTH, d.NgayDat) AS month,
-          ISNULL(SUM(d.ThanhTien), 0) AS total
+          DATEPART(MONTH, d.NgayDatHang) AS month,
+          ISNULL(SUM(c.SoLuong * c.Gia), 0) AS total
         FROM 
           DonHang d
+        JOIN
+          ChiTietDonHang c ON d.IDDonHang = c.IDDonHang
         WHERE 
-          d.NgayDat >= DATEADD(MONTH, -12, GETDATE())
+          d.NgayDatHang >= DATEADD(MONTH, -12, GETDATE())
           AND d.TrangThai != 'Huy'
         GROUP BY 
-          DATEPART(MONTH, d.NgayDat)
+          DATEPART(MONTH, d.NgayDatHang)
         ORDER BY 
           month ASC
       `;
@@ -239,6 +243,7 @@ async function getSalesData(period = 'month') {
 }
 
 // Get all users with pagination
+// Get all users with pagination
 async function getAllUsers(page = 1, pageSize = 10, search = '', role = '') {
   try {
     const offset = (page - 1) * pageSize;
@@ -256,6 +261,7 @@ async function getAllUsers(page = 1, pageSize = 10, search = '', role = '') {
       query += ` AND VaiTro = @role`;
     }
     
+    // Add sorting
     query += `
       ORDER BY NgayTao DESC
       OFFSET @offset ROWS
@@ -276,7 +282,7 @@ async function getAllUsers(page = 1, pageSize = 10, search = '', role = '') {
     
     const result = await request.query(query);
     
-    // Count total users
+    // Count total users for pagination
     let countQuery = `
       SELECT COUNT(*) AS total FROM TaiKhoan
       WHERE 1=1
@@ -315,16 +321,26 @@ async function getAllUsers(page = 1, pageSize = 10, search = '', role = '') {
   }
 }
 
-// Get user by ID
+// Add or update this function in your db.js file
 async function getUserById(id) {
   try {
-    const result = await pool.request()
-      .input('id', sql.Int, id)
-      .query(`
-        SELECT * FROM TaiKhoan
-        WHERE IDTaiKhoan = @id
-      `);
+    console.log(`Getting user with ID: ${id}`);
     
+    // Ensure the pool is connected
+    if (!pool.connected) {
+      await pool.connect();
+    }
+    
+    const result = await pool.request()
+      .input('id', sql.Int, parseInt(id))
+      .query('SELECT * FROM TaiKhoan WHERE IDTaiKhoan = @id');
+    
+    if (result.recordset.length === 0) {
+      console.log(`No user found with ID: ${id}`);
+      return null;
+    }
+    
+    console.log(`User found: ${result.recordset[0].TenNguoiDung}`);
     return result.recordset[0];
   } catch (error) {
     console.error('Error getting user by ID:', error);
@@ -332,15 +348,90 @@ async function getUserById(id) {
   }
 }
 
-// Get user by email
+// Make sure to export the function
+module.exports = {
+  // ... your other exports
+  getUserById,
+  // ... your other exports
+};
+
+async function getUsers(options = {}) {
+  try {
+    const page = options.page || 1;
+    const limit = options.limit || 10;
+    const offset = (page - 1) * limit;
+    const search = options.search || '';
+    const role = options.role || '';
+    const sort = options.sort || 'name';
+    
+    let orderBy = 'TenNguoiDung ASC'; // Default sort by name
+    
+    if (sort === 'newest') {
+      orderBy = 'NgayTao DESC';
+    } else if (sort === 'oldest') {
+      orderBy = 'NgayTao ASC';
+    }
+    
+    let whereClause = '';
+    const params = [];
+    
+    if (search) {
+      whereClause += " WHERE (TenNguoiDung LIKE @search OR Email LIKE @search)";
+      params.push({ name: 'search', type: sql.NVarChar, value: `%${search}%` });
+    }
+    
+    if (role) {
+      whereClause += whereClause ? " AND VaiTro = @role" : " WHERE VaiTro = @role";
+      params.push({ name: 'role', type: sql.NVarChar, value: role });
+    }
+    
+    // Count total users for pagination
+    let countQuery = `SELECT COUNT(*) AS total FROM TaiKhoan${whereClause}`;
+    let request = pool.request();
+    
+    params.forEach(param => {
+      request.input(param.name, param.type, param.value);
+    });
+    
+    const countResult = await request.query(countQuery);
+    const totalUsers = countResult.recordset[0].total;
+    
+    // Get users with pagination
+    let query = `
+      SELECT * FROM TaiKhoan${whereClause}
+      ORDER BY ${orderBy}
+      OFFSET ${offset} ROWS
+      FETCH NEXT ${limit} ROWS ONLY
+    `;
+    
+    request = pool.request();
+    
+    params.forEach(param => {
+      request.input(param.name, param.type, param.value);
+    });
+    
+    const result = await request.query(query);
+    
+    return {
+      users: result.recordset,
+      pagination: {
+        totalUsers,
+        totalPages: Math.ceil(totalUsers / limit),
+        currentPage: page,
+        limit
+      }
+    };
+  } catch (error) {
+    console.error('Error getting users:', error);
+    throw error;
+  }
+}
+
 async function getUserByEmail(email) {
   try {
     const result = await pool.request()
       .input('email', sql.NVarChar, email)
-      .query(`
-        SELECT * FROM TaiKhoan
-        WHERE Email = @email
-      `);
+      .query('SELECT * FROM TaiKhoan WHERE Email = @email');
     
     return result.recordset[0];
   } catch (error) {
@@ -352,72 +443,32 @@ async function getUserByEmail(email) {
 // Add new user (admin function)
 async function addUser(userData) {
   try {
-    const { fullName, email, password, role } = userData;
+    // Hash the password
+    const hashedPassword = await bcrypt.hash(userData.password, 10);
     
-    // Hash password
-    const hashedPassword = await bcrypt.hash(password, 10);
-    
+    // Insert the new user into the database
     const result = await pool.request()
-      .input('fullName', sql.NVarChar, fullName)
-      .input('email', sql.NVarChar, email)
+      .input('fullName', sql.NVarChar, userData.fullName)
+      .input('email', sql.NVarChar, userData.email)
       .input('password', sql.NVarChar, hashedPassword)
-      .input('role', sql.NVarChar, role || 'NguoiDung')
-      .input('createdAt', sql.DateTime, new Date())
+      .input('role', sql.NVarChar, userData.role)
       .query(`
         INSERT INTO TaiKhoan (TenNguoiDung, Email, MatKhau, VaiTro, NgayTao)
-        VALUES (@fullName, @email, @password, @role, @createdAt)
-        
-        SELECT SCOPE_IDENTITY() AS id
+        VALUES (@fullName, @email, @password, @role, GETDATE());
+        SELECT SCOPE_IDENTITY() AS IDTaiKhoan;
       `);
     
-    return { id: result.recordset[0].id, ...userData };
+    // Return the ID of the newly created user
+    return result.recordset[0].IDTaiKhoan;
   } catch (error) {
     console.error('Error adding user:', error);
     throw error;
   }
 }
 
+
 // Update user
-async function updateUser(id, userData) {
-  try {
-    const { fullName, email, password, role } = userData;
-    
-    let query = `
-      UPDATE TaiKhoan
-      SET 
-        TenNguoiDung = @fullName,
-        Email = @email
-    `;
-    
-    if (role) {
-      query += `, VaiTro = @role`;
-    }
-    
-    if (password) {
-      query += `, MatKhau = @password`;
-    }
-    
-    query += ` WHERE IDTaiKhoan = @id`;
-    
-    const request = pool.request()
-      .input('id', sql.Int, id)
-      .input('fullName', sql.NVarChar, fullName)
-      .input('email', sql.NVarChar, email)
-      .input('role', sql.NVarChar, role);
-    
-    if (password) {
-      const hashedPassword = await bcrypt.hash(password, 10);
-      request.input('password', sql.NVarChar, hashedPassword);
-    }
-    
-    await request.query(query);
-    
-    return await getUserById(id);
-  } catch (error) {
-    console.error('Error updating user:', error);
-    throw error;
-  }
-}
+
 
 // Delete user
 async function deleteUser(id) {
@@ -451,14 +502,12 @@ async function deleteUser(id) {
 // Get all categories
 async function getAllCategories() {
   try {
-    const result = await pool.request().query(`
-      SELECT * FROM QuanLyDanhMuc
-      ORDER BY TenDanhMuc
-    `);
+    const result = await pool.request()
+      .query('SELECT * FROM QuanLyDanhMuc ORDER BY TenDanhMuc');
     
     return result.recordset;
   } catch (error) {
-    console.error('Error getting all categories:', error);
+    console.error('Error getting categories:', error);
     throw error;
   }
 }
@@ -466,41 +515,44 @@ async function getAllCategories() {
 // Add category
 async function addCategory(categoryData) {
   try {
-    const { name, description } = categoryData;
+    const { name, imageUrl } = categoryData;
     
     const result = await pool.request()
       .input('name', sql.NVarChar, name)
-      .input('description', sql.NVarChar, description || null)
+      .input('imageUrl', sql.NVarChar, imageUrl || '')
       .query(`
-        INSERT INTO QuanLyDanhMuc (TenDanhMuc, MoTa)
-        VALUES (@name, @description)
+        INSERT INTO QuanLyDanhMuc (TenDanhMuc, HinhAnhSanPham)
+        VALUES (@name, @imageUrl);
         
-        SELECT SCOPE_IDENTITY() AS id
+        SELECT SCOPE_IDENTITY() AS categoryId;
       `);
     
-    return { id: result.recordset[0].id, ...categoryData };
+    return result.recordset[0].categoryId;
   } catch (error) {
     console.error('Error adding category:', error);
     throw error;
   }
 }
 
+
 // Update category
-async function updateCategory(id, categoryData) {
+async function updateCategory(categoryId, categoryData) {
   try {
-    const { name, description } = categoryData;
+    const { name, imageUrl } = categoryData;
     
     await pool.request()
-      .input('id', sql.Int, id)
+      .input('categoryId', sql.Int, categoryId)
       .input('name', sql.NVarChar, name)
-      .input('description', sql.NVarChar, description || null)
+      .input('imageUrl', sql.NVarChar, imageUrl || '')
       .query(`
         UPDATE QuanLyDanhMuc
-        SET TenDanhMuc = @name, MoTa = @description
-        WHERE IDDanhMuc = @id
+        SET 
+          TenDanhMuc = @name,
+          HinhAnhSanPham = @imageUrl
+        WHERE IDDanhMuc = @categoryId
       `);
     
-    return { id, ...categoryData };
+    return true;
   } catch (error) {
     console.error('Error updating category:', error);
     throw error;
@@ -508,28 +560,26 @@ async function updateCategory(id, categoryData) {
 }
 
 // Delete category
-async function deleteCategory(id) {
+async function deleteCategory(categoryId) {
   try {
-    // Check if category has products
-    const productCheck = await pool.request()
-      .input('id', sql.Int, id)
+    // Check if there are products in this category
+    const productsResult = await pool.request()
+      .input('categoryId', sql.Int, categoryId)
       .query(`
-        SELECT COUNT(*) AS count FROM QuanLySanPham
-        WHERE IDDanhMuc = @id
+        SELECT COUNT(*) AS count
+        FROM QuanLySanPham
+        WHERE IDDanhMuc = @categoryId
       `);
     
-    if (productCheck.recordset[0].count > 0) {
+    if (productsResult.recordset[0].count > 0) {
       throw new Error('Cannot delete category with associated products');
     }
     
     await pool.request()
-      .input('id', sql.Int, id)
-      .query(`
-        DELETE FROM QuanLyDanhMuc
-        WHERE IDDanhMuc = @id
-      `);
+      .input('categoryId', sql.Int, categoryId)
+      .query('DELETE FROM QuanLyDanhMuc WHERE IDDanhMuc = @categoryId');
     
-    return { success: true };
+    return true;
   } catch (error) {
     console.error('Error deleting category:', error);
     throw error;
@@ -545,7 +595,7 @@ async function getOrderWithItems(orderId) {
       .query(`
         SELECT d.*, t.TenNguoiDung, t.Email, t.SoDienThoai, t.DiaChi
         FROM DonHang d
-        LEFT JOIN TaiKhoan t ON d.IDKhachHang = t.IDTaiKhoan
+        LEFT JOIN TaiKhoan t ON d.IDTaiKhoan = t.IDTaiKhoan
         WHERE d.IDDonHang = @id
       `);
     
@@ -598,11 +648,19 @@ async function getProductsByCategory(categoryId) {
     const result = await pool.request()
       .input('categoryId', sql.Int, categoryId)
       .query(`
-        SELECT p.*, k.SoLuongTon 
+        SELECT 
+          p.IDSanPham, 
+          p.TenSanPham, 
+          p.Gia, 
+          p.MoTa, 
+          p.IDDanhMuc, 
+          p.HinhAnhSanPham, 
+          p.DonViBan,
+          c.TenDanhMuc AS CategoryName
         FROM QuanLySanPham p
-        LEFT JOIN QuanLyKhoHang k ON p.IDSanPham = k.IDSanPham
+        LEFT JOIN QuanLyDanhMuc c ON p.IDDanhMuc = c.IDDanhMuc
         WHERE p.IDDanhMuc = @categoryId
-        ORDER BY p.TenSanPham
+        ORDER BY p.TenSanPham ASC
       `);
     
     return result.recordset;
@@ -611,6 +669,98 @@ async function getProductsByCategory(categoryId) {
     throw error;
   }
 }
+
+async function getProducts(options = {}) {
+  try {
+    const page = options.page || 1;
+    const limit = options.limit || 10;
+    const offset = (page - 1) * limit;
+    const search = options.search || '';
+    const category = options.category || '';
+    const sort = options.sort || 'name';
+    
+    let orderBy = 'p.TenSanPham ASC'; // Default sort by name
+    
+    if (sort === 'price_high') {
+      orderBy = 'p.Gia DESC';
+    } else if (sort === 'price_low') {
+      orderBy = 'p.Gia ASC';
+    } else if (sort === 'newest') {
+      orderBy = 'p.IDSanPham DESC';
+    }
+    
+    let whereClause = '';
+    const params = [];
+    
+    if (search) {
+      whereClause += " WHERE (p.TenSanPham LIKE @search OR p.MoTa LIKE @search)";
+      params.push({ name: 'search', type: sql.NVarChar, value: `%${search}%` });
+    }
+    
+    if (category) {
+      whereClause += whereClause ? " AND p.IDDanhMuc = @category" : " WHERE p.IDDanhMuc = @category";
+      params.push({ name: 'category', type: sql.Int, value: category });
+    }
+    
+    // Count total products for pagination
+    let countQuery = `
+      SELECT COUNT(*) AS total 
+      FROM QuanLySanPham p
+      ${whereClause}
+    `;
+    
+    let request = pool.request();
+    
+    params.forEach(param => {
+      request.input(param.name, param.type, param.value);
+    });
+    
+    const countResult = await request.query(countQuery);
+    const totalProducts = countResult.recordset[0].total;
+    
+    // Get products with pagination
+    let query = `
+      SELECT 
+        p.IDSanPham, 
+        p.TenSanPham, 
+        p.Gia, 
+        p.MoTa, 
+        p.IDDanhMuc, 
+        p.HinhAnhSanPham, 
+        p.DonViBan,
+        c.TenDanhMuc AS CategoryName
+      FROM QuanLySanPham p
+      LEFT JOIN QuanLyDanhMuc c ON p.IDDanhMuc = c.IDDanhMuc
+      ${whereClause}
+      ORDER BY ${orderBy}
+      OFFSET ${offset} ROWS
+      FETCH NEXT ${limit} ROWS ONLY
+    `;
+    
+    request = pool.request();
+    
+    params.forEach(param => {
+      request.input(param.name, param.type, param.value);
+    });
+    
+    const result = await request.query(query);
+    
+    return {
+      products: result.recordset,
+      pagination: {
+        totalProducts,
+        totalPages: Math.ceil(totalProducts / limit),
+        currentPage: page,
+        limit
+      }
+    };
+  } catch (error) {
+    console.error('Error getting products:', error);
+    throw error;
+  }
+}
+
+
 
 // Fix the getAllProducts function to use the correct SQL Server syntax and table names
 async function getAllProducts(page = 1, pageSize = 10, search = '', category = '') {
@@ -693,16 +843,23 @@ async function getAllProducts(page = 1, pageSize = 10, search = '', category = '
 }
 
 // Add the missing getProductById function
-async function getProductById(id) {
+async function getProductById(productId) {
   try {
     const result = await pool.request()
-      .input('id', sql.Int, id)
+      .input('productId', sql.Int, productId)
       .query(`
-        SELECT p.*, c.TenDanhMuc, k.SoLuongTon, k.DonViBan
+        SELECT 
+          p.IDSanPham, 
+          p.TenSanPham, 
+          p.Gia, 
+          p.MoTa, 
+          p.IDDanhMuc, 
+          p.HinhAnhSanPham, 
+          p.DonViBan,
+          c.TenDanhMuc AS CategoryName
         FROM QuanLySanPham p
         LEFT JOIN QuanLyDanhMuc c ON p.IDDanhMuc = c.IDDanhMuc
-        LEFT JOIN QuanLyKhoHang k ON p.IDSanPham = k.IDSanPham
-        WHERE p.IDSanPham = @id
+        WHERE p.IDSanPham = @productId
       `);
     
     return result.recordset[0];
@@ -712,48 +869,69 @@ async function getProductById(id) {
   }
 }
 
+async function updateUser(userId, userData) {
+  try {
+    let query = `
+      UPDATE TaiKhoan
+      SET TenNguoiDung = @fullName,
+          Email = @email,
+          VaiTro = @role
+    `;
+    
+    // Only update password if provided
+    if (userData.password) {
+      const hashedPassword = await bcrypt.hash(userData.password, 10);
+      query += `, MatKhau = @password`;
+    }
+    
+    query += ` WHERE IDTaiKhoan = @userId`;
+    
+    const request = pool.request()
+      .input('userId', sql.Int, userId)
+      .input('fullName', sql.NVarChar, userData.fullName)
+      .input('email', sql.NVarChar, userData.email)
+      .input('role', sql.NVarChar, userData.role);
+    
+    if (userData.password) {
+      request.input('password', sql.NVarChar, await bcrypt.hash(userData.password, 10));
+    }
+    
+    await request.query(query);
+    
+    return true;
+  } catch (error) {
+    console.error('Error updating user:', error);
+    throw error;
+  }
+}
+
+
+// Make sure to export the function
+module.exports = {
+  // ... your other exports
+  getUserById,
+  updateUser,
+  // ... your other exports
+};
+
 // Add the missing addProduct function
 async function addProduct(productData) {
   try {
-    const { TenSanPham, MoTa, Gia, IDDanhMuc, HinhAnhSanPham, SoLuongTon, DonViBan } = productData;
+    const result = await pool.request()
+      .input('name', sql.NVarChar, productData.name)
+      .input('price', sql.Money, productData.price)
+      .input('description', sql.NVarChar, productData.description)
+      .input('categoryId', sql.Int, productData.categoryId)
+      .input('imageUrl', sql.NVarChar, productData.imageUrl)
+      .input('unit', sql.NVarChar, productData.unit)
+      .query(`
+        INSERT INTO QuanLySanPham (TenSanPham, Gia, MoTa, IDDanhMuc, HinhAnhSanPham, DonViBan)
+        VALUES (@name, @price, @description, @categoryId, @imageUrl, @unit);
+        SELECT SCOPE_IDENTITY() AS IDSanPham;
+      `);
     
-    const transaction = new sql.Transaction(pool);
-    await transaction.begin();
-    
-    try {
-      // Insert product
-      const productResult = await transaction.request()
-        .input('TenSanPham', sql.NVarChar, TenSanPham)
-        .input('MoTa', sql.NVarChar, MoTa || null)
-        .input('Gia', sql.Decimal(10, 2), Gia)
-        .input('IDDanhMuc', sql.Int, IDDanhMuc)
-        .input('HinhAnhSanPham', sql.NVarChar, HinhAnhSanPham || null)
-        .query(`
-          INSERT INTO QuanLySanPham (TenSanPham, MoTa, Gia, IDDanhMuc, HinhAnhSanPham)
-          VALUES (@TenSanPham, @MoTa, @Gia, @IDDanhMuc, @HinhAnhSanPham)
-          
-          SELECT SCOPE_IDENTITY() AS id
-        `);
-      
-      const productId = productResult.recordset[0].id;
-      
-      // Insert inventory
-      await transaction.request()
-        .input('IDSanPham', sql.Int, productId)
-        .input('SoLuongTon', sql.Int, SoLuongTon || 0)
-        .input('DonViBan', sql.NVarChar, DonViBan || 'Cái')
-        .query(`
-          INSERT INTO QuanLyKhoHang (IDSanPham, SoLuongTon, DonViBan)
-          VALUES (@IDSanPham, @SoLuongTon, @DonViBan)
-        `);
-      
-      await transaction.commit();
-      
-      return { id: productId, ...productData };
-    } catch (error) {
-      await transaction.rollback();
-      throw error;
-    }
+    // Return the ID of the newly created product
+    return result.recordset[0].IDSanPham;
   } catch (error) {
     console.error('Error adding product:', error);
     throw error;
@@ -761,50 +939,28 @@ async function addProduct(productData) {
 }
 
 // Add the missing updateProduct function
-async function updateProduct(id, productData) {
+async function updateProduct(productId, productData) {
   try {
-    const { TenSanPham, MoTa, Gia, IDDanhMuc, HinhAnhSanPham, SoLuongTon, DonViBan } = productData;
+    await pool.request()
+      .input('productId', sql.Int, productId)
+      .input('name', sql.NVarChar, productData.name)
+      .input('price', sql.Money, productData.price)
+      .input('description', sql.NVarChar, productData.description)
+      .input('categoryId', sql.Int, productData.categoryId)
+      .input('imageUrl', sql.NVarChar, productData.imageUrl)
+      .input('unit', sql.NVarChar, productData.unit)
+      .query(`
+        UPDATE QuanLySanPham
+        SET TenSanPham = @name,
+            Gia = @price,
+            MoTa = @description,
+            IDDanhMuc = @categoryId,
+            HinhAnhSanPham = @imageUrl,
+            DonViBan = @unit
+        WHERE IDSanPham = @productId
+      `);
     
-    const transaction = new sql.Transaction(pool);
-    await transaction.begin();
-    
-    try {
-      // Update product
-      await transaction.request()
-        .input('id', sql.Int, id)
-        .input('TenSanPham', sql.NVarChar, TenSanPham)
-        .input('MoTa', sql.NVarChar, MoTa || null)
-        .input('Gia', sql.Decimal(10, 2), Gia)
-        .input('IDDanhMuc', sql.Int, IDDanhMuc)
-        .input('HinhAnhSanPham', sql.NVarChar, HinhAnhSanPham || null)
-        .query(`
-          UPDATE QuanLySanPham
-          SET TenSanPham = @TenSanPham, 
-              MoTa = @MoTa, 
-              Gia = @Gia, 
-              IDDanhMuc = @IDDanhMuc,
-              HinhAnhSanPham = @HinhAnhSanPham
-          WHERE IDSanPham = @id
-        `);
-      
-      // Update inventory
-      await transaction.request()
-        .input('id', sql.Int, id)
-        .input('SoLuongTon', sql.Int, SoLuongTon || 0)
-        .input('DonViBan', sql.NVarChar, DonViBan || 'Cái')
-        .query(`
-          UPDATE QuanLyKhoHang
-          SET SoLuongTon = @SoLuongTon, DonViBan = @DonViBan
-          WHERE IDSanPham = @id
-        `);
-      
-      await transaction.commit();
-      
-      return { id, ...productData };
-    } catch (error) {
-      await transaction.rollback();
-      throw error;
-    }
+    return true;
   } catch (error) {
     console.error('Error updating product:', error);
     throw error;
@@ -812,54 +968,19 @@ async function updateProduct(id, productData) {
 }
 
 // Add the missing deleteProduct function
-async function deleteProduct(id) {
+async function deleteProduct(productId) {
   try {
-    // Check if product has order items
-    const orderCheck = await pool.request()
-      .input('id', sql.Int, id)
-      .query(`
-        SELECT COUNT(*) AS count FROM ChiTietDonHang
-        WHERE IDSanPham = @id
-      `);
+    await pool.request()
+      .input('productId', sql.Int, productId)
+      .query('DELETE FROM QuanLySanPham WHERE IDSanPham = @productId');
     
-    if (orderCheck.recordset[0].count > 0) {
-      throw new Error('Cannot delete product with associated orders');
-    }
-    
-    const transaction = new sql.Transaction(pool);
-    await transaction.begin();
-    
-    try {
-      // Delete inventory
-      await transaction.request()
-        .input('id', sql.Int, id)
-        .query(`
-          DELETE FROM QuanLyKhoHang
-          WHERE IDSanPham = @id
-        `);
-      
-      // Delete product
-      await transaction.request()
-        .input('id', sql.Int, id)
-        .query(`
-          DELETE FROM QuanLySanPham
-          WHERE IDSanPham = @id
-        `);
-      
-      await transaction.commit();
-      
-      return { success: true };
-    } catch (error) {
-      await transaction.rollback();
-      throw error;
-    }
+    return true;
   } catch (error) {
     console.error('Error deleting product:', error);
     throw error;
   }
 }
 
-// Add the missing getAllOrders function
 async function getAllOrders(page = 1, pageSize = 10, status = '', search = '') {
   try {
     const offset = (page - 1) * pageSize;
@@ -867,7 +988,7 @@ async function getAllOrders(page = 1, pageSize = 10, status = '', search = '') {
     let query = `
       SELECT d.*, t.TenNguoiDung as TenKhachHang
       FROM DonHang d
-      LEFT JOIN TaiKhoan t ON d.IDKhachHang = t.IDTaiKhoan
+      LEFT JOIN TaiKhoan t ON d.IDTaiKhoan = t.IDTaiKhoan
       WHERE 1=1
     `;
     
@@ -880,7 +1001,7 @@ async function getAllOrders(page = 1, pageSize = 10, status = '', search = '') {
     }
     
     query += `
-      ORDER BY d.NgayDat DESC
+      ORDER BY d.NgayDatHang DESC
       OFFSET @offset ROWS
       FETCH NEXT @pageSize ROWS ONLY
     `;
@@ -899,10 +1020,10 @@ async function getAllOrders(page = 1, pageSize = 10, status = '', search = '') {
     
     const result = await request.query(query);
     
-    // Count total orders
+    // Count total orders - Fixed JOIN condition here
     let countQuery = `
       SELECT COUNT(*) AS total FROM DonHang d
-      LEFT JOIN TaiKhoan t ON d.IDKhachHang = t.IDTaiKhoan
+      LEFT JOIN TaiKhoan t ON d.IDTaiKhoan = t.IDTaiKhoan
       WHERE 1=1
     `;
     
@@ -989,6 +1110,327 @@ async function searchProducts(query) {
   }
 }
 
+async function getOrders(options = {}) {
+  try {
+    const page = options.page || 1;
+    const limit = options.limit || 10;
+    const offset = (page - 1) * limit;
+    const search = options.search || '';
+    const status = options.status || '';
+    const sort = options.sort || 'newest';
+    
+    let orderBy = 'o.NgayDatHang DESC'; // Default sort by newest
+    
+    if (sort === 'oldest') {
+      orderBy = 'o.NgayDatHang ASC';
+    }
+    
+    let whereClause = '';
+    const params = [];
+    
+    if (search) {
+      whereClause += " WHERE (t.TenNguoiDung LIKE @search OR t.Email LIKE @search OR CAST(o.IDDonHang AS NVARCHAR) LIKE @search)";
+      params.push({ name: 'search', type: sql.NVarChar, value: `%${search}%` });
+    }
+    
+    if (status) {
+      whereClause += whereClause ? " AND o.TrangThai = @status" : " WHERE o.TrangThai = @status";
+      params.push({ name: 'status', type: sql.NVarChar, value: status });
+    }
+    
+    // Count total orders for pagination
+    let countQuery = `
+      SELECT COUNT(*) AS total 
+      FROM DonHang o
+      JOIN TaiKhoan t ON o.IDTaiKhoan = t.IDTaiKhoan
+      ${whereClause}
+    `;
+    
+    let request = pool.request();
+    
+    params.forEach(param => {
+      request.input(param.name, param.type, param.value);
+    });
+    
+    const countResult = await request.query(countQuery);
+    const totalOrders = countResult.recordset[0].total;
+    
+    // Get orders with pagination
+    let query = `
+      SELECT 
+        o.IDDonHang, 
+        o.IDTaiKhoan, 
+        o.NgayDatHang, 
+        o.TrangThai,
+        t.TenNguoiDung,
+        t.Email,
+        (SELECT SUM(c.SoLuong * c.Gia) FROM ChiTietDonHang c WHERE c.IDDonHang = o.IDDonHang) AS TongTien,
+        (SELECT COUNT(*) FROM ChiTietDonHang c WHERE c.IDDonHang = o.IDDonHang) AS SoLuongSanPham
+      FROM DonHang o
+      JOIN TaiKhoan t ON o.IDTaiKhoan = t.IDTaiKhoan
+      ${whereClause}
+      ORDER BY ${orderBy}
+      OFFSET ${offset} ROWS
+      FETCH NEXT ${limit} ROWS ONLY
+    `;
+    
+    request = pool.request();
+    
+    params.forEach(param => {
+      request.input(param.name, param.type, param.value);
+    });
+    
+    const result = await request.query(query);
+    
+    return {
+      orders: result.recordset,
+      pagination: {
+        totalOrders,
+        totalPages: Math.ceil(totalOrders / limit),
+        currentPage: page,
+        limit
+      }
+    };
+  } catch (error) {
+    console.error('Error getting orders:', error);
+    throw error;
+  }
+}
+
+async function getOrderById(orderId) {
+  try {
+    // Get order header information
+    const orderResult = await pool.request()
+      .input('orderId', sql.Int, orderId)
+      .query(`
+        SELECT 
+          o.IDDonHang, 
+          o.IDTaiKhoan, 
+          o.NgayDatHang, 
+          o.TrangThai,
+          t.TenNguoiDung,
+          t.Email
+        FROM DonHang o
+        JOIN TaiKhoan t ON o.IDTaiKhoan = t.IDTaiKhoan
+        WHERE o.IDDonHang = @orderId
+      `);
+    
+    if (orderResult.recordset.length === 0) {
+      return null;
+    }
+    
+    const order = orderResult.recordset[0];
+    
+    // Get order details (items)
+    const detailsResult = await pool.request()
+      .input('orderId', sql.Int, orderId)
+      .query(`
+        SELECT 
+          c.IDChiTietDonHang,
+          c.IDSanPham,
+          c.SoLuong,
+          c.Gia,
+          p.TenSanPham,
+          p.HinhAnhSanPham,
+          p.DonViBan
+        FROM ChiTietDonHang c
+        JOIN QuanLySanPham p ON c.IDSanPham = p.IDSanPham
+        WHERE c.IDDonHang = @orderId
+      `);
+    
+    // Calculate total
+    const totalResult = await pool.request()
+      .input('orderId', sql.Int, orderId)
+      .query(`
+        SELECT SUM(SoLuong * Gia) AS TongTien
+        FROM ChiTietDonHang
+        WHERE IDDonHang = @orderId
+      `);
+    
+    // Add details and total to order object
+    order.items = detailsResult.recordset;
+    order.TongTien = totalResult.recordset[0].TongTien || 0;
+    
+    return order;
+  } catch (error) {
+    console.error('Error getting order by ID:', error);
+    throw error;
+  }
+}
+
+async function updateOrderStatus(orderId, status) {
+  try {
+    // Validate status
+    const validStatuses = ['ChoXuLy', 'DangGiao', 'HoanThanh', 'Huy'];
+    if (!validStatuses.includes(status)) {
+      throw new Error('Invalid order status');
+    }
+    
+    await pool.request()
+      .input('orderId', sql.Int, orderId)
+      .input('status', sql.NVarChar, status)
+      .query('UPDATE DonHang SET TrangThai = @status WHERE IDDonHang = @orderId');
+    
+    return true;
+  } catch (error) {
+    console.error('Error updating order status:', error);
+    throw error;
+  }
+}
+
+async function getCategories(options = {}) {
+  try {
+    const page = options.page || 1;
+    const limit = options.limit || 10;
+    const offset = (page - 1) * limit;
+    const search = options.search || '';
+    const sort = options.sort || 'name';
+    
+    let orderBy = 'TenDanhMuc ASC'; // Default sort by name
+    
+    if (sort === 'newest') {
+      orderBy = 'IDDanhMuc DESC';
+    } else if (sort === 'oldest') {
+      orderBy = 'IDDanhMuc ASC';
+    }
+    
+    let whereClause = '';
+    const params = [];
+    
+    if (search) {
+      whereClause = " WHERE TenDanhMuc LIKE @search";
+      params.push({ name: 'search', type: sql.NVarChar, value: `%${search}%` });
+    }
+    
+    // Count total categories for pagination
+    let countQuery = `
+      SELECT COUNT(*) AS total 
+      FROM QuanLyDanhMuc
+      ${whereClause}
+    `;
+    
+    let request = pool.request();
+    
+    params.forEach(param => {
+      request.input(param.name, param.type, param.value);
+    });
+    
+    const countResult = await request.query(countQuery);
+    const totalCategories = countResult.recordset[0].total;
+    
+    // Get categories with pagination
+    let query = `
+      SELECT 
+        IDDanhMuc,
+        TenDanhMuc,
+        HinhAnhSanPham as HinhAnhDanhMuc
+      FROM QuanLyDanhMuc
+      ${whereClause}
+      ORDER BY ${orderBy}
+      OFFSET ${offset} ROWS
+      FETCH NEXT ${limit} ROWS ONLY
+    `;
+    
+    request = pool.request();
+    
+    params.forEach(param => {
+      request.input(param.name, param.type, param.value);
+    });
+    
+    const result = await request.query(query);
+    
+    return {
+      categories: result.recordset,
+      pagination: {
+        totalCategories,
+        totalPages: Math.ceil(totalCategories / limit),
+        currentPage: page,
+        limit
+      }
+    };
+  } catch (error) {
+    console.error('Error getting categories:', error);
+    throw error;
+  }
+}
+
+async function getCategoryById(categoryId) {
+  try {
+    const result = await pool.request()
+      .input('categoryId', sql.Int, categoryId)
+      .query(`
+        SELECT 
+          IDDanhMuc,
+          TenDanhMuc,
+          HinhAnhSanPham as HinhAnhDanhMuc
+        FROM QuanLyDanhMuc
+        WHERE IDDanhMuc = @categoryId
+      `);
+    
+    if (result.recordset.length === 0) {
+      return null;
+    }
+    
+    return result.recordset[0];
+  } catch (error) {
+    console.error('Error getting category by ID:', error);
+    throw error;
+  }
+}
+
+async function getTopSellingProducts(limit = 10) {
+  try {
+    const result = await pool.request()
+      .input('limit', sql.Int, limit)
+      .query(`
+        SELECT TOP (@limit)
+          p.IDSanPham,
+          p.TenSanPham,
+          p.HinhAnhSanPham,
+          SUM(c.SoLuong) AS TotalQuantity,
+          SUM(c.SoLuong * c.Gia) AS TotalRevenue
+        FROM ChiTietDonHang c
+        JOIN QuanLySanPham p ON c.IDSanPham = p.IDSanPham
+        JOIN DonHang d ON c.IDDonHang = d.IDDonHang
+        WHERE d.TrangThai != 'Huy'
+        GROUP BY p.IDSanPham, p.TenSanPham, p.HinhAnhSanPham
+        ORDER BY TotalQuantity DESC
+      `);
+    
+    return result.recordset;
+  } catch (error) {
+    console.error('Error getting top selling products:', error);
+    // Return empty array as fallback
+    return [];
+  }
+}
+
+async function getSalesByCategory() {
+  try {
+    const result = await pool.request()
+      .query(`
+        SELECT 
+          c.IDDanhMuc,
+          c.TenDanhMuc,
+          COUNT(DISTINCT d.IDDonHang) AS OrderCount,
+          SUM(ct.SoLuong) AS TotalQuantity,
+          SUM(ct.SoLuong * ct.Gia) AS TotalRevenue
+        FROM QuanLyDanhMuc c
+        LEFT JOIN QuanLySanPham p ON c.IDDanhMuc = p.IDDanhMuc
+        LEFT JOIN ChiTietDonHang ct ON p.IDSanPham = ct.IDSanPham
+        LEFT JOIN DonHang d ON ct.IDDonHang = d.IDDonHang AND d.TrangThai != 'Huy'
+        GROUP BY c.IDDanhMuc, c.TenDanhMuc
+        ORDER BY TotalRevenue DESC
+      `);
+    
+    return result.recordset;
+  } catch (error) {
+    console.error('Error getting sales by category:', error);
+    // Return empty array as fallback
+    return [];
+  }
+}
+
 // Update the module exports to include the new function
 module.exports = {
   query,
@@ -1017,5 +1459,13 @@ module.exports = {
   getOrderWithItems,
   updateOrderStatus,
   getProductsByCategory,
-  searchProducts  // Now this function is properly defined
+  searchProducts,
+  getUsers,
+  getProducts,
+  getOrders,
+  getOrderById,
+  getCategories,
+  getCategoryById,
+  getTopSellingProducts,
+  getSalesByCategory
 };
