@@ -849,16 +849,12 @@ async function getProductById(productId) {
       .input('productId', sql.Int, productId)
       .query(`
         SELECT 
-          p.IDSanPham, 
-          p.TenSanPham, 
-          p.Gia, 
-          p.MoTa, 
-          p.IDDanhMuc, 
-          p.HinhAnhSanPham, 
-          p.DonViBan,
-          c.TenDanhMuc AS CategoryName
+          p.*,
+          c.TenDanhMuc,
+          k.SoLuongTon
         FROM QuanLySanPham p
         LEFT JOIN QuanLyDanhMuc c ON p.IDDanhMuc = c.IDDanhMuc
+        LEFT JOIN QuanLyKhoHang k ON p.IDSanPham = k.IDSanPham
         WHERE p.IDSanPham = @productId
       `);
     
@@ -969,13 +965,30 @@ async function updateProduct(productId, productData) {
 
 // Add the missing deleteProduct function
 async function deleteProduct(productId) {
+  const transaction = new sql.Transaction(pool);
+  
   try {
-    await pool.request()
+    await transaction.begin();
+    
+    // First, delete related inventory records
+    await transaction.request()
+      .input('productId', sql.Int, productId)
+      .query('DELETE FROM QuanLyKhoHang WHERE IDSanPham = @productId');
+    
+    // Then, delete related order details if any
+    await transaction.request()
+      .input('productId', sql.Int, productId)
+      .query('DELETE FROM ChiTietDonHang WHERE IDSanPham = @productId');
+    
+    // Finally, delete the product
+    const result = await transaction.request()
       .input('productId', sql.Int, productId)
       .query('DELETE FROM QuanLySanPham WHERE IDSanPham = @productId');
     
-    return true;
+    await transaction.commit();
+    return result;
   } catch (error) {
+    await transaction.rollback();
     console.error('Error deleting product:', error);
     throw error;
   }
@@ -1431,6 +1444,50 @@ async function getSalesByCategory() {
   }
 }
 
+async function getBestSellingProducts(limit = 10) {
+  try {
+    const result = await pool.request()
+      .input('limit', sql.Int, limit)
+      .query(`
+        SELECT 
+          p.IDSanPham,
+          p.TenSanPham,
+          p.Gia,
+          p.MoTa,
+          p.HinhAnhSanPham,
+          p.DonViBan,
+          c.TenDanhMuc,
+          c.IDDanhMuc,
+          SUM(cd.SoLuong) AS TotalSold,
+          k.SoLuongTon
+        FROM QuanLySanPham p
+        JOIN QuanLyDanhMuc c ON p.IDDanhMuc = c.IDDanhMuc
+        JOIN ChiTietDonHang cd ON p.IDSanPham = cd.IDSanPham
+        JOIN DonHang d ON cd.IDDonHang = d.IDDonHang
+        LEFT JOIN QuanLyKhoHang k ON p.IDSanPham = k.IDSanPham
+        WHERE d.TrangThai != 'Huy'
+        GROUP BY 
+          p.IDSanPham, 
+          p.TenSanPham, 
+          p.Gia, 
+          p.MoTa, 
+          p.HinhAnhSanPham, 
+          p.DonViBan, 
+          c.TenDanhMuc,
+          c.IDDanhMuc,
+          k.SoLuongTon
+        ORDER BY TotalSold DESC
+        OFFSET 0 ROWS
+        FETCH NEXT @limit ROWS ONLY
+      `);
+    
+    return result.recordset;
+  } catch (error) {
+    console.error('Error getting best selling products:', error);
+    throw error;
+  }
+}
+
 // Update the module exports to include the new function
 module.exports = {
   query,
@@ -1467,5 +1524,6 @@ module.exports = {
   getCategories,
   getCategoryById,
   getTopSellingProducts,
-  getSalesByCategory
+  getSalesByCategory,
+  getBestSellingProducts
 };

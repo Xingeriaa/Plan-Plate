@@ -449,26 +449,36 @@ router.delete('/categories/:id', async (req, res) => {
 });
 
 // Reports
+// Add this to your reports route
 router.get('/reports', async (req, res) => {
   try {
     const reportType = req.query.type || 'sales';
     const period = req.query.period || 'month';
     
     let reportData = {};
+    let topProducts = [];
+    let categorySales = [];
     
-    if (reportType === 'sales') {
-      reportData = await db.getSalesData(period);
-    } else if (reportType === 'products') {
-      reportData = await db.getTopProducts(10);
-    } else if (reportType === 'customers') {
-      reportData = await db.getTopCustomers(10);
-    }
+    // Get sales data for different time periods
+    const weekSales = await db.getSalesData('week');
+    const monthSales = await db.getSalesData('month');
+    const yearSales = await db.getSalesData('year');
+    
+    // Get top selling products
+    topProducts = await db.getBestSellingProducts(10);
+    
+    // Get category sales data
+    categorySales = await db.getCategorySales();
     
     res.render('admin/reports', {
       title: 'Reports',
       reportType,
       period,
-      reportData
+      weekSales,
+      monthSales,
+      yearSales,
+      topProducts,
+      categorySales
     });
   } catch (error) {
     console.error('Reports error:', error);

@@ -871,3 +871,23 @@ app.get('/admin/reports', isAdmin, async (req, res) => {
     res.status(500).send('Error loading reports page');
   }
 });
+
+// Best Sellers page route
+app.get('/bestsellers', async (req, res) => {
+  try {
+    const bestSellingProducts = await db.getBestSellingProducts(12);
+    
+    res.render('bestsellers', {
+      title: 'Best Selling Products - PlannPlate',
+      products: bestSellingProducts,
+      user: req.user || null
+    });
+  } catch (error) {
+    console.error('Error loading best sellers page:', error);
+    res.status(500).render('error', {
+      title: 'Server Error',
+      message: 'An error occurred while loading the best sellers page.',
+      error: { status: 500 }
+    });
+  }
+});

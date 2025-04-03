@@ -49,3 +49,21 @@ app.get('/admin/users/:id', async (req, res) => {
     res.status(500).json({ error: 'Server error' });
   }
 });
+
+// Update the delete product route
+app.delete('/admin/products/:id', async (req, res) => {
+  try {
+    const productId = req.params.id;
+    console.log(`Attempting to delete product with ID: ${productId}`);
+    
+    await db.deleteProduct(productId);
+    
+    res.json({ success: true, message: 'Product deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting product:', error);
+    res.status(500).json({ 
+      error: 'Failed to delete product', 
+      details: error.message 
+    });
+  }
+});
