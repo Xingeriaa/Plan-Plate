@@ -191,6 +191,7 @@ function displayRelatedProducts(products) {
     container.innerHTML = html;
 }
 
+// Update the addToCart function to handle the buyNow parameter
 function addToCart(productId, quantity, buyNow = false) {
     // Get current cart from localStorage
     let cart = JSON.parse(localStorage.getItem('cart')) || [];
@@ -201,6 +202,20 @@ function addToCart(productId, quantity, buyNow = false) {
     if (existingProductIndex > -1) {
         // Update quantity if product already in cart
         cart[existingProductIndex].quantity += quantity;
+        
+        // Save updated cart to localStorage
+        localStorage.setItem('cart', JSON.stringify(cart));
+        
+        // Update cart count
+        updateCartCount();
+        
+        // Show cart sidebar or redirect to checkout
+        if (buyNow) {
+            window.location.href = '/checkout.html';
+        } else {
+            document.getElementById('cartSidebar').classList.add('active');
+            updateCartItems();
+        }
     } else {
         // Add new product to cart
         fetch(`/api/product/${productId}`)
@@ -233,21 +248,6 @@ function addToCart(productId, quantity, buyNow = false) {
                 console.error('Error fetching product details for cart:', error);
                 alert('Failed to add product to cart');
             });
-        return;
-    }
-    
-    // Save updated cart to localStorage
-    localStorage.setItem('cart', JSON.stringify(cart));
-    
-    // Update cart count
-    updateCartCount();
-    
-    // Show cart sidebar or redirect to checkout
-    if (buyNow) {
-        window.location.href = '/checkout.html';
-    } else {
-        document.getElementById('cartSidebar').classList.add('active');
-        updateCartItems();
     }
 }
 

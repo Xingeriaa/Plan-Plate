@@ -1488,6 +1488,75 @@ async function getBestSellingProducts(limit = 10) {
   }
 }
 
+async function createOrder(orderData) {
+  try {
+      // Start a transaction
+      const transaction = new sql.Transaction(pool);
+      await transaction.begin();
+      
+      try {
+          // Insert into DonHang table
+          const orderResult = await transaction.request()
+              .input('IDTaiKhoan', sql.Int, orderData.userId || null)
+              .input('NgayDatHang', sql.DateTime, new Date())
+              .input('TrangThai', sql.NVarChar, 'ChoXuLy')
+              .query(`
+                  INSERT INTO DonHang (IDTaiKhoan, NgayDatHang, TrangThai)
+                  OUTPUT INSERTED.IDDonHang
+                  VALUES (@IDTaiKhoan, @NgayDatHang, @TrangThai)
+              `);
+          
+          const orderId = orderResult.recordset[0].IDDonHang;
+          
+          // Insert order items into ChiTietDonHang table
+          for (const item of orderData.items) {
+              await transaction.request()
+                  .input('IDDonHang', sql.Int, orderId)
+                  .input('IDSanPham', sql.Int, item.id)
+                  .input('SoLuong', sql.Int, item.quantity)
+                  .input('Gia', sql.Decimal(10, 2), item.price)
+                  .query(`
+                      INSERT INTO ChiTietDonHang (IDDonHang, IDSanPham, SoLuong, Gia)
+                      VALUES (@IDDonHang, @IDSanPham, @SoLuong, @Gia)
+                  `);
+              
+              // Update inventory
+              await transaction.request()
+                  .input('IDSanPham', sql.Int, item.id)
+                  .input('SoLuong', sql.Int, item.quantity)
+                  .query(`
+                      UPDATE QuanLyKhoHang
+                      SET SoLuongTon = SoLuongTon - @SoLuong
+                      WHERE IDSanPham = @IDSanPham
+                  `);
+          }
+          
+          // Insert payment information
+          await transaction.request()
+              .input('IDDonHang', sql.Int, orderId)
+              .input('PhuongThucThanhToan', sql.NVarChar, orderData.paymentMethod)
+              .input('TrangThaiThanhToan', sql.NVarChar, orderData.paymentMethod === 'TienMat' ? 'ChuaThanhToan' : 'DaThanhToan')
+              .input('NgayThanhToan', sql.DateTime, orderData.paymentMethod === 'TienMat' ? null : new Date())
+              .query(`
+                  INSERT INTO ThanhToan (IDDonHang, PhuongThucThanhToan, TrangThaiThanhToan, NgayThanhToan)
+                  VALUES (@IDDonHang, @PhuongThucThanhToan, @TrangThaiThanhToan, @NgayThanhToan)
+              `);
+          
+          // Commit the transaction
+          await transaction.commit();
+          
+          return orderId;
+      } catch (error) {
+          // If there's an error, roll back the transaction
+          await transaction.rollback();
+          throw error;
+      }
+  } catch (error) {
+      console.error('Error creating order:', error);
+      throw error;
+  }
+}
+
 // Update the module exports to include the new function
 module.exports = {
   query,
@@ -1525,5 +1594,6 @@ module.exports = {
   getCategoryById,
   getTopSellingProducts,
   getSalesByCategory,
-  getBestSellingProducts
+  getBestSellingProducts,
+  createOrder
 };

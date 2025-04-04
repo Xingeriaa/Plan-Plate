@@ -891,3 +891,32 @@ app.get('/bestsellers', async (req, res) => {
     });
   }
 });
+
+// Add this API endpoint for placing orders
+app.post('/api/orders', async (req, res) => {
+    try {
+        // Check if user is authenticated
+        const userId = req.user ? req.user.IDTaiKhoan : null;
+        
+        // Get order data from request body
+        const orderData = req.body;
+        
+        // Create order in database
+        const orderId = await db.createOrder({
+            userId: userId,
+            items: orderData.items,
+            shippingAddress: orderData.shippingAddress,
+            paymentMethod: orderData.paymentMethod,
+            total: orderData.total
+        });
+        
+        res.json({ 
+            success: true, 
+            message: 'Order placed successfully', 
+            orderId: orderId 
+        });
+    } catch (error) {
+        console.error('Error placing order:', error);
+        res.status(500).json({ error: 'Failed to place order' });
+    }
+});
