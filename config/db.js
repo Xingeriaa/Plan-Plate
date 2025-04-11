@@ -17,22 +17,94 @@ const config = {
 };
 
 // Create a connection pool
-const pool = new sql.ConnectionPool(config);
+const pool = new sql.ConnectionPool({
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  server: process.env.DB_SERVER || 'localhost', // Provide a default if env var is missing
+  database: process.env.DB_NAME,
+  options: {
+    encrypt: true, // For Azure
+    trustServerCertificate: true, // For local dev / self-signed certs
+    enableArithAbort: true
+  },
+  pool: {
+    max: 20, // Increase from 10 to 20
+    min: 5,  // Increase from 0 to 5 to keep connections ready
+    idleTimeoutMillis: 30000
+  },
+  connectionTimeout: 15000, // Add timeout setting
+  requestTimeout: 30000     // Add request timeout
+});
 
 // Connect to database
 async function connectDB() {
   try {
+    if (pool.connected) {
+      console.log('Already connected to database');
+      return;
+    }
+    
+    // Check if environment variables are set
+    if (!process.env.DB_SERVER) {
+      console.error('ERROR: DB_SERVER environment variable is not set');
+      console.log('Please check your .env file or environment configuration');
+      process.exit(1); // Exit with error code
+    }
+    
     await pool.connect();
-    console.log('Connected to MSSQL database');
+    console.log('Connected to MSSQL database successfully');
   } catch (err) {
-    console.error('Database connection error:', err);
+    console.error('Database connection error:', err.message);
+    console.log('Connection details (without password):', {
+      user: process.env.DB_USER,
+      server: process.env.DB_SERVER,
+      database: process.env.DB_NAME
+    });
+    
     // Retry connection after delay
+    console.log('Retrying connection in 5 seconds...');
     setTimeout(connectDB, 5000);
   }
 }
 
+const queryCache = {
+  cache: {},
+  
+  // Get cached result
+  get(key) {
+    const item = this.cache[key];
+    if (!item) return null;
+    
+    // Check if cache is expired
+    if (item.expiry < Date.now()) {
+      delete this.cache[key];
+      return null;
+    }
+    
+    return item.data;
+  },
+  
+  // Set cache with TTL (time to live in ms)
+  set(key, data, ttl = 60000) { // Default 1 minute TTL
+    this.cache[key] = {
+      data,
+      expiry: Date.now() + ttl
+    };
+  },
+  
+  // Clear specific cache or all cache
+  clear(key) {
+    if (key) {
+      delete this.cache[key];
+    } else {
+      this.cache = {};
+    }
+  }
+};
+
 // Initialize connection
 connectDB();
+
 
 // Generic query function
 async function query(sqlQuery) {
@@ -44,7 +116,68 @@ async function query(sqlQuery) {
   }
 }
 
+async function cachedQuery(sqlQuery, params = [], cacheKey = null, ttl = 60000) {
+  // Generate cache key if not provided
+  if (!cacheKey) {
+    cacheKey = sqlQuery + (params ? JSON.stringify(params) : '');
+  }
+  
+  // Try to get from cache first
+  const cachedResult = queryCache.get(cacheKey);
+  if (cachedResult) {
+    return cachedResult;
+  }
+  
+  // If not in cache, execute query
+  try {
+    let request = pool.request();
+    
+    // Add parameters if any
+    if (params && Array.isArray(params)) {
+      params.forEach(param => {
+        request.input(param.name, param.type, param.value);
+      });
+    }
+    
+    const result = await request.query(sqlQuery);
+    
+    // Cache the result
+    queryCache.set(cacheKey, result, ttl);
+    
+    return result;
+  } catch (error) {
+    console.error('Database query error:', error);
+    throw error;
+  }
+}
+
 // Admin dashboard functions
+
+// Function to clear relevant caches when data changes
+function clearRelevantCaches(type, id = null) {
+  switch (type) {
+    case 'category':
+      queryCache.clear('categories_with_counts');
+      if (id) queryCache.clear(`products_category_${id}`);
+      break;
+    case 'product':
+      if (id) {
+        queryCache.clear(`product_${id}`);
+        // Also clear category cache this product belongs to
+        // This would require knowing the category ID, which we don't have here
+        // So we clear all category-related caches
+        queryCache.clear('categories_with_counts');
+      }
+      break;
+    case 'order':
+      if (id) queryCache.clear(`order_${id}`);
+      queryCache.clear('recent_orders');
+      break;
+    case 'all':
+      queryCache.clear();
+      break;
+  }
+}
 
 // Get dashboard statistics
 async function getDashboardStats() {
@@ -429,11 +562,14 @@ async function getUsers(options = {}) {
 
 async function getUserByEmail(email) {
   try {
-    const result = await pool.request()
-      .input('email', sql.NVarChar, email)
-      .query('SELECT * FROM TaiKhoan WHERE Email = @email');
+    const request = pool.request()
+      .input('email', sql.NVarChar, email);
     
-    return result.recordset[0];
+    const result = await request.query(`
+      SELECT * FROM TaiKhoan WHERE Email = @email
+    `);
+    
+    return result.recordset[0] || null;
   } catch (error) {
     console.error('Error getting user by email:', error);
     throw error;
@@ -623,19 +759,80 @@ async function getOrderWithItems(orderId) {
   }
 }
 
+async function logAction({ userId, action, description, entityType, entityId, oldData = null, newData = null, ipAddress = null }) {
+  try {
+    const pool = await sql.connect(config);
+    
+    // Get user name if userId is provided
+    let userName = 'System';
+    if (userId) {
+      const userResult = await pool.request()
+        .input('userId', sql.Int, userId)
+        .query('SELECT TenNguoiDung FROM TaiKhoan WHERE IDTaiKhoan = @userId');
+      
+      if (userResult.recordset.length > 0) {
+        userName = userResult.recordset[0].TenNguoiDung;
+      }
+    }
+    
+    // Insert audit log entry
+    await pool.request()
+      .input('userId', sql.Int, userId)
+      .input('userName', sql.NVarChar, userName)
+      .input('action', sql.NVarChar, action)
+      .input('description', sql.NVarChar, description)
+      .input('entityType', sql.NVarChar, entityType)
+      .input('entityId', sql.Int, entityId)
+      .input('oldData', sql.NVarChar, oldData)
+      .input('newData', sql.NVarChar, newData)
+      .input('ipAddress', sql.NVarChar, ipAddress)
+      .query(`
+        INSERT INTO AuditLog (
+          IDTaiKhoan, TenNguoiDung, HanhDong, MoTa, 
+          LoaiDoiTuong, IDDoiTuong, ThoiGian, 
+          DiaChiIP, DuLieuCu, DuLieuMoi
+        ) VALUES (
+          @userId, @userName, @action, @description, 
+          @entityType, @entityId, GETDATE(), 
+          @ipAddress, @oldData, @newData
+        )
+      `);
+    
+    return true;
+  } catch (error) {
+    console.error('Error logging action:', error);
+    // Don't throw the error to prevent disrupting the main operation
+    return false;
+  }
+}
+
 // Update order status
 async function updateOrderStatus(orderId, status) {
   try {
-    await pool.request()
-      .input('id', sql.Int, orderId)
+    const pool = await sql.connect(config);
+    
+    // Update the query to remove NgayCapNhat column reference
+    const result = await pool.request()
+      .input('orderId', sql.Int, orderId)
       .input('status', sql.NVarChar, status)
       .query(`
-        UPDATE DonHang
+        UPDATE DonHang 
         SET TrangThai = @status
-        WHERE IDDonHang = @id
+        WHERE IDDonHang = @orderId
       `);
     
-    return { success: true };
+    // Log the action to audit log
+    await logAction({
+      userId: null, // This should be replaced with actual user ID from session
+      action: 'UPDATE',
+      description: `Cập nhật trạng thái đơn hàng #${orderId} thành ${status}`,
+      entityType: 'Order',
+      entityId: orderId,
+      oldData: JSON.stringify({ TrangThai: 'previous_status' }), // Ideally, get the previous status
+      newData: JSON.stringify({ TrangThai: status })
+    });
+    
+    return result.rowsAffected[0] > 0;
   } catch (error) {
     console.error('Error updating order status:', error);
     throw error;
@@ -643,8 +840,17 @@ async function updateOrderStatus(orderId, status) {
 }
 
 // Add new function to get products by category
+// Optimize the getProductsByCategory function with caching
 async function getProductsByCategory(categoryId) {
+  const cacheKey = `products_category_${categoryId}`;
+  
   try {
+    // Try to get from cache first (cache for 2 minutes)
+    const cachedResult = queryCache.get(cacheKey);
+    if (cachedResult) {
+      return cachedResult;
+    }
+    
     const result = await pool.request()
       .input('categoryId', sql.Int, categoryId)
       .query(`
@@ -662,6 +868,9 @@ async function getProductsByCategory(categoryId) {
         WHERE p.IDDanhMuc = @categoryId
         ORDER BY p.TenSanPham ASC
       `);
+    
+    // Cache the result for 2 minutes
+    queryCache.set(cacheKey, result.recordset, 120000);
     
     return result.recordset;
   } catch (error) {
@@ -843,8 +1052,17 @@ async function getAllProducts(page = 1, pageSize = 10, search = '', category = '
 }
 
 // Add the missing getProductById function
+// Optimize the getProductById function with caching
 async function getProductById(productId) {
+  const cacheKey = `product_${productId}`;
+  
   try {
+    // Try to get from cache first (cache for 2 minutes)
+    const cachedResult = queryCache.get(cacheKey);
+    if (cachedResult) {
+      return cachedResult;
+    }
+    
     const result = await pool.request()
       .input('productId', sql.Int, productId)
       .query(`
@@ -857,6 +1075,9 @@ async function getProductById(productId) {
         LEFT JOIN QuanLyKhoHang k ON p.IDSanPham = k.IDSanPham
         WHERE p.IDSanPham = @productId
       `);
+    
+    // Cache the result for 2 minutes
+    queryCache.set(cacheKey, result.recordset[0], 120000);
     
     return result.recordset[0];
   } catch (error) {
@@ -926,6 +1147,9 @@ async function addProduct(productData) {
         SELECT SCOPE_IDENTITY() AS IDSanPham;
       `);
     
+    // Clear relevant caches
+    clearRelevantCaches('category', productData.categoryId);
+    
     // Return the ID of the newly created product
     return result.recordset[0].IDSanPham;
   } catch (error) {
@@ -937,6 +1161,9 @@ async function addProduct(productData) {
 // Add the missing updateProduct function
 async function updateProduct(productId, productData) {
   try {
+    // Get the current product to know its category
+    const currentProduct = await getProductById(productId);
+    
     await pool.request()
       .input('productId', sql.Int, productId)
       .input('name', sql.NVarChar, productData.name)
@@ -956,6 +1183,17 @@ async function updateProduct(productId, productData) {
         WHERE IDSanPham = @productId
       `);
     
+    // Clear relevant caches
+    clearRelevantCaches('product', productId);
+    
+    // If category changed, clear old and new category caches
+    if (currentProduct && currentProduct.IDDanhMuc !== productData.categoryId) {
+      clearRelevantCaches('category', currentProduct.IDDanhMuc);
+      clearRelevantCaches('category', productData.categoryId);
+    } else {
+      clearRelevantCaches('category', productData.categoryId);
+    }
+    
     return true;
   } catch (error) {
     console.error('Error updating product:', error);
@@ -968,6 +1206,9 @@ async function deleteProduct(productId) {
   const transaction = new sql.Transaction(pool);
   
   try {
+    // Get the current product to know its category
+    const currentProduct = await getProductById(productId);
+    
     await transaction.begin();
     
     // First, delete related inventory records
@@ -986,6 +1227,13 @@ async function deleteProduct(productId) {
       .query('DELETE FROM QuanLySanPham WHERE IDSanPham = @productId');
     
     await transaction.commit();
+    
+    // Clear relevant caches
+    clearRelevantCaches('product', productId);
+    if (currentProduct) {
+      clearRelevantCaches('category', currentProduct.IDDanhMuc);
+    }
+    
     return result;
   } catch (error) {
     await transaction.rollback();
@@ -1074,25 +1322,38 @@ async function getAllOrders(page = 1, pageSize = 10, status = '', search = '') {
 }
 
 // Create new user (for signup)
+// ... existing code ...
+
+// Create a new user
 async function createUser(userData) {
   try {
-    const { firstName, lastName, email, password } = userData;
+    const { firstName, lastName, email, password, provider, providerId } = userData;
     const fullName = `${firstName} ${lastName}`.trim();
+    const currentDate = new Date();
     
-    const result = await pool.request()
+    // Create a request with proper parameters
+    const request = pool.request()
       .input('fullName', sql.NVarChar, fullName)
       .input('email', sql.NVarChar, email)
-      .input('password', sql.NVarChar, password)
+      .input('password', sql.NVarChar, password) // This will be null for OAuth users
       .input('role', sql.NVarChar, 'NguoiDung')
-      .input('createdAt', sql.DateTime, new Date())
-      .query(`
-        INSERT INTO TaiKhoan (TenNguoiDung, Email, MatKhau, VaiTro, NgayTao)
-        VALUES (@fullName, @email, @password, @role, @createdAt)
-        
-        SELECT SCOPE_IDENTITY() AS id
-      `);
+      .input('currentDate', sql.DateTime, currentDate)
+      .input('provider', sql.NVarChar, provider || null)
+      .input('providerId', sql.NVarChar, providerId || null);
     
-    const userId = result.recordset[0].id;
+    // SQL query to insert a new user - using @parameter syntax for SQL Server
+    const query = `
+      INSERT INTO TaiKhoan (TenNguoiDung, Email, MatKhau, VaiTro, NgayTao, Provider, ProviderId) 
+      VALUES (@fullName, @email, @password, @role, @currentDate, @provider, @providerId);
+      SELECT SCOPE_IDENTITY() AS IDTaiKhoan;
+    `;
+    
+    const result = await request.query(query);
+    
+    // Get the newly created user ID
+    const userId = result.recordset[0].IDTaiKhoan;
+    
+    // Return the complete user object
     return await getUserById(userId);
   } catch (error) {
     console.error('Error creating user:', error);
@@ -1100,22 +1361,36 @@ async function createUser(userData) {
   }
 }
 
+// ... existing code ...
 // Add the missing searchProducts function
-async function searchProducts(query) {
+async function searchProducts(searchTerm) {
   try {
-    const result = await pool.request()
-      .input('query', sql.NVarChar, `%${query}%`)
-      .query(`
-        SELECT p.*, c.TenDanhMuc, k.SoLuongTon
-        FROM QuanLySanPham p
-        LEFT JOIN QuanLyDanhMuc c ON p.IDDanhMuc = c.IDDanhMuc
-        LEFT JOIN QuanLyKhoHang k ON p.IDSanPham = k.IDSanPham
-        WHERE p.TenSanPham LIKE @query 
-           OR p.MoTa LIKE @query
-           OR c.TenDanhMuc LIKE @query
-        ORDER BY p.TenSanPham
-      `);
+    // Create a request with proper parameters
+    const request = pool.request()
+      .input('searchTerm', sql.NVarChar, `%${searchTerm}%`);
     
+    // SQL query to search products
+    const query = `
+      SELECT 
+        p.IDSanPham, 
+        p.TenSanPham, 
+        p.Gia, 
+        p.MoTa, 
+        p.IDDanhMuc, 
+        p.HinhAnhSanPham, 
+        p.DonViBan,
+        c.TenDanhMuc,
+        k.SoLuongTon
+      FROM QuanLySanPham p
+      LEFT JOIN QuanLyDanhMuc c ON p.IDDanhMuc = c.IDDanhMuc
+      LEFT JOIN QuanLyKhoHang k ON p.IDSanPham = k.IDSanPham
+      WHERE p.TenSanPham LIKE @searchTerm
+      OR p.MoTa LIKE @searchTerm
+      OR c.TenDanhMuc LIKE @searchTerm
+      ORDER BY p.TenSanPham
+    `;
+    
+    const result = await request.query(query);
     return result.recordset;
   } catch (error) {
     console.error('Error searching products:', error);
@@ -1444,6 +1719,91 @@ async function getSalesByCategory() {
   }
 }
 
+// Add this function to get audit logs with filtering and pagination
+// Add this function to get audit logs with filtering and pagination
+async function getAuditLogs({ page = 1, limit = 20, userId = '', action = '', entityType = '', startDate = '', endDate = '' }) {
+  try {
+    const pool = await sql.connect(config);
+    
+    // Build the WHERE clause based on filters
+    let whereClause = '';
+    const conditions = [];
+    
+    if (userId) {
+      conditions.push(`IDTaiKhoan = ${userId}`);
+    }
+    
+    if (action) {
+      conditions.push(`HanhDong = '${action}'`);
+    }
+    
+    if (entityType) {
+      conditions.push(`LoaiDoiTuong = '${entityType}'`);
+    }
+    
+    if (startDate) {
+      conditions.push(`ThoiGian >= '${startDate}'`);
+    }
+    
+    if (endDate) {
+      // Add one day to include the end date fully
+      const nextDay = new Date(endDate);
+      nextDay.setDate(nextDay.getDate() + 1);
+      const formattedNextDay = nextDay.toISOString().split('T')[0];
+      conditions.push(`ThoiGian < '${formattedNextDay}'`);
+    }
+    
+    if (conditions.length > 0) {
+      whereClause = 'WHERE ' + conditions.join(' AND ');
+    }
+    
+    // Count total records for pagination
+    const countResult = await pool.request().query(`
+      SELECT COUNT(*) as total FROM AuditLog ${whereClause}
+    `);
+    
+    const totalItems = countResult.recordset[0].total;
+    const totalPages = Math.ceil(totalItems / limit);
+    const offset = (page - 1) * limit;
+    
+    // Get paginated logs - Fix column alias and pagination syntax
+    const result = await pool.request()
+      .input('offset', sql.Int, offset)
+      .input('limit', sql.Int, limit)
+      .query(`
+        SELECT 
+          IDAuditLog,
+          TenNguoiDung as userName,
+          HanhDong as action,
+          MoTa as description,
+          LoaiDoiTuong as entityType,
+          IDDoiTuong as entityId,
+          ThoiGian as timestamp,
+          DiaChiIP as ipAddress,
+          DuLieuCu as oldData,
+          DuLieuMoi as newData
+        FROM AuditLog
+        ${whereClause}
+        ORDER BY ThoiGian DESC
+        OFFSET @offset ROWS
+        FETCH NEXT @limit ROWS ONLY
+      `);
+    
+    return {
+      logs: result.recordset,
+      pagination: {
+        totalItems,
+        totalPages,
+        currentPage: page,
+        limit
+      }
+    };
+  } catch (error) {
+    console.error('Database error in getAuditLogs:', error);
+    throw error;
+  }
+}
+
 async function getBestSellingProducts(limit = 10) {
   try {
     const result = await pool.request()
@@ -1557,6 +1917,565 @@ async function createOrder(orderData) {
   }
 }
 
+async function getCategoriesWithProductCounts() {
+  const cacheKey = 'categories_with_counts';
+  
+  try {
+    // Try to get from cache first (cache for 5 minutes)
+    const cachedResult = queryCache.get(cacheKey);
+    if (cachedResult) {
+      return cachedResult;
+    }
+    
+    const result = await pool.request().query(`
+      SELECT c.IDDanhMuc, c.TenDanhMuc, c.HinhAnhSanPham, 
+             COUNT(p.IDSanPham) AS ProductCount
+      FROM QuanLyDanhMuc c
+      LEFT JOIN QuanLySanPham p ON c.IDDanhMuc = p.IDDanhMuc
+      GROUP BY c.IDDanhMuc, c.TenDanhMuc, c.HinhAnhSanPham
+      ORDER BY c.TenDanhMuc
+    `);
+    
+    // Cache the result for 5 minutes
+    queryCache.set(cacheKey, result.recordset, 300000);
+    
+    return result.recordset;
+  } catch (error) {
+    console.error('Error getting categories with product counts:', error);
+    throw error;
+  }
+}
+
+// Add this function to log all admin actions
+async function logAdminAction(userId, action, description, entityType, entityId) {
+  try {
+    const pool = await sql.connect(config);
+    const timestamp = new Date().toISOString();
+    
+    // Get user information
+    const userResult = await pool.request()
+      .input('userId', sql.Int, userId)
+      .query('SELECT TenNguoiDung, Email FROM TaiKhoan WHERE IDTaiKhoan = @userId');
+    
+    const user = userResult.recordset[0];
+    const userName = user ? user.TenNguoiDung : 'Unknown User';
+    
+    // Insert into audit log table
+    await pool.request()
+      .input('userId', sql.Int, userId)
+      .input('userName', sql.NVarChar, userName)
+      .input('action', sql.VarChar, action)
+      .input('description', sql.NVarChar, description)
+      .input('entityType', sql.VarChar, entityType)
+      .input('entityId', sql.Int, entityId)
+      .input('timestamp', sql.DateTime, timestamp)
+      .input('ipAddress', sql.VarChar, '0.0.0.0') // In a real app, capture the IP
+      .query(`
+        INSERT INTO AuditLog (IDTaiKhoan, TenNguoiDung, HanhDong, MoTa, LoaiDoiTuong, IDDoiTuong, ThoiGian, DiaChiIP)
+        VALUES (@userId, @userName, @action, @description, @entityType, @entityId, @timestamp, @ipAddress)
+      `);
+      
+    console.log(`Audit log created: ${action} by ${userName}`);
+  } catch (error) {
+    console.error('Error creating audit log:', error);
+  }
+}
+
+// Add this function to get recent audit logs
+async function getRecentAuditLogs(limit = 10) {
+  try {
+    const pool = await sql.connect(config);
+    const result = await pool.request()
+      .input('limit', sql.Int, limit)
+      .query(`
+        SELECT TOP (@limit) 
+          a.IDAuditLog,
+          a.TenNguoiDung as user,
+          a.HanhDong as action,
+          a.MoTa as description,
+          a.LoaiDoiTuong as entityType,
+          a.IDDoiTuong as entityId,
+          a.ThoiGian as timestamp
+        FROM AuditLog a
+        ORDER BY a.ThoiGian DESC
+      `);
+    
+    return result.recordset;
+  } catch (error) {
+    console.error('Error fetching audit logs:', error);
+    return [];
+  }
+}
+
+// Add this function to get all audit logs with pagination
+async function getAllAuditLogs(page = 1, limit = 20, filters = {}) {
+  try {
+    const pool = await sql.connect(config);
+    const offset = (page - 1) * limit;
+    
+    let query = `
+      SELECT 
+        a.IDAuditLog,
+        a.TenNguoiDung as user,
+        a.HanhDong as action,
+        a.MoTa as description,
+        a.LoaiDoiTuong as entityType,
+        a.IDDoiTuong as entityId,
+        a.ThoiGian as timestamp,
+        a.DiaChiIP as ipAddress
+      FROM AuditLog a
+      WHERE 1=1
+    `;
+    
+    const queryParams = [];
+    
+    // Add filters
+    if (filters.userId) {
+      query += ` AND a.IDTaiKhoan = @userId`;
+      queryParams.push({ name: 'userId', type: sql.Int, value: filters.userId });
+    }
+    
+    if (filters.action) {
+      query += ` AND a.HanhDong = @action`;
+      queryParams.push({ name: 'action', type: sql.VarChar, value: filters.action });
+    }
+    
+    if (filters.entityType) {
+      query += ` AND a.LoaiDoiTuong = @entityType`;
+      queryParams.push({ name: 'entityType', type: sql.VarChar, value: filters.entityType });
+    }
+    
+    if (filters.startDate && filters.endDate) {
+      query += ` AND a.ThoiGian BETWEEN @startDate AND @endDate`;
+      queryParams.push({ name: 'startDate', type: sql.DateTime, value: new Date(filters.startDate) });
+      queryParams.push({ name: 'endDate', type: sql.DateTime, value: new Date(filters.endDate) });
+    }
+    
+    // Count total records
+    const countQuery = query.replace('SELECT \n        a.IDAuditLog,\n        a.TenNguoiDung as user,\n        a.HanhDong as action,\n        a.MoTa as description,\n        a.LoaiDoiTuong as entityType,\n        a.IDDoiTuong as entityId,\n        a.ThoiGian as timestamp,\n        a.DiaChiIP as ipAddress', 'SELECT COUNT(*) as total');
+    
+    let request = pool.request();
+    queryParams.forEach(param => {
+      request = request.input(param.name, param.type, param.value);
+    });
+    
+    const countResult = await request.query(countQuery);
+    const total = countResult.recordset[0].total;
+    
+    // Add pagination
+    query += ` ORDER BY a.ThoiGian DESC OFFSET @offset ROWS FETCH NEXT @limit ROWS ONLY`;
+    
+    request = pool.request();
+    queryParams.forEach(param => {
+      request = request.input(param.name, param.type, param.value);
+    });
+    
+    request = request
+      .input('offset', sql.Int, offset)
+      .input('limit', sql.Int, limit);
+    
+    const result = await request.query(query);
+    
+    return {
+      logs: result.recordset,
+      pagination: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit)
+      }
+    };
+  } catch (error) {
+    console.error('Error fetching all audit logs:', error);
+    return { logs: [], pagination: { total: 0, page, limit, totalPages: 0 } };
+  }
+}
+
+// Modify the existing functions to include audit logging
+// For example, update the updateProduct function:
+
+async function updateProduct(productId, productData, userId) {
+  try {
+    // First get the original product data for audit purposes
+    const originalProduct = await getProductById(productId);
+    
+    const pool = await sql.connect(config);
+    const result = await pool.request()
+      .input('id', sql.Int, productId)
+      .input('name', sql.NVarChar, productData.TenSanPham)
+      .input('price', sql.Money, productData.Gia)
+      .input('description', sql.NVarChar, productData.MoTa)
+      .input('categoryId', sql.Int, productData.IDDanhMuc)
+      .input('image', sql.NVarChar, productData.HinhAnhSanPham)
+      .input('unit', sql.NVarChar, productData.DonViBan)
+      .query(`
+        UPDATE QuanLySanPham
+        SET TenSanPham = @name,
+            Gia = @price,
+            MoTa = @description,
+            IDDanhMuc = @categoryId,
+            HinhAnhSanPham = @image,
+            DonViBan = @unit
+        WHERE IDSanPham = @id
+      `);
+      
+    // Log the action
+        // Log the action
+  const changes = [];
+  if (originalProduct.TenSanPham !== productData.TenSanPham) 
+    changes.push(`Tên: ${originalProduct.TenSanPham} → ${productData.TenSanPham}`);
+  if (originalProduct.Gia !== productData.Gia)
+    changes.push(`Giá: ${originalProduct.Gia} → ${productData.Gia}`);
+  if (originalProduct.MoTa !== productData.MoTa)
+    changes.push(`Mô tả đã được cập nhật`);
+  if (originalProduct.IDDanhMuc !== productData.IDDanhMuc)
+    changes.push(`Danh mục: ${originalProduct.IDDanhMuc} → ${productData.IDDanhMuc}`);
+  if (originalProduct.HinhAnhSanPham !== productData.HinhAnhSanPham)
+    changes.push(`Hình ảnh đã được cập nhật`);
+  if (originalProduct.DonViBan !== productData.DonViBan)
+    changes.push(`Đơn vị bán: ${originalProduct.DonViBan} → ${productData.DonViBan}`);
+  
+  const description = `Cập nhật sản phẩm: ${productData.TenSanPham}. Thay đổi: ${changes.join(', ')}`;
+  
+  // Log to audit trail
+  await logAdminAction(
+    userId, 
+    'UPDATE', 
+    description, 
+    'Product', 
+    productId,
+    originalProduct,  // Old data
+    productData       // New data
+  );
+  
+  return result.rowsAffected[0] > 0;
+} catch (error) {
+  console.error('Error updating product:', error);
+  return false;
+}
+}
+
+// Add audit logging to createProduct function
+async function createProduct(productData, userId) {
+try {
+  const pool = await sql.connect(config);
+  const result = await pool.request()
+    .input('name', sql.NVarChar, productData.TenSanPham)
+    .input('price', sql.Money, productData.Gia)
+    .input('description', sql.NVarChar, productData.MoTa)
+    .input('categoryId', sql.Int, productData.IDDanhMuc)
+    .input('image', sql.NVarChar, productData.HinhAnhSanPham)
+    .input('unit', sql.NVarChar, productData.DonViBan)
+    .input('costPrice', sql.Money, productData.GiaGoc || productData.Gia * 0.7) // Default cost price if not provided
+    .query(`
+      INSERT INTO QuanLySanPham (TenSanPham, Gia, MoTa, IDDanhMuc, HinhAnhSanPham, DonViBan, GiaGoc)
+      OUTPUT INSERTED.IDSanPham
+      VALUES (@name, @price, @description, @categoryId, @image, @unit, @costPrice)
+    `);
+  
+  const productId = result.recordset[0].IDSanPham;
+  
+  // Log the action
+  const description = `Tạo sản phẩm mới: ${productData.TenSanPham}`;
+  
+  // Log to audit trail
+  await logAdminAction(
+    userId, 
+    'CREATE', 
+    description, 
+    'Product', 
+    productId,
+    null,         // No old data for creation
+    productData   // New data
+  );
+  
+  return productId;
+} catch (error) {
+  console.error('Error creating product:', error);
+  return null;
+}
+}
+
+// Add audit logging to deleteProduct function
+async function deleteProduct(productId, userId) {
+try {
+  // First get the product data for audit purposes
+  const product = await getProductById(productId);
+  if (!product) {
+    return false;
+  }
+  
+  const pool = await sql.connect(config);
+  const result = await pool.request()
+    .input('id', sql.Int, productId)
+    .query(`
+      DELETE FROM QuanLySanPham
+      WHERE IDSanPham = @id
+    `);
+  
+  // Log the action
+  const description = `Xóa sản phẩm: ${product.TenSanPham}`;
+  
+  // Log to audit trail
+  await logAdminAction(
+    userId, 
+    'DELETE', 
+    description, 
+    'Product', 
+    productId,
+    product,  // Old data
+    null      // No new data for deletion
+  );
+  
+  return result.rowsAffected[0] > 0;
+} catch (error) {
+  console.error('Error deleting product:', error);
+  return false;
+}
+}
+
+// Add audit logging to user management functions
+async function updateUser(userId, userData, adminId) {
+try {
+  // First get the original user data for audit purposes
+  const originalUser = await getUserById(userId);
+  
+  const pool = await sql.connect(config);
+  const result = await pool.request()
+    .input('id', sql.Int, userId)
+    .input('name', sql.NVarChar, userData.TenNguoiDung)
+    .input('email', sql.NVarChar, userData.Email)
+    .input('phone', sql.VarChar, userData.SoDienThoai)
+    .input('address', sql.NVarChar, userData.DiaChi)
+    .input('role', sql.VarChar, userData.VaiTro)
+    .query(`
+      UPDATE TaiKhoan
+      SET TenNguoiDung = @name,
+          Email = @email,
+          SoDienThoai = @phone,
+          DiaChi = @address,
+          VaiTro = @role
+      WHERE IDTaiKhoan = @id
+    `);
+  
+  // Log the action
+  const changes = [];
+  if (originalUser.TenNguoiDung !== userData.TenNguoiDung)
+    changes.push(`Tên: ${originalUser.TenNguoiDung} → ${userData.TenNguoiDung}`);
+  if (originalUser.Email !== userData.Email)
+    changes.push(`Email: ${originalUser.Email} → ${userData.Email}`);
+  if (originalUser.SoDienThoai !== userData.SoDienThoai)
+    changes.push(`SĐT: ${originalUser.SoDienThoai} → ${userData.SoDienThoai}`);
+  if (originalUser.DiaChi !== userData.DiaChi)
+    changes.push(`Địa chỉ đã được cập nhật`);
+  if (originalUser.VaiTro !== userData.VaiTro)
+    changes.push(`Vai trò: ${originalUser.VaiTro} → ${userData.VaiTro}`);
+  
+  // Create a sanitized version of user data without password
+  const sanitizedOriginal = { ...originalUser };
+  delete sanitizedOriginal.MatKhau;
+  
+  const sanitizedNew = { ...userData };
+  delete sanitizedNew.MatKhau;
+  
+  const description = `Cập nhật người dùng: ${userData.TenNguoiDung}. Thay đổi: ${changes.join(', ')}`;
+  
+  // Log to audit trail
+  await logAdminAction(
+    adminId, 
+    'UPDATE', 
+    description, 
+    'User', 
+    userId,
+    sanitizedOriginal,  // Old data (without password)
+    sanitizedNew        // New data (without password)
+  );
+  
+  return result.rowsAffected[0] > 0;
+} catch (error) {
+  console.error('Error updating user:', error);
+  return false;
+}
+}
+
+// Add audit logging to order management
+// Find the updateOrderStatus function and modify it
+// Modify the updateOrderStatus function to include userId parameter
+// Update the updateOrderStatus function to accept userId parameter
+async function updateOrderStatus(orderId, status, userId) {
+  try {
+    const pool = await sql.connect(config);
+    
+    // Get the current status before updating
+    const currentStatusResult = await pool.request()
+      .input('orderId', sql.Int, orderId)
+      .query('SELECT TrangThai FROM DonHang WHERE IDDonHang = @orderId');
+    
+    const oldStatus = currentStatusResult.recordset.length > 0 
+      ? currentStatusResult.recordset[0].TrangThai 
+      : 'Unknown';
+    
+    // Update the order status
+    const result = await pool.request()
+      .input('orderId', sql.Int, orderId)
+      .input('status', sql.NVarChar, status)
+      .query(`
+        UPDATE DonHang 
+        SET TrangThai = @status
+        WHERE IDDonHang = @orderId
+      `);
+    
+    // Log the action to audit log
+    await logAction({
+      userId: userId, // Use the passed userId
+      action: 'UPDATE',
+      description: `Cập nhật trạng thái đơn hàng #${orderId} từ ${oldStatus} thành ${status}`,
+      entityType: 'Order',
+      entityId: orderId,
+      oldData: JSON.stringify({ TrangThai: oldStatus }),
+      newData: JSON.stringify({ TrangThai: status })
+    });
+    
+    return result.rowsAffected[0] > 0;
+  } catch (error) {
+    console.error('Error updating order status:', error);
+    throw error;
+  }
+}
+
+// Add audit logging to category management
+async function createCategory(categoryData, adminId) {
+try {
+  const pool = await sql.connect(config);
+  const result = await pool.request()
+    .input('name', sql.NVarChar, categoryData.TenDanhMuc)
+    .input('description', sql.NVarChar, categoryData.MoTa)
+    .query(`
+      INSERT INTO DanhMucSanPham (TenDanhMuc, MoTa)
+      OUTPUT INSERTED.IDDanhMuc
+      VALUES (@name, @description)
+    `);
+  
+  const categoryId = result.recordset[0].IDDanhMuc;
+  
+  // Log the action
+  const description = `Tạo danh mục mới: ${categoryData.TenDanhMuc}`;
+  
+  // Log to audit trail
+  await logAdminAction(
+    adminId, 
+    'CREATE', 
+    description, 
+    'Category', 
+    categoryId,
+    null,           // No old data for creation
+    categoryData    // New data
+  );
+  
+  return categoryId;
+} catch (error) {
+  console.error('Error creating category:', error);
+  return null;
+}
+}
+
+// Add audit logging to login/logout events
+async function logUserLogin(userId, ipAddress) {
+try {
+  const user = await getUserById(userId);
+  const description = `Đăng nhập thành công`;
+  
+  // Log to audit trail
+  await logAdminAction(
+    userId, 
+    'LOGIN', 
+    description, 
+    'User', 
+    userId,
+    null,  // No old data for login
+    { timestamp: new Date().toISOString(), ipAddress }  // Login metadata
+  );
+  
+  return true;
+} catch (error) {
+  console.error('Error logging user login:', error);
+  return false;
+}
+}
+
+async function logUserLogout(userId, ipAddress) {
+try {
+  const user = await getUserById(userId);
+  const description = `Đăng xuất thành công`;
+  
+  // Log to audit trail
+  await logAdminAction(
+    userId, 
+    'LOGOUT', 
+    description, 
+    'User', 
+    userId,
+    null,  // No old data for logout
+    { timestamp: new Date().toISOString(), ipAddress }  // Logout metadata
+  );
+  
+  return true;
+} catch (error) {
+  console.error('Error logging user logout:', error);
+  return false;
+}
+}
+
+// Enhanced version of logAdminAction that captures IP address from request
+async function logAdminActionWithRequest(userId, action, description, entityType, entityId, oldData, newData, req) {
+try {
+  // Get IP address from request
+  const ipAddress = req.headers['x-forwarded-for'] || 
+                    req.connection.remoteAddress || 
+                    req.socket.remoteAddress || 
+                    req.connection.socket.remoteAddress || 
+                    '0.0.0.0';
+  
+  const pool = await sql.connect(config);
+  const timestamp = new Date().toISOString();
+  
+  // Get user information
+  const userResult = await pool.request()
+    .input('userId', sql.Int, userId)
+    .query('SELECT TenNguoiDung, Email FROM TaiKhoan WHERE IDTaiKhoan = @userId');
+  
+  const user = userResult.recordset[0];
+  const userName = user ? user.TenNguoiDung : 'Unknown User';
+  
+  // Convert data to strings if provided
+  const oldDataStr = oldData ? JSON.stringify(oldData) : null;
+  const newDataStr = newData ? JSON.stringify(newData) : null;
+  
+  // Insert into audit log table
+  await pool.request()
+    .input('userId', sql.Int, userId)
+    .input('userName', sql.NVarChar, userName)
+    .input('action', sql.VarChar, action)
+    .input('description', sql.NVarChar, description)
+    .input('entityType', sql.VarChar, entityType)
+    .input('entityId', sql.Int, entityId)
+    .input('timestamp', sql.DateTime, timestamp)
+    .input('ipAddress', sql.VarChar, ipAddress)
+    .input('oldData', sql.NVarChar, oldDataStr)
+    .input('newData', sql.NVarChar, newDataStr)
+    .query(`
+      INSERT INTO AuditLog (IDTaiKhoan, TenNguoiDung, HanhDong, MoTa, LoaiDoiTuong, IDDoiTuong, ThoiGian, DiaChiIP, DuLieuCu, DuLieuMoi)
+      VALUES (@userId, @userName, @action, @description, @entityType, @entityId, @timestamp, @ipAddress, @oldData, @newData)
+    `);
+    
+  console.log(`Audit log created: ${action} by ${userName} from ${ipAddress}`);
+  return true;
+} catch (error) {
+  console.error('Error creating audit log:', error);
+  return false;
+}
+}
+
 // Update the module exports to include the new function
 module.exports = {
   query,
@@ -1595,5 +2514,23 @@ module.exports = {
   getTopSellingProducts,
   getSalesByCategory,
   getBestSellingProducts,
-  createOrder
+  createOrder,
+  getCategoriesWithProductCounts,
+  cachedQuery,
+  clearRelevantCaches,
+  queryCache,
+  logAdminAction,
+  logAdminActionWithRequest,
+  getRecentAuditLogs,
+  getAllAuditLogs,
+  updateProduct,
+  createProduct,
+  deleteProduct,
+  updateUser,
+  updateOrderStatus,
+  createCategory,
+  logUserLogin,
+  logUserLogout,
+  getAuditLogs,
+  logAction
 };

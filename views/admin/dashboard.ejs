@@ -1,11 +1,12 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Admin Dashboard - PlannPlate</title>
+  <title>Bảng Điều Khiển - PlannPlate</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+  <link rel="icon" type="image/x-icon" href="/images/logo.png">
   <style>
     .sidebar {
       min-height: calc(100vh - 56px);
@@ -29,6 +30,25 @@
       height: 300px;
       margin-bottom: 20px;
     }
+    /* Audit log styles */
+    .audit-log {
+      max-height: 300px;
+      overflow-y: auto;
+    }
+    .audit-log-item {
+      border-left: 3px solid #6c757d;
+      padding-left: 10px;
+      margin-bottom: 10px;
+    }
+    .audit-log-item.create {
+      border-left-color: #198754;
+    }
+    .audit-log-item.update {
+      border-left-color: #0d6efd;
+    }
+    .audit-log-item.delete {
+      border-left-color: #dc3545;
+    }
   </style>
 </head>
 <body>
@@ -41,30 +61,33 @@
       <div class="collapse navbar-collapse" id="navbarNav">
         <ul class="navbar-nav me-auto">
           <li class="nav-item">
-            <a class="nav-link active" href="/admin">Dashboard</a>
+            <a class="nav-link active" href="/admin">Bảng Điều Khiển</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link" href="/admin/users">Users</a>
+            <a class="nav-link" href="/admin/users">Người Dùng</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link" href="/admin/products">Products</a>
+            <a class="nav-link" href="/admin/products">Sản Phẩm</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link" href="/admin/orders">Orders</a>
+            <a class="nav-link" href="/admin/orders">Đơn Hàng</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link" href="/admin/categories">Categories</a>
+            <a class="nav-link" href="/admin/categories">Danh Mục</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link" href="/admin/reports">Reports</a>
+            <a class="nav-link" href="/admin/reports">Báo Cáo</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="/admin/audit-logs">Nhật Ký Hệ Thống</a>
           </li>
         </ul>
         <ul class="navbar-nav">
           <li class="nav-item">
-            <a class="nav-link" href="/profile">Back to Profile</a>
+            <a class="nav-link" href="/profile">Quay Lại Hồ Sơ</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link" href="/logout">Logout</a>
+            <a class="nav-link" href="/logout">Đăng Xuất</a>
           </li>
         </ul>
       </div>
@@ -75,29 +98,33 @@
     <div class="row">
       <div class="col-md-3 col-lg-2 d-md-block sidebar p-3">
         <div class="list-group">
-          <a href="/admin" class="list-group-item list-group-item-action active">Dashboard</a>
-          <a href="/admin/users" class="list-group-item list-group-item-action">Users</a>
-          <a href="/admin/products" class="list-group-item list-group-item-action">Products</a>
-          <a href="/admin/orders" class="list-group-item list-group-item-action">Orders</a>
-          <a href="/admin/categories" class="list-group-item list-group-item-action">Categories</a>
-          <a href="/admin/reports" class="list-group-item list-group-item-action">Reports</a>
+          <a href="/admin" class="list-group-item list-group-item-action active">Bảng Điều Khiển</a>
+          <a href="/admin/users" class="list-group-item list-group-item-action">Người Dùng</a>
+          <a href="/admin/products" class="list-group-item list-group-item-action">Sản Phẩm</a>
+          <a href="/admin/orders" class="list-group-item list-group-item-action">Đơn Hàng</a>
+          <a href="/admin/categories" class="list-group-item list-group-item-action">Danh Mục</a>
+          <a href="/admin/reports" class="list-group-item list-group-item-action">Báo Cáo</a>
+          <a href="/admin/audit-logs" class="list-group-item list-group-item-action">Nhật Ký Hệ Thống</a>
         </div>
       </div>
       <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 py-4">
         <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-          <h1>Dashboard</h1>
+          <h1>Bảng Điều Khiển</h1>
           <div class="btn-toolbar mb-2 mb-md-0">
             <div class="btn-group me-2">
-              <a href="/admin/reports" class="btn btn-sm btn-outline-secondary">View Reports</a>
+              <a href="/admin/reports" class="btn btn-sm btn-outline-secondary">Xem Báo Cáo</a>
+              <a href="/admin/audit-logs" class="btn btn-sm btn-outline-secondary">Nhật Ký Hệ Thống</a>
             </div>
-            <button type="button" class="btn btn-sm btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
-              <i class="bi bi-calendar"></i> This Month
-            </button>
-            <ul class="dropdown-menu">
-              <li><a class="dropdown-item" href="#">This Week</a></li>
-              <li><a class="dropdown-item" href="#">This Month</a></li>
-              <li><a class="dropdown-item" href="#">This Year</a></li>
-            </ul>
+            <div class="dropdown">
+              <button type="button" class="btn btn-sm btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
+                <i class="bi bi-calendar"></i> Tháng Này
+              </button>
+              <ul class="dropdown-menu">
+                <li><a class="dropdown-item" href="#" data-period="week">Tuần Này</a></li>
+                <li><a class="dropdown-item" href="#" data-period="month">Tháng Này</a></li>
+                <li><a class="dropdown-item" href="#" data-period="year">Năm Này</a></li>
+              </ul>
+            </div>
           </div>
         </div>
         
@@ -110,12 +137,15 @@
                   <i class="bi bi-people"></i>
                 </div>
                 <div>
-                  <h6 class="card-title text-muted mb-0">Total Users</h6>
+                  <h6 class="card-title text-muted mb-0">Tổng Người Dùng</h6>
                   <h2 class="mt-2 mb-0"><%= stats.userCount %></h2>
                   <p class="text-success mb-0">
-                    <i class="bi bi-arrow-up"></i> <%= stats.newUsers %> new this month
+                    <i class="bi bi-arrow-up"></i> <%= stats.newUsers %> mới tháng này
                   </p>
                 </div>
+              </div>
+              <div class="card-footer bg-transparent border-0 text-end">
+                <a href="/admin/users" class="btn btn-sm btn-outline-primary">Chi tiết</a>
               </div>
             </div>
           </div>
@@ -126,12 +156,15 @@
                   <i class="bi bi-cart"></i>
                 </div>
                 <div>
-                  <h6 class="card-title text-muted mb-0">Total Orders</h6>
+                  <h6 class="card-title text-muted mb-0">Tổng Đơn Hàng</h6>
                   <h2 class="mt-2 mb-0"><%= stats.orderCount %></h2>
                   <p class="text-warning mb-0">
-                    <i class="bi bi-clock"></i> <%= stats.pendingOrders %> pending
+                    <i class="bi bi-clock"></i> <%= stats.pendingOrders %> đang chờ xử lý
                   </p>
                 </div>
+              </div>
+              <div class="card-footer bg-transparent border-0 text-end">
+                <a href="/admin/orders" class="btn btn-sm btn-outline-success">Chi tiết</a>
               </div>
             </div>
           </div>
@@ -142,12 +175,15 @@
                   <i class="bi bi-box"></i>
                 </div>
                 <div>
-                  <h6 class="card-title text-muted mb-0">Products</h6>
+                  <h6 class="card-title text-muted mb-0">Sản Phẩm</h6>
                   <h2 class="mt-2 mb-0"><%= stats.productCount %></h2>
                   <p class="text-danger mb-0">
-                    <i class="bi bi-exclamation-triangle"></i> <%= stats.lowStockCount %> low stock
+                    <i class="bi bi-exclamation-triangle"></i> <%= stats.lowStockCount %> sắp hết hàng
                   </p>
                 </div>
+              </div>
+              <div class="card-footer bg-transparent border-0 text-end">
+                <a href="/admin/products" class="btn btn-sm btn-outline-warning">Chi tiết</a>
               </div>
             </div>
           </div>
@@ -158,12 +194,15 @@
                   <i class="bi bi-currency-dollar"></i>
                 </div>
                 <div>
-                  <h6 class="card-title text-muted mb-0">Revenue</h6>
+                  <h6 class="card-title text-muted mb-0">Doanh Thu</h6>
                   <h2 class="mt-2 mb-0">₫<%= stats.totalRevenue.toLocaleString('vi-VN') %></h2>
                   <p class="text-info mb-0">
-                    <i class="bi bi-calendar"></i> ₫<%= stats.monthlyRevenue.toLocaleString('vi-VN') %> this month
+                    <i class="bi bi-calendar"></i> ₫<%= stats.monthlyRevenue.toLocaleString('vi-VN') %> tháng này
                   </p>
                 </div>
+              </div>
+              <div class="card-footer bg-transparent border-0 text-end">
+                <a href="/admin/reports" class="btn btn-sm btn-outline-info">Chi tiết</a>
               </div>
             </div>
           </div>
@@ -174,11 +213,11 @@
           <div class="col-lg-8 mb-4">
             <div class="card">
               <div class="card-header d-flex justify-content-between align-items-center">
-                <h5 class="card-title mb-0">Sales Overview</h5>
+                <h5 class="card-title mb-0">Tổng Quan Doanh Số</h5>
                 <div class="btn-group btn-group-sm">
-                  <button type="button" class="btn btn-outline-secondary active" data-period="week">Week</button>
-                  <button type="button" class="btn btn-outline-secondary" data-period="month">Month</button>
-                  <button type="button" class="btn btn-outline-secondary" data-period="year">Year</button>
+                  <button type="button" class="btn btn-outline-secondary active" data-period="week">Tuần</button>
+                  <button type="button" class="btn btn-outline-secondary" data-period="month">Tháng</button>
+                  <button type="button" class="btn btn-outline-secondary" data-period="year">Năm</button>
                 </div>
               </div>
               <div class="card-body">
@@ -186,12 +225,15 @@
                   <canvas id="salesChart"></canvas>
                 </div>
               </div>
+              <div class="card-footer bg-transparent">
+                <small class="text-muted">* Dữ liệu được cập nhật tự động mỗi giờ. Cập nhật cuối: <%= new Date().toLocaleString('vi-VN') %></small>
+              </div>
             </div>
           </div>
           <div class="col-lg-4 mb-4">
             <div class="card h-100">
               <div class="card-header">
-                <h5 class="card-title mb-0">Low Stock Products</h5>
+                <h5 class="card-title mb-0">Sản Phẩm Sắp Hết Hàng</h5>
               </div>
               <div class="card-body p-0">
                 <ul class="list-group list-group-flush">
@@ -205,73 +247,102 @@
                             <small class="text-muted"><%= product.TenDanhMuc %></small>
                           </div>
                         </div>
-                        <span class="badge bg-danger rounded-pill"><%= product.SoLuongTon %> left</span>
+                        <span class="badge bg-danger rounded-pill"><%= product.SoLuongTon %> còn lại</span>
                       </li>
                     <% }); %>
                   <% } else { %>
-                    <li class="list-group-item text-center">No low stock products</li>
+                    <li class="list-group-item text-center">Không có sản phẩm sắp hết hàng</li>
                   <% } %>
                 </ul>
               </div>
               <div class="card-footer text-center">
-                <a href="/admin/products?filter=low-stock" class="btn btn-sm btn-outline-primary">View All</a>
+                <a href="/admin/products?filter=low-stock" class="btn btn-sm btn-outline-primary">Xem Tất Cả</a>
               </div>
             </div>
           </div>
         </div>
         
-        <!-- Recent Orders -->
-        <div class="card mb-4">
-          <div class="card-header d-flex justify-content-between align-items-center">
-            <h5 class="card-title mb-0">Recent Orders</h5>
-            <a href="/admin/orders" class="btn btn-sm btn-outline-primary">View All</a>
-          </div>
-          <div class="card-body p-0">
-            <div class="table-responsive">
-              <table class="table table-hover mb-0">
-                <thead class="table-light">
-                  <tr>
-                    <th>Order ID</th>
-                    <th>Customer</th>
-                    <th>Date</th>
-                    <th>Amount</th>
-                    <th>Status</th>
-                    <th>Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <% if (recentOrders && recentOrders.length > 0) { %>
-                    <% recentOrders.forEach(order => { %>
+        <!-- Recent Orders and Audit Log -->
+        <div class="row mb-4">
+          <div class="col-lg-8 mb-4">
+            <div class="card">
+              <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">Đơn Hàng Gần Đây</h5>
+                <a href="/admin/orders" class="btn btn-sm btn-outline-primary">Xem Tất Cả</a>
+              </div>
+              <div class="card-body p-0">
+                <div class="table-responsive">
+                  <table class="table table-hover mb-0">
+                    <thead class="table-light">
                       <tr>
-                        <td>#<%= order.IDDonHang %></td>
-                        <td><%= order.TenKhachHang %></td>
-                        <td><%= new Date(order.NgayDatHang).toLocaleDateString('vi-VN') %></td>
-                        <td>₫<%= order.TongTien ? order.TongTien.toLocaleString('vi-VN') : '0' %></td>
-                        <td>
-                          <% if (order.TrangThai === 'ChoXuLy') { %>
-                            <span class="badge bg-warning">Pending</span>
-                          <% } else if (order.TrangThai === 'DangGiao') { %>
-                            <span class="badge bg-info">Shipping</span>
-                          <% } else if (order.TrangThai === 'DaGiao') { %>
-                            <span class="badge bg-success">Delivered</span>
-                          <% } else if (order.TrangThai === 'Huy') { %>
-                            <span class="badge bg-danger">Cancelled</span>
-                          <% } %>
-                        </td>
-                        <td>
-                          <a href="/admin/orders/<%= order.IDDonHang %>" class="btn btn-sm btn-outline-secondary">
-                            <i class="bi bi-eye"></i>
-                          </a>
-                        </td>
+                        <th>Mã Đơn</th>
+                        <th>Khách Hàng</th>
+                        <th>Ngày Đặt</th>
+                        <th>Tổng Tiền</th>
+                        <th>Trạng Thái</th>
+                        <th>Thao Tác</th>
                       </tr>
-                    <% }); %>
-                  <% } else { %>
-                    <tr>
-                      <td colspan="6" class="text-center">No recent orders</td>
-                    </tr>
-                  <% } %>
-                </tbody>
-              </table>
+                    </thead>
+                    <tbody>
+                      <% if (recentOrders && recentOrders.length > 0) { %>
+                        <% recentOrders.forEach(order => { %>
+                          <tr>
+                            <td>#<%= order.IDDonHang %></td>
+                            <td><%= order.TenKhachHang %></td>
+                            <td><%= new Date(order.NgayDatHang).toLocaleDateString('vi-VN') %></td>
+                            <td>₫<%= order.TongTien ? order.TongTien.toLocaleString('vi-VN') : '0' %></td>
+                            <td>
+                              <% if (order.TrangThai === 'ChoXuLy') { %>
+                                <span class="badge bg-warning">Chờ Xử Lý</span>
+                              <% } else if (order.TrangThai === 'DangGiao') { %>
+                                <span class="badge bg-info">Đang Giao</span>
+                              <% } else if (order.TrangThai === 'DaGiao') { %>
+                                <span class="badge bg-success">Đã Giao</span>
+                              <% } else if (order.TrangThai === 'Huy') { %>
+                                <span class="badge bg-danger">Đã Hủy</span>
+                              <% } %>
+                            </td>
+                            <td>
+                              <a href="/admin/orders/<%= order.IDDonHang %>" class="btn btn-sm btn-outline-secondary">
+                                <i class="bi bi-eye"></i>
+                              </a>
+                            </td>
+                          </tr>
+                        <% }); %>
+                      <% } else { %>
+                        <tr>
+                          <td colspan="6" class="text-center">Không có đơn hàng gần đây</td>
+                        </tr>
+                      <% } %>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Audit Log -->
+          <div class="col-lg-4 mb-4">
+            <div class="card h-100">
+              <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">Nhật Ký Hoạt Động Gần Đây</h5>
+                <a href="/admin/audit-logs" class="btn btn-sm btn-outline-secondary">Xem Tất Cả</a>
+              </div>
+              <div class="card-body audit-log">
+                <% if (auditLogs && auditLogs.length > 0) { %>
+                  <% auditLogs.forEach(log => { %>
+                    <div class="audit-log-item <%= log.action.toLowerCase() %>">
+                      <div class="d-flex justify-content-between">
+                        <strong><%= log.user %></strong>
+                        <small class="text-muted"><%= new Date(log.timestamp).toLocaleString('vi-VN') %></small>
+                      </div>
+                      <p class="mb-0"><%= log.description %></p>
+                    </div>
+                  <% }); %>
+                <% } else { %>
+                  <p class="text-center">Không có hoạt động gần đây</p>
+                <% } %>
+              </div>
             </div>
           </div>
         </div>
@@ -293,7 +364,7 @@
         data: {
           labels: salesData.labels,
           datasets: [{
-            label: 'Revenue (₫)',
+            label: 'Doanh Thu (₫)',
             data: salesData.values,
             backgroundColor: 'rgba(13, 110, 253, 0.2)',
             borderColor: 'rgba(13, 110, 253, 1)',
@@ -339,8 +410,7 @@
           // Add active class to clicked button
           this.classList.add('active');
           
-          // Update chart data (this would normally fetch new data from server)
-          // For demo purposes, we'll just simulate different data
+          // Update chart data
           fetch(`/admin/api/sales-data?period=${period}`)
             .then(response => response.json())
             .then(data => {
@@ -351,6 +421,198 @@
             .catch(error => console.error('Error fetching sales data:', error));
         });
       });
+      
+      // Dropdown period selector
+      const dropdownItems = document.querySelectorAll('.dropdown-item[data-period]');
+      dropdownItems.forEach(item => {
+        item.addEventListener('click', function(e) {
+          e.preventDefault();
+          const period = this.getAttribute('data-period');
+          
+          // Find and click the corresponding button
+          const button = document.querySelector(`.btn-group button[data-period="${period}"]`);
+          if (button) button.click();
+          
+          // Update dropdown button text
+          const dropdownButton = this.closest('.dropdown').querySelector('.dropdown-toggle');
+          if (dropdownButton) {
+            if (period === 'week') dropdownButton.innerHTML = '<i class="bi bi-calendar"></i> Tuần Này';
+            else if (period === 'month') dropdownButton.innerHTML = '<i class="bi bi-calendar"></i> Tháng Này';
+            else if (period === 'year') dropdownButton.innerHTML = '<i class="bi bi-calendar"></i> Năm Này';
+          }
+        });
+      });
+    });
+  </script>
+
+  </script>
+  
+  <!-- Log Detail Modal -->
+  <div class="modal fade" id="logDetailModal" tabindex="-1" aria-labelledby="logDetailModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="logDetailModalLabel">Chi Tiết Nhật Ký</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="row mb-3">
+            <div class="col-md-6">
+              <p><strong>Người Dùng:</strong> <span id="logUser"></span></p>
+              <p><strong>Hành Động:</strong> <span id="logAction" class="badge"></span></p>
+              <p><strong>Đối Tượng:</strong> <span id="logEntityType"></span> #<span id="logEntityId"></span></p>
+            </div>
+            <div class="col-md-6">
+              <p><strong>Thời Gian:</strong> <span id="logTimestamp"></span></p>
+              <p><strong>Địa Chỉ IP:</strong> <span id="logIp"></span></p>
+              <p><strong>ID Nhật Ký:</strong> <span id="logId"></span></p>
+            </div>
+          </div>
+          
+          <div class="mb-3">
+            <h6>Mô Tả:</h6>
+            <p id="logDescription" class="p-2 bg-light rounded"></p>
+          </div>
+          
+          <div id="diffContainer" class="mb-3 d-none">
+            <h6>Thay Đổi:</h6>
+            <div class="row">
+              <div class="col-md-6">
+                <h6 class="text-muted">Dữ Liệu Cũ</h6>
+                <div id="oldData" class="diff-view"></div>
+              </div>
+              <div class="col-md-6">
+                <h6 class="text-muted">Dữ Liệu Mới</h6>
+                <div id="newData" class="diff-view"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Log detail modal functionality
+    document.addEventListener('DOMContentLoaded', function() {
+      const logDetailModal = document.getElementById('logDetailModal');
+      if (logDetailModal) {
+        logDetailModal.addEventListener('show.bs.modal', function(event) {
+          const button = event.relatedTarget;
+          
+          // Extract log data from button attributes
+          const logId = button.getAttribute('data-log-id');
+          const logUser = button.getAttribute('data-log-user');
+          const logAction = button.getAttribute('data-log-action');
+          const logDescription = button.getAttribute('data-log-description');
+          const logEntityType = button.getAttribute('data-log-entity-type');
+          const logEntityId = button.getAttribute('data-log-entity-id');
+          const logTimestamp = button.getAttribute('data-log-timestamp');
+          const logIp = button.getAttribute('data-log-ip');
+          const logOldData = button.getAttribute('data-log-old-data');
+          const logNewData = button.getAttribute('data-log-new-data');
+          
+          // Update modal content
+          document.getElementById('logId').textContent = logId;
+          document.getElementById('logUser').textContent = logUser;
+          document.getElementById('logDescription').textContent = logDescription;
+          document.getElementById('logEntityType').textContent = logEntityType;
+          document.getElementById('logEntityId').textContent = logEntityId;
+          document.getElementById('logTimestamp').textContent = logTimestamp;
+          document.getElementById('logIp').textContent = logIp;
+          
+          // Set action badge color
+          const actionBadge = document.getElementById('logAction');
+          actionBadge.textContent = logAction;
+          actionBadge.className = 'badge';
+          
+          if (logAction === 'CREATE') {
+            actionBadge.classList.add('bg-success');
+          } else if (logAction === 'UPDATE') {
+            actionBadge.classList.add('bg-primary');
+          } else if (logAction === 'DELETE') {
+            actionBadge.classList.add('bg-danger');
+          } else if (logAction === 'LOGIN') {
+            actionBadge.classList.add('bg-info');
+          } else if (logAction === 'LOGOUT') {
+            actionBadge.classList.add('bg-warning');
+          } else {
+            actionBadge.classList.add('bg-secondary');
+          }
+          
+          // Show diff if old and new data exist
+          const diffContainer = document.getElementById('diffContainer');
+          const oldDataContainer = document.getElementById('oldData');
+          const newDataContainer = document.getElementById('newData');
+          
+          if (logOldData && logNewData) {
+            diffContainer.classList.remove('d-none');
+            
+            try {
+              const oldDataObj = JSON.parse(logOldData);
+              const newDataObj = JSON.parse(logNewData);
+              
+              oldDataContainer.innerHTML = formatJsonForDisplay(oldDataObj);
+              newDataContainer.innerHTML = formatJsonForDisplay(newDataObj);
+              
+              // Highlight differences
+              highlightDifferences(oldDataObj, newDataObj);
+            } catch (error) {
+              oldDataContainer.textContent = logOldData || 'Không có dữ liệu';
+              newDataContainer.textContent = logNewData || 'Không có dữ liệu';
+            }
+          } else {
+            diffContainer.classList.add('d-none');
+          }
+        });
+      }
+      
+      // Format JSON for display
+      function formatJsonForDisplay(obj) {
+        if (!obj) return 'Không có dữ liệu';
+        
+        let html = '';
+        for (const key in obj) {
+          if (Object.prototype.hasOwnProperty.call(obj, key)) {
+            const value = obj[key];
+            html += `<div data-key="${key}"><strong>${key}:</strong> ${value === null ? 'null' : value}</div>`;
+          }
+        }
+        return html;
+      }
+      
+      // Highlight differences between old and new data
+      function highlightDifferences(oldData, newData) {
+        if (!oldData || !newData) return;
+        
+        // Check old data keys
+        for (const key in oldData) {
+          if (Object.prototype.hasOwnProperty.call(oldData, key)) {
+            const oldValue = oldData[key];
+            const newValue = newData[key];
+            
+            // If values are different, highlight them
+            if (oldValue !== newValue) {
+              const oldElement = document.querySelector(`#oldData [data-key="${key}"]`);
+              const newElement = document.querySelector(`#newData [data-key="${key}"]`);
+              
+              if (oldElement) oldElement.classList.add('diff-removed');
+              if (newElement) newElement.classList.add('diff-added');
+            }
+          }
+        }
+        
+        // Check for new keys in new data
+        for (const key in newData) {
+          if (Object.prototype.hasOwnProperty.call(newData, key) && !Object.prototype.hasOwnProperty.call(oldData, key)) {
+            const newElement = document.querySelector(`#newData [data-key="${key}"]`);
+            if (newElement) newElement.classList.add('diff-added');
+          }
+        }
+      }
     });
   </script>
 </body>

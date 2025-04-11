@@ -6,8 +6,20 @@ const path = require('path');
 const bcrypt = require('bcrypt');
 const LocalStrategy = require('passport-local').Strategy;
 const db = require('./config/db');
+const sql = require('mssql');
 
 dotenv.config();
+
+const config = {
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  server: process.env.DB_SERVER,
+  database: process.env.DB_NAME,
+  options: {
+    encrypt: true,
+    trustServerCertificate: true
+  }
+};
 
 const app = express();
 
@@ -70,6 +82,22 @@ app.get('/api/categories', async (req, res) => {
     } catch (error) {
         console.error('Error fetching categories:', error);
         res.status(500).json({ error: 'Failed to fetch categories' });
+    }
+});
+
+// Add search products API endpoint
+app.get('/api/search', async (req, res) => {
+    try {
+        const searchTerm = req.query.q;
+        if (!searchTerm) {
+            return res.status(400).json({ error: 'Search term is required' });
+        }
+        
+        const products = await db.searchProducts(searchTerm);
+        res.json(products);
+    } catch (error) {
+        console.error('Error searching products:', error);
+        res.status(500).json({ error: 'Failed to search products' });
     }
 });
 
@@ -258,28 +286,112 @@ const isAdmin = (req, res, next) => {
 
 // Add these admin routes after your existing routes
 // Update the admin dashboard route to include the required data
+// Admin dashboard route
 app.get('/admin', isAdmin, async (req, res) => {
   try {
-    // Fetch dashboard statistics
-    const stats = await db.getDashboardStats();
+    // Get dashboard stats
+    const pool = await sql.connect(config);
     
-    // Fetch recent orders
-    const recentOrders = await db.getRecentOrders(5); // Get 5 most recent orders
+    // User stats
+    const userResult = await pool.request().query(`
+      SELECT COUNT(*) as userCount,
+      (SELECT COUNT(*) FROM TaiKhoan WHERE DATEDIFF(month, NgayTao, GETDATE()) = 0) as newUsers
+      FROM TaiKhoan
+    `);
     
-    // Fetch low stock products
-    const lowStockProducts = await db.getLowStockProducts(5); // Get 5 products with lowest stock
+    // Order stats
+    const orderResult = await pool.request().query(`
+      SELECT COUNT(*) as orderCount,
+      (SELECT COUNT(*) FROM DonHang WHERE TrangThai = 'ChoXuLy') as pendingOrders,
+      (SELECT SUM(cd.Gia * cd.SoLuong) FROM ChiTietDonHang cd) as totalRevenue,
+      (SELECT SUM(cd.Gia * cd.SoLuong) 
+       FROM ChiTietDonHang cd 
+       JOIN DonHang dh ON cd.IDDonHang = dh.IDDonHang 
+       WHERE DATEDIFF(month, dh.NgayDatHang, GETDATE()) = 0) as monthlyRevenue
+      FROM DonHang
+    `);
     
-    // Fetch sales data for chart (default to month period)
-    const salesData = await db.getSalesData('month');
+    // Product stats
+    const productResult = await pool.request().query(`
+      SELECT COUNT(*) as productCount,
+      (SELECT COUNT(*) FROM QuanLyKhoHang WHERE SoLuongTon < 10) as lowStockCount
+      FROM QuanLySanPham
+    `);
     
-    res.render('admin/dashboard', { 
-      user: req.user,
-      name: req.user.TenNguoiDung,
-      email: req.user.Email,
+    // Get recent orders
+    const recentOrdersResult = await pool.request().query(`
+      SELECT TOP 5 dh.IDDonHang, tk.TenNguoiDung as TenKhachHang, dh.NgayDatHang, 
+      (SELECT SUM(cd.Gia * cd.SoLuong) FROM ChiTietDonHang cd WHERE cd.IDDonHang = dh.IDDonHang) as TongTien, 
+      dh.TrangThai
+      FROM DonHang dh
+      JOIN TaiKhoan tk ON dh.IDTaiKhoan = tk.IDTaiKhoan
+      ORDER BY dh.NgayDatHang DESC
+    `);
+    
+    // Get low stock products
+    const lowStockResult = await pool.request().query(`
+      SELECT TOP 5 sp.IDSanPham, sp.TenSanPham, kh.SoLuongTon, sp.HinhAnhSanPham, dm.TenDanhMuc
+      FROM QuanLySanPham sp
+      JOIN QuanLyKhoHang kh ON sp.IDSanPham = kh.IDSanPham
+      LEFT JOIN QuanLyDanhMuc dm ON sp.IDDanhMuc = dm.IDDanhMuc
+      WHERE kh.SoLuongTon < 10
+      ORDER BY kh.SoLuongTon ASC
+    `);
+    
+    // Get sales data for chart
+    const salesDataResult = await pool.request().query(`
+      SELECT 
+        CONVERT(date, dh.NgayDatHang) as OrderDate,
+        SUM(cd.Gia * cd.SoLuong) as DailyRevenue
+      FROM DonHang dh
+      JOIN ChiTietDonHang cd ON dh.IDDonHang = cd.IDDonHang
+      WHERE DATEDIFF(day, dh.NgayDatHang, GETDATE()) <= 30
+      GROUP BY CONVERT(date, dh.NgayDatHang)
+      ORDER BY OrderDate
+    `);
+    
+        // Get recent audit logs
+        const auditLogsResult = await pool.request().query(`
+          SELECT TOP 5
+            a.IDAuditLog,
+            a.TenNguoiDung as userName,
+            a.HanhDong as action,
+            a.MoTa as description,
+            a.LoaiDoiTuong as entityType,
+            a.IDDoiTuong as entityId,
+            a.ThoiGian as timestamp,
+            a.DiaChiIP as ipAddress
+          FROM AuditLog a
+          ORDER BY a.ThoiGian DESC
+        `);
+    
+    // Format sales data for chart
+    const salesData = {
+      labels: salesDataResult.recordset.map(item => {
+        const date = new Date(item.OrderDate);
+        return date.toLocaleDateString('vi-VN');
+      }),
+      values: salesDataResult.recordset.map(item => item.DailyRevenue || 0)
+    };
+    
+    // Combine all stats
+    const stats = {
+      userCount: userResult.recordset[0].userCount || 0,
+      newUsers: userResult.recordset[0].newUsers || 0,
+      orderCount: orderResult.recordset[0].orderCount || 0,
+      pendingOrders: orderResult.recordset[0].pendingOrders || 0,
+      totalRevenue: orderResult.recordset[0].totalRevenue || 0,
+      monthlyRevenue: orderResult.recordset[0].monthlyRevenue || 0,
+      productCount: productResult.recordset[0].productCount || 0,
+      lowStockCount: productResult.recordset[0].lowStockCount || 0
+    };
+    
+    res.render('admin/dashboard', {
       stats,
-      recentOrders,
-      lowStockProducts,
-      salesData
+      recentOrders: recentOrdersResult.recordset,
+      lowStockProducts: lowStockResult.recordset,
+      salesData,
+      auditLogs: auditLogsResult.recordset // Add this line to pass audit logs to the template
     });
   } catch (error) {
     console.error('Error loading admin dashboard:', error);
@@ -288,6 +400,85 @@ app.get('/admin', isAdmin, async (req, res) => {
 });
 
 // Add these routes to your app.js file for product management
+
+// Admin routes - Audit Logs
+app.get('/admin/audit-logs', isAdmin, async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const search = req.query.search || '';
+    const action = req.query.action || '';
+    const entityType = req.query.entityType || '';
+    const dateFrom = req.query.dateFrom || '';
+    const dateTo = req.query.dateTo || '';
+    
+    // Create filters object for template
+    const filters = {
+      userId: req.query.userId || '',
+      action,
+      entityType,
+      startDate: dateFrom,
+      endDate: dateTo
+    };
+    
+    const result = await db.getAuditLogs({
+      page,
+      limit: 20,
+      search,
+      action,
+      entityType,
+      dateFrom,
+      dateTo
+    });
+    
+    // Helper function to determine badge class based on action
+    const getBadgeClass = (action) => {
+      switch(action.toLowerCase()) {
+        case 'create':
+          return 'bg-success';
+        case 'update':
+          return 'bg-primary';
+        case 'delete':
+          return 'bg-danger';
+        case 'login':
+          return 'bg-info';
+        case 'logout':
+          return 'bg-secondary';
+        default:
+          return 'bg-dark';
+      }
+    };
+    
+    // Helper function to format date
+    const formatDate = (dateString) => {
+      const options = { 
+        year: 'numeric', 
+        month: 'short', 
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
+      };
+      return new Date(dateString).toLocaleDateString('vi-VN', options);
+    };
+    
+    res.render('admin/audit-logs', {
+      logs: result.logs,
+      pagination: {
+        totalPages: result.pagination.totalPages,
+        page: page
+      },
+      filters,
+      getBadgeClass,
+      formatDate
+    });
+  } catch (error) {
+    console.error('Error fetching audit logs:', error);
+    res.status(500).render('error', { 
+      message: 'Failed to fetch audit logs',
+      error: error.message
+    });
+  }
+});
 
 // Admin routes - Product Management
 app.get('/admin/products', async (req, res) => {

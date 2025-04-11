@@ -128,6 +128,50 @@ router.get('/auth/google', (req, res, next) => {
   passport.authenticate('google', { scope: ['profile', 'email'] })(req, res, next);
 });
 
+router.get('/auth/google/callback', 
+  passport.authenticate('google', { failureRedirect: '/login' }),
+  async (req, res) => {
+    try {
+      // Check if user exists in database
+      const email = req.user.emails && req.user.emails[0] ? req.user.emails[0].value : null;
+      if (!email) {
+        return res.redirect('/login?error=Không thể lấy email từ tài khoản Google');
+      }
+      
+      let user = await db.getUserByEmail(email);
+      
+      // If user doesn't exist, create a new one
+      if (!user) {
+        const displayName = req.user.displayName || 'Google User';
+        const nameParts = displayName.split(' ');
+        const firstName = nameParts[0] || '';
+        const lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : '';
+        
+        user = await db.createUser({
+          firstName,
+          lastName,
+          email,
+          password: null, // No password for OAuth users
+          provider: 'google',
+          providerId: req.user.id
+        });
+      }
+      
+      // Set user in session
+      req.login(user, (err) => {
+        if (err) {
+          console.error('Login error after Google auth:', err);
+          return res.redirect('/login?error=Đăng nhập thất bại');
+        }
+        return res.redirect('/profile');
+      });
+    } catch (error) {
+      console.error('Google auth error:', error);
+      res.redirect('/login?error=Đăng nhập thất bại');
+    }
+  }
+);
+
 router.get('/auth/github', (req, res, next) => {
   // Check if user is already logged in
   if (req.isAuthenticated()) {
@@ -135,9 +179,52 @@ router.get('/auth/github', (req, res, next) => {
   }
   passport.authenticate('github')(req, res, next);
 });
-router.get('/auth/github/callback', passport.authenticate('github', { failureRedirect: '/login' }), (req, res) => {
-  res.redirect('/profile');
-});
+
+router.get('/auth/github/callback', 
+  passport.authenticate('github', { failureRedirect: '/login' }),
+  async (req, res) => {
+    try {
+      // Get email from GitHub profile
+      const email = req.user.emails && req.user.emails[0] ? req.user.emails[0].value : 
+                   (req.user._json && req.user._json.email ? req.user._json.email : null);
+      
+      if (!email) {
+        return res.redirect('/login?error=Không thể lấy email từ tài khoản GitHub');
+      }
+      
+      let user = await db.getUserByEmail(email);
+      
+      // If user doesn't exist, create a new one
+      if (!user) {
+        const displayName = req.user.displayName || req.user.username || 'GitHub User';
+        const nameParts = displayName.split(' ');
+        const firstName = nameParts[0] || '';
+        const lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : '';
+        
+        user = await db.createUser({
+          firstName,
+          lastName,
+          email,
+          password: null, // No password for OAuth users
+          provider: 'github',
+          providerId: req.user.id
+        });
+      }
+      
+      // Set user in session
+      req.login(user, (err) => {
+        if (err) {
+          console.error('Login error after GitHub auth:', err);
+          return res.redirect('/login?error=Đăng nhập thất bại');
+        }
+        return res.redirect('/profile');
+      });
+    } catch (error) {
+      console.error('GitHub auth error:', error);
+      res.redirect('/login?error=Đăng nhập thất bại');
+    }
+  }
+);
 
 // Authentication status check endpoint
 router.get('/auth/check', (req, res) => {

@@ -183,163 +183,216 @@
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
 }
 
-/* Related Products Section - Updated to match the image exactly */
+/* Related Products Section - Redesigned */
 .related-products-section {
-    margin-top: 50px;
+    margin-top: 60px;
     padding-top: 30px;
-    border-top: 1px solid #eee;
 }
 
-.row h3 {
+.section-header {
+    position: relative;
+    margin-bottom: 30px;
+    text-align: center;
+}
+
+.section-header h3 {
     font-weight: 700;
     color: #333;
-    margin-bottom: 1.5rem;
-    font-size: 1.5rem;
-    padding-bottom: 10px;
-    border-bottom: 1px solid #eee;
+    font-size: 1.8rem;
+    display: inline-block;
+    background: #fff;
+    padding: 0 20px;
+    position: relative;
+    z-index: 1;
 }
 
-/* Clean Card Design for Related Products - Updated to match image */
-#relatedProductsContainer .col-md-3 {
-    padding: 0 10px;
-    margin-bottom: 20px;
+.section-line {
+    height: 1px;
+    background-color: #e0e0e0;
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    z-index: 0;
 }
 
-#relatedProductsContainer .card {
-    border: none;
-    border-radius: 8px;
+/* Related Product Card */
+.related-product-card {
+    background-color: #fff;
+    border-radius: 10px;
     overflow: hidden;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
     transition: all 0.3s ease;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
     height: 100%;
     display: flex;
     flex-direction: column;
 }
 
-#relatedProductsContainer .card:hover {
+.related-product-card:hover {
     transform: translateY(-5px);
-    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.08);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
 }
 
-#relatedProductsContainer .card-img-container {
-    height: 180px;
+/* Product Image Container */
+.product-image {
+    height: 200px;
+    position: relative;
     overflow: hidden;
+    background-color: #f9f9f9;
     display: flex;
     align-items: center;
     justify-content: center;
-    background-color: #f9f9f9;
-    padding: 10px;
-    position: relative;
 }
 
-#relatedProductsContainer .card-img-top {
-    max-height: 100%;
-    max-width: 100%;
+.product-image img {
+    max-height: 85%;
+    max-width: 85%;
     object-fit: contain;
+    transition: transform 0.4s ease;
 }
 
-#relatedProductsContainer .card-body {
+.related-product-card:hover .product-image img {
+    transform: scale(1.08);
+}
+
+/* Product Overlay with Quick Add Button */
+.product-overlay {
+    position: absolute;
+    bottom: -50px;
+    left: 0;
+    right: 0;
+    background-color: rgba(255, 255, 255, 0.9);
+    padding: 10px;
+    display: flex;
+    justify-content: center;
+    transition: all 0.3s ease;
+}
+
+.related-product-card:hover .product-overlay {
+    bottom: 0;
+}
+
+.quick-add-btn {
+    background-color: #00a651;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.quick-add-btn:hover {
+    background-color: #008d45;
+    transform: scale(1.1);
+}
+
+.quick-add-btn i {
+    font-size: 1.2rem;
+}
+
+/* Product Info */
+.product-info {
     padding: 15px;
     display: flex;
     flex-direction: column;
     flex-grow: 1;
 }
 
-#relatedProductsContainer .card-title {
+.product-title {
     font-weight: 600;
     font-size: 1rem;
-    margin-bottom: 5px;
     color: #333;
+    margin-bottom: 10px;
     height: 40px;
     overflow: hidden;
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
+    transition: color 0.2s ease;
 }
 
-#relatedProductsContainer .card-unit {
+.related-product-card:hover .product-title {
+    color: #00a651;
+}
+
+.product-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.product-unit {
     color: #777;
     font-size: 0.85rem;
-    margin-bottom: 10px;
 }
 
-#relatedProductsContainer .card-price {
+.product-price {
     color: #00a651;
     font-weight: 700;
     font-size: 1.1rem;
-    margin-bottom: 15px;
-    margin-top: auto;
 }
 
-/* Button container for related products */
-#relatedProductsContainer .card-actions {
-    display: flex;
-    width: 100%;
-}
-
-#relatedProductsContainer .btn-view {
-    flex: 1;
-    border: none;
+/* View Details Button */
+.view-details-btn {
     background-color: #f8f8f8;
     color: #555;
+    text-align: center;
     padding: 8px 0;
-    font-size: 0.85rem;
+    border-radius: 5px;
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 0.9rem;
     transition: all 0.3s ease;
-    border-right: 1px solid #eee;
+    margin-top: auto;
+    border: 1px solid #eee;
+    display: block;
 }
 
-#relatedProductsContainer .btn-view:hover {
-    background-color: #f0f0f0;
-    color: #333;
-}
-
-#relatedProductsContainer .btn-add-cart {
-    flex: 1;
-    border: none;
-    background-color: #007bff;
+.view-details-btn:hover {
+    background-color: #00a651;
     color: white;
-    padding: 8px 0;
-    font-size: 0.85rem;
-    transition: all 0.3s ease;
-}
-
-#relatedProductsContainer .btn-add-cart:hover {
-    background-color: #0069d9;
-}
-
-/* Best Seller Badge */
-.bestseller-badge {
-    position: absolute;
-    top: 10px;
-    left: 10px;
-    background-color: #dc3545;
-    color: white;
-    padding: 3px 8px;
-    border-radius: 4px;
-    font-size: 0.7rem;
-    font-weight: 600;
-    z-index: 2;
+    border-color: #00a651;
 }
 
 /* Responsive Adjustments */
+@media (max-width: 992px) {
+    .product-image {
+        height: 180px;
+    }
+}
+
 @media (max-width: 768px) {
-    #relatedProductsContainer .card-img-container {
+    .product-image {
         height: 160px;
+    }
+    
+    .section-header h3 {
+        font-size: 1.5rem;
     }
 }
 
 @media (max-width: 576px) {
-    #relatedProductsContainer .col-md-3 {
-        width: 50%;
-        padding: 0 5px;
+    .related-product-card {
+        margin-bottom: 15px;
     }
     
-    #relatedProductsContainer .card-title {
+    .product-title {
         font-size: 0.9rem;
         height: 38px;
     }
     
-    #relatedProductsContainer .card-price {
+    .product-price {
         font-size: 1rem;
+    }
+    
+    .view-details-btn {
+        font-size: 0.8rem;
+        padding: 7px 0;
     }
 }

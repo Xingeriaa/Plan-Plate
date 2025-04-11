@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nhật Ký Hệ Thống - PlannPlate</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+  <link rel="icon" type="image/x-icon" href="/images/logo.png">
+  <style>
+    .sidebar {
+      min-height: calc(100vh - 56px);
+      background-color: #f8f9fa;
+    }
+    .audit-log-item {
+      border-left: 3px solid #6c757d;
+      padding-left: 10px;
+      margin-bottom: 10px;
+    }
+    .audit-log-item.CREATE {
+      border-left-color: #198754;
+    }
+    .audit-log-item.UPDATE {
+      border-left-color: #0d6efd;
+    }
+    .audit-log-item.DELETE {
+      border-left-color: #dc3545;
+    }
+    .audit-log-item.LOGIN {
+      border-left-color: #6610f2;
+    }
+    .audit-log-item.LOGOUT {
+      border-left-color: #fd7e14;
+    }
+    .diff-view {
+      background-color: #f8f9fa;
+      border-radius: 4px;
+      padding: 10px;
+      margin-top: 10px;
+      font-family: monospace;
+      white-space: pre-wrap;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+    .diff-added {
+      background-color: #d1e7dd;
+    }
+    .diff-removed {
+      background-color: #f8d7da;
+    }
+  </style>
+</head>
+<body>
+  <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <div class="container-fluid">
+      <a class="navbar-brand" href="/admin">PlannPlate Admin</a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav me-auto">
+          <li class="nav-item">
+            <a class="nav-link" href="/admin">Bảng Điều Khiển</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="/admin/users">Người Dùng</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="/admin/products">Sản Phẩm</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="/admin/orders">Đơn Hàng</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="/admin/categories">Danh Mục</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="/admin/reports">Báo Cáo</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link active" href="/admin/audit-logs">Nhật Ký Hệ Thống</a>
+          </li>
+        </ul>
+        <ul class="navbar-nav">
+          <li class="nav-item">
+            <a class="nav-link" href="/profile">Quay Lại Hồ Sơ</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="/logout">Đăng Xuất</a>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container-fluid">
+    <div class="row">
+      <div class="col-md-3 col-lg-2 d-md-block sidebar p-3">
+        <div class="list-group">
+          <a href="/admin" class="list-group-item list-group-item-action">Bảng Điều Khiển</a>
+          <a href="/admin/users" class="list-group-item list-group-item-action">Người Dùng</a>
+          <a href="/admin/products" class="list-group-item list-group-item-action">Sản Phẩm</a>
+          <a href="/admin/orders" class="list-group-item list-group-item-action">Đơn Hàng</a>
+          <a href="/admin/categories" class="list-group-item list-group-item-action">Danh Mục</a>
+          <a href="/admin/reports" class="list-group-item list-group-item-action">Báo Cáo</a>
+          <a href="/admin/audit-logs" class="list-group-item list-group-item-action active">Nhật Ký Hệ Thống</a>
+        </div>
+      </div>
+      <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 py-4">
+        <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+          <h1>Nhật Ký Hệ Thống</h1>
+          <div class="btn-toolbar mb-2 mb-md-0">
+            <a href="/admin/audit-logs/export<%= Object.keys(filters).length ? '?' + new URLSearchParams(filters).toString() : '' %>" class="btn btn-sm btn-outline-secondary me-2">
+              <i class="bi bi-download"></i> Xuất CSV
+            </a>
+            <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#filterModal">
+              <i class="bi bi-funnel"></i> Lọc
+            </button>
+          </div>
+        </div>
+        
+        <!-- Filter summary -->
+        <% if (Object.keys(filters).length > 0) { %>
+          <div class="alert alert-info d-flex align-items-center mb-4">
+            <i class="bi bi-info-circle me-2"></i>
+            <div>
+              Đang lọc theo: 
+              <% if (filters.userId) { %>
+                <span class="badge bg-primary me-1">ID Người Dùng: <%= filters.userId %></span>
+              <% } %>
+              <% if (filters.action) { %>
+                <span class="badge bg-primary me-1">Hành Động: <%= filters.action %></span>
+              <% } %>
+              <% if (filters.entityType) { %>
+                <span class="badge bg-primary me-1">Loại Đối Tượng: <%= filters.entityType %></span>
+              <% } %>
+              <% if (filters.startDate && filters.endDate) { %>
+                <span class="badge bg-primary me-1">Thời Gian: <%= new Date(filters.startDate).toLocaleDateString('vi-VN') %> - <%= new Date(filters.endDate).toLocaleDateString('vi-VN') %></span>
+              <% } %>
+              <a href="/admin/audit-logs" class="ms-2 text-decoration-none">Xóa bộ lọc</a>
+            </div>
+          </div>
+        <% } %>
+        
+        <!-- Audit Logs -->
+        <div class="card mb-4">
+          <div class="card-body p-0">
+            <div class="table-responsive">
+              <table class="table table-hover mb-0">
+                <thead class="table-light">
+                  <tr>
+                    <th>ID</th>
+                    <th>Người Dùng</th>
+                    <th>Hành Động</th>
+                    <th>Mô Tả</th>
+                    <th>Đối Tượng</th>
+                    <th>Thời Gian</th>
+                    <th>Địa Chỉ IP</th>
+                    <th>Chi Tiết</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <% if (logs && logs.length > 0) { %>
+                    <% logs.forEach(log => { %>
+                      <tr>
+                        <td><%= log.IDAuditLog %></td>
+                        <td><%= log.user %></td>
+                        <td>
+                          <% if (log.action === 'CREATE') { %>
+                            <span class="badge bg-success">Tạo Mới</span>
+                          <% } else if (log.action === 'UPDATE') { %>
+                            <span class="badge bg-primary">Cập Nhật</span>
+                          <% } else if (log.action === 'DELETE') { %>
+                            <span class="badge bg-danger">Xóa</span>
+                          <% } else if (log.action === 'LOGIN') { %>
+                            <span class="badge bg-info">Đăng Nhập</span>
+                          <% } else if (log.action === 'LOGOUT') { %>
+                            <span class="badge bg-warning">Đăng Xuất</span>
+                          <% } else { %>
+                            <span class="badge bg-secondary"><%= log.action %></span>
+                          <% } %>
+                        </td>
+                        <td><%= log.description %></td>
+                        <td>
+                          <% if (log.entityType === 'Product') { %>
+                            <span class="badge bg-info">Sản Phẩm #<%= log.entityId %></span>
+                          <% } else if (log.entityType === 'Order') { %>
+                            <span class="badge bg-warning">Đơn Hàng #<%= log.entityId %></span>
+                          <% } else if (log.entityType === 'User') { %>
+                            <span class="badge bg-primary">Người Dùng #<%= log.entityId %></span>
+                          <% } else if (log.entityType === 'Category') { %>
+                            <span class="badge bg-success">Danh Mục #<%= log.entityId %></span>
+                          <% } else { %>
+                            <span class="badge bg-secondary"><%= log.entityType %> #<%= log.entityId %></span>
+                          <% } %>
+                        </td>
+                        <td><%= new Date(log.timestamp).toLocaleString('vi-VN') %></td>
+                        <td><%= log.ipAddress %></td>
+                        <td>
+                          <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#logDetailModal" 
+                                  data-log-id="<%= log.IDAuditLog %>"
+                                  data-log-user="<%= log.user %>"
+                                  data-log-action="<%= log.action %>"
+                                  data-log-description="<%= log.description %>"
+                                  data-log-entity-type="<%= log.entityType %>"
+                                  data-log-entity-id="<%= log.entityId %>"
+                                  data-log-timestamp="<%= new Date(log.timestamp).toLocaleString('vi-VN') %>"
+                                  data-log-ip="<%= log.ipAddress %>"
+                                  data-log-old-data="<%= log.oldData %>"
+                                  data-log-new-data="<%= log.newData %>">
+                            <i class="bi bi-eye"></i>
+                          </button>
+                        </td>
+                      </tr>
+                    <% }); %>
+                  <% } else { %>
+                    <tr>
+                      <td colspan="8" class="text-center py-4">Không có nhật ký nào được tìm thấy</td>
+                    </tr>
+                  <% } %>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          
+          <!-- Pagination -->
+          <% if (pagination.totalPages > 1) { %>
+            <div class="card-footer">
+              <nav aria-label="Page navigation">
+                <ul class="pagination justify-content-center mb-0">
+                  <li class="page-item <%= pagination.page === 1 ? 'disabled' : '' %>">
+                    <a class="page-link" href="/admin/audit-logs?page=<%= pagination.page - 1 %><%= Object.keys(filters).length ? '&' + new URLSearchParams(filters).toString() : '' %>" aria-label="Previous">
+                      <span aria-hidden="true">&laquo;</span>
+                    </a>
+                  </li>
+                  
+                  <% 
+                    let startPage = Math.max(1, pagination.page - 2);
+                    let endPage = Math.min(pagination.totalPages, startPage + 4);
+                    if (endPage - startPage < 4) {
+                      startPage = Math.max(1, endPage - 4);
+                    }
+                  %>
+                  
+                  <% if (startPage > 1) { %>
+                    <li class="page-item">
+                      <a class="page-link" href="/admin/audit-logs?page=1<%= Object.keys(filters).length ? '&' + new URLSearchParams(filters).toString() : '' %>">1</a>
+                    </li>
+                    <% if (startPage > 2) { %>
+                      <li class="page-item disabled">
+                        <a class="page-link" href="#">...</a>
+                      </li>
+                    <% } %>
+                  <% } %>
+                  
+                  <% for (let i = startPage; i <= endPage; i++) { %>
+                    <li class="page-item <%= pagination.page === i ? 'active' : '' %>">
+                      <a class="page-link" href="/admin/audit-logs?page=<%= i %><%= Object.keys(filters).length ? '&' + new URLSearchParams(filters).toString() : '' %>"><%= i %></a>
+                    </li>
+                  <% } %>
+                  
+                  <% if (endPage < pagination.totalPages) { %>
+                    <% if (endPage < pagination.totalPages - 1) { %>
+                      <li class="page-item disabled">
+                        <a class="page-link" href="#">...</a>
+                      </li>
+                    <% } %>
+                    <li class="page-item">
+                      <a class="page-link" href="/admin/audit-logs?page=<%= pagination.totalPages %><%= Object.keys(filters).length ? '&' + new URLSearchParams(filters).toString() : '' %>"><%= pagination.totalPages %></a>
+                    </li>
+                  <% } %>
+                  
+                  <li class="page-item <%= pagination.page === pagination.totalPages ? 'disabled' : '' %>">
+                    <a class="page-link" href="/admin/audit-logs?page=<%= pagination.page + 1 %><%= Object.keys(filters).length ? '&' + new URLSearchParams(filters).toString() : '' %>" aria-label="Next">
+                      <span aria-hidden="true">&raquo;</span>
+                    </a>
+                  </li>
+                </ul>
+              </nav>
+            </div>
+          <% } %>
+        </div>
+      </main>
+    </div>
+  </div>
+  
+  <!-- Filter Modal -->
+  <div class="modal fade" id="filterModal" tabindex="-1" aria-labelledby="filterModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="filterModalLabel">Lọc Nhật Ký</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <form id="filterForm" action="/admin/audit-logs" method="GET">
+            <div class="mb-3">
+              <label for="userId" class="form-label">ID Người Dùng</label>
+              <input type="number" class="form-control" id="userId" name="userId" value="<%= filters.userId || '' %>">
+            </div>
+            <div class="mb-3">
+              <label for="action" class="form-label">Hành Động</label>
+              <select class="form-select" id="action" name="action">
+                <option value="">Tất Cả</option>
+                <option value="CREATE" <%= filters.action === 'CREATE' ? 'selected' : '' %>>Tạo Mới</option>
+                <option value="UPDATE" <%= filters.action === 'UPDATE' ? 'selected' : '' %>>Cập Nhật</option>
+                <option value="DELETE" <%= filters.action === 'DELETE' ? 'selected' : '' %>>Xóa</option>
+                <option value="LOGIN" <%= filters.action === 'LOGIN' ? 'selected' : '' %>>Đăng Nhập</option>
+                <option value="LOGOUT" <%= filters.action === 'LOGOUT' ? 'selected' : '' %>>Đăng Xuất</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label for="entityType" class="form-label">Loại Đối Tượng</label>
+              <select class="form-select" id="entityType" name="entityType">
+                <option value="">Tất Cả</option>
+                <option value="Product" <%= filters.entityType === 'Product' ? 'selected' : '' %>>Sản Phẩm</option>
+                <option value="Order" <%= filters.entityType === 'Order' ? 'selected' : '' %>>Đơn Hàng</option>
+                <option value="User" <%= filters.entityType === 'User' ? 'selected' : '' %>>Người Dùng</option>
+                <option value="Category" <%= filters.entityType === 'Category' ? 'selected' : '' %>>Danh Mục</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label for="dateRange" class="form-label">Khoảng Thời Gian</label>
+              <input type="text" class="form-control" id="dateRange" name="dateRange" placeholder="Chọn khoảng thời gian">
+              <input type="hidden" id="startDate" name="startDate" value="<%= filters.startDate || '' %>">
+              <input type="hidden" id="endDate" name="endDate" value="<%= filters.endDate || '' %>">
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+          <button type="button" class="btn btn-primary" onclick="document.getElementById('filterForm').submit()">Áp Dụng</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Log Detail Modal -->
+  <div class="modal fade" id="logDetailModal" tabindex="-1" aria-labelledby="logDetailModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="logDetailModalLabel">Chi Tiết Nhật Ký</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="row mb-3">
+            <div class="col-md-6">
+              <p><strong>Người Dùng:</strong> <span id="logUser"></span></p>
+              <p><strong>Hành Động:</strong> <span id="logAction" class="badge"></span></p>
+              <p><strong>Đối Tượng:</strong> <span id="logEntityType"></span> #<span id="logEntityId"></span></p>
+            </div>
+            <div class="col-md-6">
+              <p><strong>Thời Gian:</strong> <span id="logTimestamp"></span></p>
+              <p><strong>Địa Chỉ IP:</strong> <span id="logIp"></span></p>
+              <p><strong>ID Nhật Ký:</strong> <span id="logId"></span></p>
+            </div>
+          </div>
+          
+          <div class="mb-3">
+            <h6>Mô Tả:</h6>
+            <p id="logDescription" class="p-2 bg-light rounded"></p>
+          </div>
+          
+          <div id="diffContainer" class="mb-3 d-none">
+            <h6>Thay Đổi:</h6>
+            <div class="row">
+              <div class="col-md-6">
+                <h6 class="text-muted">Dữ Liệu Cũ</h6>
+                <div id="oldData" class="diff-view"></div>
+              </div>
+              <div class="col-md-6">
+                <h6 class="text-muted">Dữ Liệu Mới</h6>
+                <div id="newData" class="diff-view"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bootstrap and other scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/vn.js"></script>
+  
+  <script>
+    // Initialize date range picker
+    document.addEventListener('DOMContentLoaded', function() {
+      // Date range picker initialization
+      const dateRangePicker = flatpickr("#dateRange", {
+        mode: "range",
+        dateFormat: "Y-m-d",
+        locale: "vn",
+        allowInput: true,
+        altInput: true,
+        altFormat: "d/m/Y",
+        maxDate: "today",
+        onChange: function(selectedDates, dateStr, instance) {
+          if (selectedDates.length === 2) {
+            document.getElementById('startDate').value = selectedDates[0].toISOString().split('T')[0];
+            document.getElementById('endDate').value = selectedDates[1].toISOString().split('T')[0];
+          }
+        }
+      });
+      
+      // Set initial date range if available
+      const startDate = document.getElementById('startDate').value;
+      const endDate = document.getElementById('endDate').value;
+      
+      if (startDate && endDate) {
+        dateRangePicker.setDate([startDate, endDate]);
+      }
+      
+      // Log detail modal functionality
+      const logDetailModal = document.getElementById('logDetailModal');
+      if (logDetailModal) {
+        logDetailModal.addEventListener('show.bs.modal', function(event) {
+          const button = event.relatedTarget;
+          
+          // Extract log data from button attributes
+          const logId = button.getAttribute('data-log-id');
+          const logUser = button.getAttribute('data-log-user');
+          const logAction = button.getAttribute('data-log-action');
+          const logDescription = button.getAttribute('data-log-description');
+          const logEntityType = button.getAttribute('data-log-entity-type');
+          const logEntityId = button.getAttribute('data-log-entity-id');
+          const logTimestamp = button.getAttribute('data-log-timestamp');
+          const logIp = button.getAttribute('data-log-ip');
+          const logOldData = button.getAttribute('data-log-old-data');
+          const logNewData = button.getAttribute('data-log-new-data');
+          
+          // Update modal content
+          document.getElementById('logId').textContent = logId;
+          document.getElementById('logUser').textContent = logUser;
+          document.getElementById('logDescription').textContent = logDescription;
+          document.getElementById('logEntityType').textContent = logEntityType;
+          document.getElementById('logEntityId').textContent = logEntityId;
+          document.getElementById('logTimestamp').textContent = logTimestamp;
+          document.getElementById('logIp').textContent = logIp;
+          
+          // Set action badge color
+          const actionBadge = document.getElementById('logAction');
+          actionBadge.textContent = logAction;
+          actionBadge.className = 'badge';
+          
+          if (logAction === 'CREATE') {
+            actionBadge.classList.add('bg-success');
+          } else if (logAction === 'UPDATE') {
+            actionBadge.classList.add('bg-primary');
+          } else if (logAction === 'DELETE') {
+            actionBadge.classList.add('bg-danger');
+          } else if (logAction === 'LOGIN') {
+            actionBadge.classList.add('bg-info');
+          } else if (logAction === 'LOGOUT') {
+            actionBadge.classList.add('bg-warning');
+          } else {
+            actionBadge.classList.add('bg-secondary');
+          }
+          
+          // Show diff if old and new data exist
+          const diffContainer = document.getElementById('diffContainer');
+          const oldDataContainer = document.getElementById('oldData');
+          const newDataContainer = document.getElementById('newData');
+          
+          if (logOldData || logNewData) {
+            diffContainer.classList.remove('d-none');
+            
+            try {
+              const oldDataObj = logOldData ? JSON.parse(logOldData) : null;
+              const newDataObj = logNewData ? JSON.parse(logNewData) : null;
+              
+              oldDataContainer.innerHTML = formatJsonForDisplay(oldDataObj);
+              newDataContainer.innerHTML = formatJsonForDisplay(newDataObj);
+              
+              // Highlight differences
+              highlightDifferences(oldDataObj, newDataObj);
+            } catch (error) {
+              console.error('Error parsing JSON data:', error);
+              oldDataContainer.textContent = logOldData || 'Không có dữ liệu';
+              newDataContainer.textContent = logNewData || 'Không có dữ liệu';
+            }
+          } else {
+            diffContainer.classList.add('d-none');
+          }
+        });
+      }
+    });
+    
+    // Format JSON for display
+    function formatJsonForDisplay(obj) {
+      if (!obj) return '<em>Không có dữ liệu</em>';
+      
+      let html = '';
+      for (const key in obj) {
+        if (Object.prototype.hasOwnProperty.call(obj, key)) {
+          const value = obj[key];
+          const displayValue = value === null ? 'null' : 
+                              typeof value === 'object' ? JSON.stringify(value) : value;
+          html += `<div data-key="${key}"><strong>${key}:</strong> ${displayValue}</div>`;
+        }
+      }
+      return html || '<em>Không có dữ liệu</em>';
+    }
+    
+    // Highlight differences between old and new data
+    function highlightDifferences(oldData, newData) {
+      if (!oldData && !newData) return;
+      
+      if (oldData && newData) {
+        // Check old data keys
+        for (const key in oldData) {
+          if (Object.prototype.hasOwnProperty.call(oldData, key)) {
+            const oldValue = oldData[key];
+            const newValue = newData[key];
+            
+            // If values are different, highlight them
+            if (JSON.stringify(oldValue) !== JSON.stringify(newValue)) {
+              const oldElement = document.querySelector(`#oldData [data-key="${key}"]`);
+              const newElement = document.querySelector(`#newData [data-key="${key}"]`);
+              
+              if (oldElement) oldElement.classList.add('diff-removed');
+              if (newElement) newElement.classList.add('diff-added');
+            }
+          }
+        }
+        
+        // Check for new keys in new data
+        for (const key in newData) {
+          if (Object.prototype.hasOwnProperty.call(newData, key) && !Object.prototype.hasOwnProperty.call(oldData, key)) {
+            const newElement = document.querySelector(`#newData [data-key="${key}"]`);
+            if (newElement) newElement.classList.add('diff-added');
+          }
+        }
+        
+        // Check for deleted keys
+        for (const key in oldData) {
+          if (Object.prototype.hasOwnProperty.call(oldData, key) && !Object.prototype.hasOwnProperty.call(newData, key)) {
+            const oldElement = document.querySelector(`#oldData [data-key="${key}"]`);
+            if (oldElement) oldElement.classList.add('diff-removed');
+          }
+        }
+      } else if (oldData) {
+        // If only old data exists (deletion)
+        for (const key in oldData) {
+          if (Object.prototype.hasOwnProperty.call(oldData, key)) {
+            const oldElement = document.querySelector(`#oldData [data-key="${key}"]`);
+            if (oldElement) oldElement.classList.add('diff-removed');
+          }
+        }
+      } else if (newData) {
+        // If only new data exists (creation)
+        for (const key in newData) {
+          if (Object.prototype.hasOwnProperty.call(newData, key)) {
+            const newElement = document.querySelector(`#newData [data-key="${key}"]`);
+            if (newElement) newElement.classList.add('diff-added');
+          }
+        }
+      }
+    }
+  </script>
+</body>
+</html>

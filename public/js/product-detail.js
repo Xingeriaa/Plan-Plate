@@ -103,7 +103,7 @@ function updateProductUI(product) {
     const stockQuantity = document.getElementById('stockQuantity');
     
     if (product.SoLuongTon > 0) {
-        stockStatus.textContent = 'In Stock';
+        stockStatus.textContent = 'Còn hàng';
         stockStatus.className = 'badge bg-success';
         stockQuantity.textContent = `Available: ${product.SoLuongTon}`;
         stockQuantity.setAttribute('data-stock', product.SoLuongTon);
@@ -112,7 +112,7 @@ function updateProductUI(product) {
         document.getElementById('addToCartBtn').disabled = false;
         document.getElementById('buyNowBtn').disabled = false;
     } else {
-        stockStatus.textContent = 'Out of Stock';
+        stockStatus.textContent = 'Hết hàng';
         stockStatus.className = 'badge bg-danger';
         stockQuantity.textContent = 'Not available';
         stockQuantity.setAttribute('data-stock', 0);
@@ -155,33 +155,34 @@ function displayRelatedProducts(products) {
     const container = document.getElementById('relatedProductsContainer');
     
     if (!products || products.length === 0) {
-        container.innerHTML = '<div class="col-12"><p class="text-muted">No related products found</p></div>';
+        container.innerHTML = '<div class="col-12"><p class="text-muted">Không tìm thấy sản phẩm liên quan</p></div>';
         return;
     }
     
     let html = '';
     
     products.forEach(product => {
-        // Only show bestseller badge on some products
-        const showBestsellerBadge = Math.random() > 0.5; // Randomly show badge for demo
+        // Format price with Vietnamese locale
+        const formattedPrice = product.Gia.toLocaleString('vi-VN');
         
         html += `
-            <div class="col-md-3 col-sm-6">
-                <div class="card h-100">
-                    <div class="position-relative">
-                        ${showBestsellerBadge ? '<div class="bestseller-badge">Best Seller</div>' : ''}
-                        <div class="card-img-container">
-                            <img src="${product.HinhAnhSanPham}" class="card-img-top" alt="${product.TenSanPham}">
+            <div class="col-md-3 col-sm-6 mb-4">
+                <div class="related-product-card">
+                    <div class="product-image">
+                        <img src="${product.HinhAnhSanPham}" alt="${product.TenSanPham}">
+                        <div class="product-overlay">
+                            <button class="quick-add-btn" onclick="addToCart('${product.IDSanPham}', 1)">
+                                <i class="bi bi-cart-plus"></i>
+                            </button>
                         </div>
                     </div>
-                    <div class="card-body">
-                        <h5 class="card-title">${product.TenSanPham}</h5>
-                        <div class="card-unit">${product.DonViBan || ''}</div>
-                        <div class="card-price">₫${product.Gia.toLocaleString('vi-VN')}</div>
-                    </div>
-                    <div class="card-actions">
-                        <a href="/product-detail.html?id=${product.IDSanPham}" class="btn btn-view">View</a>
-                        <button class="btn btn-add-cart" onclick="addToCart('${product.IDSanPham}', 1)">Add to Cart</button>
+                    <div class="product-info">
+                        <h5 class="product-title">${product.TenSanPham}</h5>
+                        <div class="product-meta">
+                            <span class="product-unit">${product.DonViBan || ''}</span>
+                            <span class="product-price">₫${formattedPrice}</span>
+                        </div>
+                        <a href="/product-detail.html?id=${product.IDSanPham}" class="view-details-btn">Xem chi tiết</a>
                     </div>
                 </div>
             </div>

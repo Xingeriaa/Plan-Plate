@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PlannPlate - Organic Ingredients</title>
+    <title>PlannPlate - Nguyên Liệu Hữu Cơ</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="css/styles.css" rel="stylesheet">
     <link href="css/animations.css" rel="stylesheet">
@@ -11,6 +11,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="/js/search.js"></script>
+    <link rel="icon" type="image/x-icon" href="/images/logo.png">
 </head>
 <body>
 
@@ -23,14 +25,14 @@
             </div>
 
             <div class="flex-grow-1 mx-3 position-relative">
-                <input type="text" class="form-control" id="searchInput" placeholder="What are you looking for?">
+                <input type="text" class="form-control" id="searchInput" placeholder="Bạn đang tìm gì?">
                 <div id="searchResults" class="search-results d-none position-absolute w-100 mt-1"></div>
             </div>
 
             <div class="d-flex align-items-center">
-                <a href="#" class="btn btn-outline-primary me-3" id="accountBtn">My Account</a>
+                <a href="#" class="btn btn-outline-primary me-3" id="accountBtn">Tài Khoản</a>
                 <a href="#" class="btn btn-outline-primary position-relative" id="cartBtn">
-                    Cart
+                    Giỏ Hàng
                     <span class="badge bg-danger position-absolute top-0 start-100 translate-middle p-1 badge-circle" id="cartCount">0</span>
                 </a>
             </div>
@@ -39,12 +41,12 @@
 <div class="account-sidebar" id="accountSidebar">
     <div class="account-sidebar-content">
         <div class="account-header">
-            <h2>MY ACCOUNT</h2>
+            <h2>TÀI KHOẢN CỦA TÔI</h2>
             <button class="close-btn" id="closeSidebarBtn">&times;</button>
         </div>
         <div class="account-body">
-            <a href="/login" class="btn btn-primary w-100 mb-3">LOGIN</a>
-            <a href="#" class="return-link" id="returnToStoreBtn">RETURN TO STORE</a>
+            <a href="/login" class="btn btn-primary w-100 mb-3">ĐĂNG NHẬP</a>
+            <a href="#" class="return-link" id="returnToStoreBtn">TRỞ LẠI CỬA HÀNG</a>
         </div>
     </div>
     <div class="sidebar-overlay" id="accountSidebarOverlay"></div>
@@ -53,7 +55,7 @@
 <div class="cart-sidebar" id="cartSidebar">
     <div class="cart-sidebar-content">
         <div class="cart-header">
-            <h2>VIEW CART</h2>
+            <h2>XEM GIỎ HÀNG</h2>
             <button class="close-btn" id="closeCartBtn">&times;</button>
         </div>
         <div class="cart-body" id="cartItems">
@@ -61,29 +63,29 @@
         <div class="cart-footer">
             <div class="cart-summary">
                 <div class="d-flex justify-content-between mb-2">
-                    <span>Subtotal</span>
+                    <span>Tạm tính</span>
                     <span id="cartSubtotal">₫0</span>
                 </div>
                 <div class="d-flex justify-content-between mb-2">
-                    <span>Tax <small>(calculated in checkout)</small></span>
+                    <span>Thuế <small>(tính khi thanh toán)</small></span>
                     <span>-</span>
                 </div>
                 <div class="d-flex justify-content-between mb-3">
-                    <span>Shipping</span>
+                    <span>Phí vận chuyển</span>
                     <span>-</span>
                 </div>
                 <div class="shipping-note mb-3">
-                    <small>Taxes, shipping and promotions calculated in checkout.</small>
+                    <small>Thuế, phí vận chuyển và khuyến mãi được tính khi thanh toán.</small>
                 </div>
                 <div class="mb-3">
-                    <label for="cartNotes" class="form-label">Delivery note or comments (Optional)</label>
+                    <label for="cartNotes" class="form-label">Ghi chú giao hàng (Tùy chọn)</label>
                     <textarea class="form-control" id="cartNotes" rows="3"></textarea>
                 </div>
                 <div class="d-flex justify-content-between mb-3">
-                    <span><strong>Estimated Total</strong></span>
+                    <span><strong>Tổng dự tính</strong></span>
                     <span id="cartTotal"><strong>₫0</strong></span>
                 </div>
-                <button class="btn btn-primary" id="checkoutBtn">CHECKOUT</button>
+                <button class="btn btn-primary" id="checkoutBtn">THANH TOÁN</button>
             </div>
         </div>
     </div>
@@ -93,17 +95,17 @@
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav mx-auto">
                     <li class="nav-item">
-                        <a class="nav-link" href="about.html">About Us</a>
+                        <a class="nav-link" href="about.html">Về Chúng Tôi</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="faq.html">FAQ</a>
+                        <a class="nav-link" href="faq.html">Câu Hỏi Thường Gặp</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="/product-listing.html">All Products</a>
+                        <a class="nav-link" href="/product-listing.html">Tất Cả Sản Phẩm</a>
                     </li>
                     <!-- Update the bestsellers link in the navigation -->
                     <li class="nav-item">
-                        <a class="nav-link" href="/bestsellers">Bestsellers</a>
+                        <a class="nav-link" href="/bestsellers">Bán Chạy Nhất</a>
                     </li>
                 </ul>
             </div>
@@ -121,97 +123,26 @@
         </div>
         <div class="carousel-inner">
             <div class="carousel-item active">
-                <img src="https://www.omfoods.com/cdn/shop/files/Banner_NEW.jpg?v=1681412890" class="d-block w-100" alt="Organic Foods">
+                <img src="https://www.omfoods.com/cdn/shop/files/Banner_NEW.jpg?v=1681412890" class="d-block w-100" alt="Thực Phẩm Hữu Cơ">
             </div>
             <div class="carousel-item">
-                <img src="https://www.omfoods.com/cdn/shop/files/OMFOODS_ORGANIC.jpg?v=1681412890" class="d-block w-100" alt="Organic Foods">
+                <img src="https://www.omfoods.com/cdn/shop/files/OMFOODS_ORGANIC.jpg?v=1681412890" class="d-block w-100" alt="Thực Phẩm Hữu Cơ">
             </div>
             <div class="carousel-item">
-                <img src="https://www.omfoods.com/cdn/shop/files/SALE_PRODUCTS_OM_FOODS.jpg?v=1681412890" class="d-block w-100" alt="Organic Foods">
+                <img src="https://www.omfoods.com/cdn/shop/files/SALE_PRODUCTS_OM_FOODS.jpg?v=1681412890" class="d-block w-100" alt="Thực Phẩm Hữu Cơ">
             </div>
             <div class="carousel-item">
-                <img src="https://www.omfoods.com/cdn/shop/files/OMFOODS_ORGANIC_INGREDIENTS.jpg?v=1681412891" class="d-block w-100 " alt="Organic Foods">
+                <img src="https://www.omfoods.com/cdn/shop/files/OMFOODS_ORGANIC_INGREDIENTS.jpg?v=1681412891" class="d-block w-100 " alt="Thực Phẩm Hữu Cơ">
             </div>
         </div>
         <button class="carousel-control-prev" type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide="prev">
             <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-            <span class="visually-hidden">Previous</span>
+            <span class="visually-hidden">Trước</span>
         </button>
         <button class="carousel-control-next" type="button" data-bs-target="#carouselExampleIndicators" data-bs-slide="next">
             <span class="carousel-control-next-icon" aria-hidden="true"></span>
-            <span class="visually-hidden">Next</span>
+            <span class="visually-hidden">Tiếp</span>
         </button>
-    </div>
-</section>
-
-<div class="section-divider"></div>
-
-<!-- Replace the static product cards with this dynamic version -->
-<!-- After the carousel section and before the products section -->
-<section class="banner-section mt-5 fade-in">
-    <div class="container">
-        <div class="row">
-            <div class="col-12">
-                <div class="banner p-4 rounded" style="background-color: #f8f9fa; border-left: 5px solid #28a745;">
-                    <div class="row align-items-center">
-                        <div class="col-md-8">
-                            <h3 class="mb-3">Fresh Organic Ingredients Delivered to Your Door</h3>
-                            <p class="mb-3">Discover our premium selection of organic, sustainably sourced ingredients. From farm to table, we ensure quality in every product.</p>
-                            <ul class="list-unstyled mb-0">
-                                <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i> 100% Organic Certified</li>
-                                <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i> Free Shipping on Orders Over $50</li>
-                                <li><i class="bi bi-check-circle-fill text-success me-2"></i> Sustainable Packaging</li>
-                            </ul>
-                        </div>
-                        <div class="col-md-4 text-center text-md-end mt-3 mt-md-0">
-                            <a href="/product-listing.html" class="btn btn-success btn-lg">Shop Now</a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</section>
-
-<!-- Add featured categories section before the main categories -->
-<section class="featured-section mt-5 slide-in">
-    <div class="container">
-        <h2 class="text-center mb-4" style="font-weight: bold;">Featured Categories</h2>
-        <div class="row g-4">
-            <div class="col-md-4">
-                <div class="card h-100 border-0 shadow-sm">
-                    <span class="organic-badge">100% Organic</span>
-                    <div class="card-body text-center">
-                        <i class="bi bi-flower1 text-success" style="font-size: 3rem;"></i>
-                        <h4 class="mt-3">Organic Herbs</h4>
-                        <p class="text-muted">Fresh and dried herbs to enhance your cooking</p>
-                        <a href="/product-listing.html?category=1" class="btn btn-outline-success">Explore</a>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="card h-100 border-0 shadow-sm">
-                    <span class="organic-badge">100% Organic</span>
-                    <div class="card-body text-center">
-                        <i class="bi bi-droplet-fill text-success" style="font-size: 3rem;"></i>
-                        <h4 class="mt-3">Essential Oils</h4>
-                        <p class="text-muted">Pure, natural oils for cooking and aromatherapy</p>
-                        <a href="/product-listing.html?category=2" class="btn btn-outline-success">Explore</a>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="card h-100 border-0 shadow-sm">
-                    <span class="organic-badge">100% Organic</span>
-                    <div class="card-body text-center">
-                        <i class="bi bi-basket2-fill text-success" style="font-size: 3rem;"></i>
-                        <h4 class="mt-3">Organic Grains</h4>
-                        <p class="text-muted">Wholesome grains for nutritious meals</p>
-                        <a href="/product-listing.html?category=3" class="btn btn-outline-success">Explore</a>
-                    </div>
-                </div>
-            </div>
-        </div>
     </div>
 </section>
 
@@ -220,8 +151,8 @@
 <!-- Update the products section title to be more descriptive -->
 <section class="products-section mt-5 fade-in">
     <div class="container">
-        <h2 class="text-center" style="font-weight: bold;">Browse All Categories</h2>
-        <p class="text-center text-muted mb-4">Explore our wide range of organic ingredients for your healthy lifestyle</p>
+        <h2 class="text-center" style="font-weight: bold;">Khám Phá Tất Cả Danh Mục</h2>
+        <p class="text-center text-muted mb-4">Khám phá đa dạng nguyên liệu hữu cơ cho lối sống lành mạnh của bạn</p>
         <div class="row" id="categoriesContainer">
             <!-- Categories will be loaded dynamically here -->
         </div>
@@ -230,70 +161,24 @@
 
 <div class="section-divider"></div>
 
-<!-- Add testimonials section before the footer -->
-<section class="testimonials-section mt-5 py-5 slide-in" style="background-color: #f8f9fa;">
+<!-- Moved banner section below products section -->
+<section class="banner-section mt-5 fade-in">
     <div class="container">
-        <h2 class="text-center mb-4" style="font-weight: bold;">What Our Customers Say</h2>
         <div class="row">
-            <div class="col-md-4 mb-4">
-                <div class="card h-100 border-0 shadow-sm">
-                    <div class="card-body">
-                        <div class="d-flex mb-3">
-                            <i class="bi bi-star-fill text-warning me-1"></i>
-                            <i class="bi bi-star-fill text-warning me-1"></i>
-                            <i class="bi bi-star-fill text-warning me-1"></i>
-                            <i class="bi bi-star-fill text-warning me-1"></i>
-                            <i class="bi bi-star-fill text-warning"></i>
+            <div class="col-12">
+                <div class="banner p-4 rounded" style="background-color: #f8f9fa; border-left: 5px solid #28a745;">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <h3 class="mb-3">Nguyên Liệu Hữu Cơ Tươi Ngon Giao Tận Nhà</h3>
+                            <p class="mb-3">Khám phá bộ sưu tập nguyên liệu hữu cơ cao cấp, được cung cấp bền vững. Từ trang trại đến bàn ăn, chúng tôi đảm bảo chất lượng trong mọi sản phẩm.</p>
+                            <ul class="list-unstyled mb-0">
+                                <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i> 100% Chứng Nhận Hữu Cơ</li>
+                                <li class="mb-2"><i class="bi bi-check-circle-fill text-success me-2"></i> Miễn Phí Vận Chuyển Cho Đơn Hàng Trên 1.000.000₫</li>
+                                <li><i class="bi bi-check-circle-fill text-success me-2"></i> Đóng Gói Bền Vững</li>
+                            </ul>
                         </div>
-                        <p class="card-text">"The quality of ingredients from PlannPlate is exceptional. My family loves the organic flour for our weekend baking sessions!"</p>
-                        <div class="d-flex align-items-center mt-3">
-                            <div class="rounded-circle bg-success text-white d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">JD</div>
-                            <div class="ms-3">
-                                <h6 class="mb-0">Jane Doe</h6>
-                                <small class="text-muted">Loyal Customer</small>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-4 mb-4">
-                <div class="card h-100 border-0 shadow-sm">
-                    <div class="card-body">
-                        <div class="d-flex mb-3">
-                            <i class="bi bi-star-fill text-warning me-1"></i>
-                            <i class="bi bi-star-fill text-warning me-1"></i>
-                            <i class="bi bi-star-fill text-warning me-1"></i>
-                            <i class="bi bi-star-fill text-warning me-1"></i>
-                            <i class="bi bi-star-fill text-warning"></i>
-                        </div>
-                        <p class="card-text">"Fast delivery and sustainable packaging. I appreciate a company that cares about the environment as much as the quality of their products."</p>
-                        <div class="d-flex align-items-center mt-3">
-                            <div class="rounded-circle bg-success text-white d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">JS</div>
-                            <div class="ms-3">
-                                <h6 class="mb-0">John Smith</h6>
-                                <small class="text-muted">New Customer</small>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-4 mb-4">
-                <div class="card h-100 border-0 shadow-sm">
-                    <div class="card-body">
-                        <div class="d-flex mb-3">
-                            <i class="bi bi-star-fill text-warning me-1"></i>
-                            <i class="bi bi-star-fill text-warning me-1"></i>
-                            <i class="bi bi-star-fill text-warning me-1"></i>
-                            <i class="bi bi-star-fill text-warning me-1"></i>
-                            <i class="bi bi-star-half text-warning"></i>
-                        </div>
-                        <p class="card-text">"The variety of organic spices is impressive. I've completely transformed my cooking since discovering PlannPlate's selection."</p>
-                        <div class="d-flex align-items-center mt-3">
-                            <div class="rounded-circle bg-success text-white d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">AL</div>
-                            <div class="ms-3">
-                                <h6 class="mb-0">Amy Lee</h6>
-                                <small class="text-muted">Food Blogger</small>
-                            </div>
+                        <div class="col-md-4 text-center text-md-end mt-3 mt-md-0">
+                            <a href="/product-listing.html" class="btn btn-success btn-lg">Mua Ngay</a>
                         </div>
                     </div>
                 </div>
@@ -366,9 +251,9 @@
             cartItemsContainer.innerHTML = '';
             
             if (cartItems.length === 0) {
-                cartItemsContainer.innerHTML = '<p class="text-center my-5">Your cart is empty</p>';
-                cartSubtotal.textContent = '$0.00';
-                cartTotal.textContent = '$0.00';
+                cartItemsContainer.innerHTML = '<p class="text-center my-5">Giỏ hàng của bạn đang trống</p>';
+                cartSubtotal.textContent = '₫0';
+                cartTotal.textContent = '₫0';
                 return;
             }
             
@@ -389,22 +274,22 @@
                     </div>
                     <div class="cart-item-details">
                         <div class="cart-item-name">${item.name}</div>
-                        <div class="cart-item-type">Type</div>
-                        <div class="cart-item-total">Total: ${item.price}</div>
+                        <div class="cart-item-type">Loại</div>
+                        <div class="cart-item-total">Tổng: ${item.price}</div>
                         <div class="cart-item-quantity">
                             <button class="quantity-btn minus-btn" data-index="${index}">-</button>
                             <input type="text" class="quantity-input" value="${item.quantity}" readonly>
                             <button class="quantity-btn plus-btn" data-index="${index}">+</button>
                         </div>
-                        <a href="#" class="cart-item-remove" data-index="${index}">Remove</a>
+                        <a href="#" class="cart-item-remove" data-index="${index}">Xóa</a>
                     </div>
                 `;
                 
                 cartItemsContainer.appendChild(cartItemElement);
             });
             
-            cartSubtotal.textContent = '$' + subtotal.toFixed(2);
-            cartTotal.textContent = '$' + subtotal.toFixed(2);
+            cartSubtotal.textContent = '₫' + subtotal.toFixed(2);
+            cartTotal.textContent = '₫' + subtotal.toFixed(2);
 
             document.querySelectorAll('.minus-btn').forEach(btn => {
                 btn.addEventListener('click', function() {
@@ -474,9 +359,9 @@
         
         checkoutBtn.addEventListener('click', function() {
             if (cartItems.length === 0) {
-                alert('Your cart is empty');
+                alert('Giỏ hàng của bạn đang trống');
             } else {
-                alert('Proceeding to checkout...');
+                alert('Đang chuyển đến thanh toán...');
             }
         });
         
@@ -509,7 +394,7 @@
             }
             
             // Show loading indicator
-            searchResults.innerHTML = '<div class="text-center py-2"><div class="spinner-border spinner-border-sm text-primary" role="status"></div> Searching...</div>';
+            searchResults.innerHTML = '<div class="text-center py-2"><div class="spinner-border spinner-border-sm text-primary" role="status"></div> Đang tìm kiếm...</div>';
             searchResults.classList.remove('d-none');
             
             // Set a timeout to delay the search request (debouncing)
@@ -534,7 +419,7 @@
             fetch(`/api/search?q=${encodeURIComponent(query)}`)
                 .then(response => {
                     if (!response.ok) {
-                        throw new Error('Search request failed');
+                        throw new Error('Yêu cầu tìm kiếm thất bại');
                     }
                     return response.json();
                 })
@@ -544,8 +429,8 @@
                     displaySearchResults(products);
                 })
                 .catch(error => {
-                    console.error('Search error:', error);
-                    searchResults.innerHTML = '<div class="no-results p-3">Error searching products. Please try again.</div>';
+                    console.error('Lỗi tìm kiếm:', error);
+                    searchResults.innerHTML = '<div class="no-results p-3">Lỗi khi tìm kiếm sản phẩm. Vui lòng thử lại.</div>';
                 });
         }
         
@@ -553,11 +438,11 @@
             searchResults.innerHTML = '';
             
             if (products.length === 0) {
-                searchResults.innerHTML = '<div class="no-results p-3">No products found</div>';
+                searchResults.innerHTML = '<div class="no-results">Không tìm thấy sản phẩm nào</div>';
                 return;
             }
             
-            // Display search results
+            // Display search results with enhanced UI
             products.forEach(product => {
                 const resultItem = document.createElement('div');
                 resultItem.className = 'search-result-item';
@@ -570,20 +455,47 @@
                         <div class="search-result-img">
                             <img src="${product.HinhAnhSanPham || 'images/placeholder.png'}" alt="${product.TenSanPham}" onerror="this.src='images/placeholder.png'">
                         </div>
-                        <div class="ms-3">
+                        <div class="ms-3 flex-grow-1">
                             <div class="product-name">${product.TenSanPham}</div>
+                            <span class="product-category">${product.TenDanhMuc || 'Sản phẩm'}</span>
                             <div class="product-price">${formattedPrice}₫</div>
+                        </div>
+                        <div class="ms-2">
+                            <i class="bi bi-arrow-right text-muted"></i>
                         </div>
                     </div>
                 `;
                 
                 resultItem.addEventListener('click', function() {
-                    window.location.href = `/product/${product.IDSanPham}`;
+                    window.location.href = `/product.html?id=${product.IDSanPham}`;
                 });
                 
                 searchResults.appendChild(resultItem);
             });
         }
+        
+        // Show loading indicator when searching
+        searchInput.addEventListener('input', function() {
+            const query = this.value.trim();
+            
+            // Clear any existing timeout
+            clearTimeout(searchTimeout);
+            
+            // Hide results if query is too short
+            if (query.length < 3) {
+                searchResults.classList.add('d-none');
+                return;
+            }
+            
+            // Show loading indicator
+            searchResults.innerHTML = '<div class="search-loading"><div class="spinner-border spinner-border-sm text-success me-2" role="status"></div> Đang tìm kiếm...</div>';
+            searchResults.classList.remove('d-none');
+            
+            // Set a timeout to delay the search request (debouncing)
+            searchTimeout = setTimeout(() => {
+                searchProducts(query);
+            }, 300); // Wait 300ms after user stops typing
+        });
         
         document.addEventListener('click', function(e) {
             if (!searchInput.contains(e.target) && !searchResults.contains(e.target)) {
@@ -599,7 +511,7 @@
             fetch('/api/categories')
                 .then(response => {
                     if (!response.ok) {
-                        throw new Error('Network response was not ok');
+                        throw new Error('Phản hồi mạng không thành công');
                     }
                     return response.json();
                 })
@@ -608,7 +520,7 @@
                     categoriesContainer.innerHTML = '';
                     
                     if (categories.length === 0) {
-                        categoriesContainer.innerHTML = '<div class="col-12 text-center"><p>No categories found</p></div>';
+                        categoriesContainer.innerHTML = '<div class="col-12 text-center"><p>Không tìm thấy danh mục nào</p></div>';
                         return;
                     }
                     
@@ -638,7 +550,7 @@
                                         <img src="${category.HinhAnhSanPham}" class="card-img-top" alt="${category.TenDanhMuc}">
                                         <div class="card-body">
                                             <h5 class="card-title">${category.TenDanhMuc.toUpperCase()}</h5>
-                                            <p class="card-text">${productCount} PRODUCTS</p>
+                                            <p class="card-text">${productCount} SẢN PHẨM</p>
                                         </div>
                                     </div>
                                 `;
@@ -660,9 +572,9 @@
                         });
                 })
                 .catch(error => {
-                    console.error('Error loading categories:', error);
+                    console.error('Lỗi khi tải danh mục:', error);
                     document.getElementById('categoriesContainer').innerHTML = 
-                        '<div class="col-12 text-center"><p>Failed to load categories. Please try again later.</p></div>';
+                        '<div class="col-12 text-center"><p>Không thể tải danh mục. Vui lòng thử lại sau.</p></div>';
                 });
         }
         
@@ -679,32 +591,32 @@
         <div class="row">
             <div class="col-md-4 mb-3">
                 <h5>PlannPlate</h5>
-                <p>Your source for premium organic ingredients and healthy food products.</p>
+                <p>Nguồn cung cấp nguyên liệu hữu cơ cao cấp và các sản phẩm thực phẩm lành mạnh.</p>
             </div>
             <div class="col-md-2 mb-3">
-                <h5>Shop</h5>
+                <h5>Mua Sắm</h5>
                 <ul class="list-unstyled">
-                    <li><a href="#" class="text-decoration-none">All Products</a></li>
-                    <li><a href="#" class="text-decoration-none">Bestsellers</a></li>
-                    <li><a href="#" class="text-decoration-none">New Arrivals</a></li>
-                    <li><a href="#" class="text-decoration-none">Sale</a></li>
+                    <li><a href="#" class="text-decoration-none">Tất Cả Sản Phẩm</a></li>
+                    <li><a href="#" class="text-decoration-none">Bán Chạy Nhất</a></li>
+                    <li><a href="#" class="text-decoration-none">Hàng Mới Về</a></li>
+                    <li><a href="#" class="text-decoration-none">Khuyến Mãi</a></li>
                 </ul>
             </div>
             <div class="col-md-2 mb-3">
-                <h5>About</h5>
+                <h5>Giới Thiệu</h5>
                 <ul class="list-unstyled">
-                    <li><a href="about.html" class="text-decoration-none">Our Story</a></li>
+                    <li><a href="about.html" class="text-decoration-none">Câu Chuyện Của Chúng Tôi</a></li>
                     <li><a href="#" class="text-decoration-none">Blog</a></li>
-                    <li><a href="faq.html" class="text-decoration-none">FAQ</a></li>
-                    <li><a href="#" class="text-decoration-none">Contact</a></li>
+                    <li><a href="faq.html" class="text-decoration-none">Câu Hỏi Thường Gặp</a></li>
+                    <li><a href="#" class="text-decoration-none">Liên Hệ</a></li>
                 </ul>
             </div>
             <div class="col-md-4 mb-3">
-                <h5>Stay Connected</h5>
-                <p>Subscribe to our newsletter for updates and promotions.</p>
+                <h5>Giữ Liên Lạc</h5>
+                <p>Đăng ký nhận bản tin của chúng tôi để cập nhật thông tin và khuyến mãi.</p>
                 <div class="input-group mb-3">
-                    <input type="email" class="form-control" placeholder="Your email" aria-label="Your email">
-                    <button class="btn btn-primary" type="button">Subscribe</button>
+                    <input type="email" class="form-control" placeholder="Email của bạn" aria-label="Email của bạn">
+                    <button class="btn btn-primary" type="button">Đăng Ký</button>
                 </div>
                 <div class="social-icons">
                     <a href="#" class="me-2"><i class="bi bi-facebook"></i></a>
@@ -717,12 +629,11 @@
         <hr>
         <div class="row">
             <div class="col-md-6">
-                <p class="mb-0">&copy; 2023 PlannPlate. All rights reserved.</p>
-            </div>
+                <p class="mb-0">&copy; 2023 PlannPlate. Tất cả quyền được bảo lưu.</p>
             <div class="col-md-6 text-md-end">
-                <a href="#" class="text-decoration-none me-3">Privacy Policy</a>
-                <a href="#" class="text-decoration-none me-3">Terms of Service</a>
-                <a href="#" class="text-decoration-none">Shipping Policy</a>
+                <a href="#" class="text-decoration-none me-3">Chính Sách Bảo Mật</a>
+                <a href="#" class="text-decoration-none me-3">Điều Khoản Dịch Vụ</a>
+                <a href="#" class="text-decoration-none">Chính Sách Vận Chuyển</a>
             </div>
         </div>
     </div>
@@ -730,3 +641,5 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.min.js"></script>
+</body>
+</html>

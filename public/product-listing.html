@@ -1,13 +1,14 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PlannPlate - Product Listing</title>
+    <title>PlannPlate - Danh Sách Sản Phẩm</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="css/styles.css" rel="stylesheet">
     <link href="css/product-listing.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <link rel="icon" type="image/x-icon" href="/images/logo.png">
 </head>
 <body>
 
@@ -20,14 +21,14 @@
             </div>
 
             <div class="flex-grow-1 mx-3 position-relative">
-                <input type="text" class="form-control" id="searchInput" placeholder="What are you looking for?">
+                <input type="text" class="form-control" id="searchInput" placeholder="Bạn đang tìm gì?">
                 <div id="searchResults" class="search-results d-none position-absolute w-100 mt-1"></div>
             </div>
 
             <div class="d-flex align-items-center">
-                <a href="#" class="btn btn-outline-primary me-3" id="accountBtn">My Account</a>
+                <a href="#" class="btn btn-outline-primary me-3" id="accountBtn">Tài Khoản</a>
                 <a href="#" class="btn btn-outline-primary position-relative" id="cartBtn">
-                    Cart
+                    Giỏ Hàng
                     <span class="badge bg-danger position-absolute top-0 start-100 translate-middle p-1 badge-circle" id="cartCount">0</span>
                 </a>
             </div>
@@ -36,51 +37,53 @@
 <div class="account-sidebar" id="accountSidebar">
     <div class="account-sidebar-content">
         <div class="account-header">
-            <h2>MY ACCOUNT</h2>
+            <h2>TÀI KHOẢN CỦA TÔI</h2>
             <button class="close-btn" id="closeSidebarBtn">&times;</button>
         </div>
         <div class="account-body">
-            <a href="/login" class="btn btn-primary w-100 mb-3">LOGIN</a>
-            <a href="#" class="return-link" id="returnToStoreBtn">RETURN TO STORE</a>
+            <a href="/login" class="btn btn-primary w-100 mb-3">ĐĂNG NHẬP</a>
+            <a href="#" class="return-link" id="returnToStoreBtn">TRỞ LẠI CỬA HÀNG</a>
         </div>
     </div>
     <div class="sidebar-overlay" id="accountSidebarOverlay"></div>
 </div>
 
+<!-- Remove these elements -->
 <div class="cart-sidebar" id="cartSidebar">
     <div class="cart-sidebar-content">
         <div class="cart-header">
-            <h2>VIEW CART</h2>
+            <h2>XEM GIỎ HÀNG</h2>
             <button class="close-btn" id="closeCartBtn">&times;</button>
         </div>
         <div class="cart-body" id="cartItems">
+            <!-- Cart items will be rendered here -->
         </div>
         <div class="cart-footer">
             <div class="cart-summary">
                 <div class="d-flex justify-content-between mb-2">
-                    <span>Subtotal</span>
+                    <span>Tạm tính</span>
                     <span id="cartSubtotal">₫0</span>
                 </div>
                 <div class="d-flex justify-content-between mb-2">
-                    <span>Tax <small>(calculated in checkout)</small></span>
+                    <span>Thuế <small>(tính khi thanh toán)</small></span>
                     <span>-</span>
                 </div>
                 <div class="d-flex justify-content-between mb-3">
-                    <span>Shipping</span>
+                    <span>Phí vận chuyển</span>
                     <span>-</span>
                 </div>
                 <div class="shipping-note mb-3">
-                    <small>Taxes, shipping and promotions calculated in checkout.</small>
+                    <small>Thuế, phí vận chuyển và khuyến mãi được tính khi thanh toán.</small>
                 </div>
                 <div class="mb-3">
-                    <label for="cartNotes" class="form-label">Delivery note or comments (Optional)</label>
+                    <label for="cartNotes" class="form-label">Ghi chú giao hàng (Tùy chọn)</label>
                     <textarea class="form-control" id="cartNotes" rows="3"></textarea>
                 </div>
                 <div class="d-flex justify-content-between mb-3">
-                    <span><strong>Estimated Total</strong></span>
+                    <span><strong>Tổng dự tính</strong></span>
                     <span id="cartTotal"><strong>₫0</strong></span>
                 </div>
-                <button class="btn btn-primary" id="checkoutBtn">CHECKOUT</button>
+                <button class="btn btn-success w-100" id="checkoutBtn">THANH TOÁN</button>
             </div>
         </div>
     </div>
@@ -90,16 +93,16 @@
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav mx-auto">
                     <li class="nav-item">
-                        <a class="nav-link" href="about.html">About Us</a>
+                        <a class="nav-link" href="about.html">Về Chúng Tôi</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="faq.html">FAQ</a>
+                        <a class="nav-link" href="faq.html">Câu Hỏi Thường Gặp</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="/product-listing.html">All Products</a>
+                        <a class="nav-link" href="/product-listing.html">Tất Cả Sản Phẩm</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="/product-listing.html?category=bestsellers">Bestsellers</a>
+                        <a class="nav-link" href="/bestsellers">Bán Chạy Nhất</a>
                     </li>
                 </ul>
             </div>
@@ -110,8 +113,8 @@
 <div class="container mt-4">
     <nav aria-label="breadcrumb">
         <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a href="/">Home</a></li>
-            <li class="breadcrumb-item active" id="categoryBreadcrumb">All Products</li>
+            <li class="breadcrumb-item"><a href="/">Trang Chủ</a></li>
+            <li class="breadcrumb-item active" id="categoryBreadcrumb">Tất Cả Sản Phẩm</li>
         </ol>
     </nav>
     
@@ -119,10 +122,10 @@
         <!-- Category Sidebar -->
         <div class="col-lg-3 mb-4">
             <div class="category-sidebar">
-                <h4 class="mb-3">SHOP BY CATEGORY</h4>
+                <h4 class="mb-3">DANH MỤC SẢN PHẨM</h4>
                 <div id="categoryList">
                     <div class="category-item active" data-category-id="all">
-                        All (<span id="allProductCount">0</span>)
+                        Tất Cả (<span id="allProductCount">0</span>)
                     </div>
                     <!-- Categories will be loaded dynamically here -->
                 </div>
@@ -133,15 +136,15 @@
         <div class="col-lg-9">
             <div class="filter-section d-flex justify-content-between align-items-center mb-4">
                 <div>
-                    <span id="productCount">0</span> products
+                    <span id="productCount">0</span> sản phẩm
                 </div>
                 <div class="d-flex align-items-center">
-                    <label for="sortSelect" class="me-2">Sort by:</label>
+                    <label for="sortSelect" class="me-2">Sắp xếp theo:</label>
                     <select id="sortSelect" class="form-select form-select-sm" style="width: auto;">
-                        <option value="name-asc">Name (A-Z)</option>
-                        <option value="name-desc">Name (Z-A)</option>
-                        <option value="price-asc">Price (Low to High)</option>
-                        <option value="price-desc">Price (High to Low)</option>
+                        <option value="name-asc">Tên (A-Z)</option>
+                        <option value="name-desc">Tên (Z-A)</option>
+                        <option value="price-asc">Giá (Thấp đến Cao)</option>
+                        <option value="price-desc">Giá (Cao đến Thấp)</option>
                     </select>
                 </div>
             </div>
@@ -167,32 +170,32 @@
         <div class="row">
             <div class="col-md-4 mb-3">
                 <h5>PlannPlate</h5>
-                <p>Your source for premium organic ingredients and healthy food products.</p>
+                <p>Nguồn cung cấp nguyên liệu hữu cơ cao cấp và các sản phẩm thực phẩm lành mạnh.</p>
             </div>
             <div class="col-md-2 mb-3">
-                <h5>Shop</h5>
+                <h5>Mua Sắm</h5>
                 <ul class="list-unstyled">
-                    <li><a href="#" class="text-decoration-none">All Products</a></li>
-                    <li><a href="#" class="text-decoration-none">Bestsellers</a></li>
-                    <li><a href="#" class="text-decoration-none">New Arrivals</a></li>
-                    <li><a href="#" class="text-decoration-none">Sale</a></li>
+                    <li><a href="#" class="text-decoration-none">Tất Cả Sản Phẩm</a></li>
+                    <li><a href="#" class="text-decoration-none">Bán Chạy Nhất</a></li>
+                    <li><a href="#" class="text-decoration-none">Hàng Mới Về</a></li>
+                    <li><a href="#" class="text-decoration-none">Khuyến Mãi</a></li>
                 </ul>
             </div>
             <div class="col-md-2 mb-3">
-                <h5>About</h5>
+                <h5>Giới Thiệu</h5>
                 <ul class="list-unstyled">
-                    <li><a href="about.html" class="text-decoration-none">Our Story</a></li>
+                    <li><a href="about.html" class="text-decoration-none">Câu Chuyện Của Chúng Tôi</a></li>
                     <li><a href="#" class="text-decoration-none">Blog</a></li>
-                    <li><a href="faq.html" class="text-decoration-none">FAQ</a></li>
-                    <li><a href="#" class="text-decoration-none">Contact</a></li>
+                    <li><a href="faq.html" class="text-decoration-none">Câu Hỏi Thường Gặp</a></li>
+                    <li><a href="#" class="text-decoration-none">Liên Hệ</a></li>
                 </ul>
             </div>
             <div class="col-md-4 mb-3">
-                <h5>Stay Connected</h5>
-                <p>Subscribe to our newsletter for updates and promotions.</p>
+                <h5>Kết Nối</h5>
+                <p>Đăng ký nhận bản tin của chúng tôi để cập nhật thông tin và khuyến mãi.</p>
                 <div class="input-group mb-3">
-                    <input type="email" class="form-control" placeholder="Your email" aria-label="Your email">
-                    <button class="btn btn-primary" type="button">Subscribe</button>
+                    <input type="email" class="form-control" placeholder="Email của bạn" aria-label="Email của bạn">
+                    <button class="btn btn-primary" type="button">Đăng Ký</button>
                 </div>
                 <div class="social-icons">
                     <a href="#" class="me-2"><i class="bi bi-facebook"></i></a>
@@ -205,12 +208,12 @@
         <hr>
         <div class="row">
             <div class="col-md-6">
-                <p class="mb-0">&copy; 2023 PlannPlate. All rights reserved.</p>
+                <p class="mb-0">&copy; 2023 PlannPlate. Tất cả quyền được bảo lưu.</p>
             </div>
             <div class="col-md-6 text-md-end">
-                <a href="#" class="text-decoration-none me-3">Privacy Policy</a>
-                <a href="#" class="text-decoration-none me-3">Terms of Service</a>
-                <a href="#" class="text-decoration-none">Shipping Policy</a>
+                <a href="#" class="text-decoration-none me-3">Chính Sách Bảo Mật</a>
+                <a href="#" class="text-decoration-none me-3">Điều Khoản Dịch Vụ</a>
+                <a href="#" class="text-decoration-none">Chính Sách Vận Chuyển</a>
             </div>
         </div>
     </div>

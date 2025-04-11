@@ -1,10 +1,175 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PlannPlate - Sign Up</title>
+  <title>PlannPlate - Đăng Ký</title>
   <link rel="stylesheet" href="/css/signup.css">
+  <link rel="icon" type="image/x-icon" href="/images/logo.png">
+  <style>
+    body {
+      background-image: url('https://img.freepik.com/free-photo/top-view-circular-food-frame_23-2148723455.jpg?semt=ais_hybrid&w=740');
+      background-size: cover;
+      background-position: center;
+      background-attachment: fixed;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    
+    .signup-container {
+      background-color: rgba(255, 255, 255, 0.95);
+      border-radius: 15px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+      padding: 40px;
+      max-width: 450px;
+      width: 90%;
+      margin: 60px auto;
+    }
+    
+    .logo-container {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    
+    .logo {
+      width: 80px;
+      height: auto;
+      margin-bottom: 10px;
+    }
+    
+    h1 {
+      font-size: 2rem;
+      color: #333;
+      margin-bottom: 0.5rem;
+    }
+    
+    .signup-form {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      margin-bottom: 25px;
+    }
+    
+    .name-fields {
+      display: flex;
+      gap: 15px;
+      width: 100%;
+    }
+    
+    .name-fields input {
+      width: 50%;
+    }
+    
+    input {
+      width: 100%;
+      padding: 12px 15px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      font-size: 16px;
+      transition: border-color 0.3s;
+    }
+    
+    input:focus {
+      border-color: #4CAF50;
+      outline: none;
+    }
+    
+    .btn-signup {
+      width: 100%;
+      padding: 12px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background-color 0.3s;
+      margin-top: 10px;
+    }
+    
+    .btn-signup:hover {
+      background-color: #45a049;
+    }
+    
+    .social-login {
+      display: flex;
+      justify-content: center;
+      margin: 25px 0;
+    }
+    
+    .social-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      margin: 0 10px;
+      transition: transform 0.3s;
+    }
+    
+    .social-btn:hover {
+      transform: scale(1.1);
+    }
+    
+    .github {
+      background-color: #333;
+    }
+    
+    .google {
+      background-color: #DB4437;
+    }
+    
+    .social-btn svg {
+      fill: white;
+      width: 24px;
+      height: 24px;
+    }
+    
+    .login-link {
+      text-align: center;
+      margin-top: 20px;
+      font-size: 14px;
+      color: #666;
+    }
+    
+    .login-link a {
+      color: #4CAF50;
+      text-decoration: none;
+      font-weight: bold;
+    }
+    
+    .login-link a:hover {
+      text-decoration: underline;
+    }
+    
+    .error-message {
+      background-color: #ffebee;
+      color: #d32f2f;
+      padding: 10px;
+      border-radius: 5px;
+      margin: 15px 0;
+      text-align: center;
+      font-size: 14px;
+    }
+    
+    /* Responsive adjustments */
+    @media (max-width: 480px) {
+      .signup-container {
+        padding: 30px;
+      }
+      
+      .name-fields {
+        flex-direction: column;
+        gap: 15px;
+      }
+      
+      .name-fields input {
+        width: 100%;
+      }
+    }
+  </style>
 </head>
 <body>
   <div class="signup-container">
@@ -27,19 +192,25 @@
             window.location.href = '/profile';
           }
         })
-        .catch(error => console.error('Authentication check failed:', error));
+        .catch(error => console.error('Kiểm tra xác thực thất bại:', error));
       })();
     </script>
     
+    <% if (locals.error) { %>
+    <div class="error-message">
+      <%= error %>
+    </div>
+    <% } %>
+    
     <form class="signup-form" action="/signup" method="POST">
       <div class="name-fields">
-        <input type="text" name="firstName" placeholder="First name" required>
-        <input type="text" name="lastName" placeholder="Last name" required>
+        <input type="text" name="firstName" placeholder="Tên" required>
+        <input type="text" name="lastName" placeholder="Họ" required>
       </div>
-      <input type="email" name="email" placeholder="E-mail" required>
-      <input type="password" name="password" placeholder="Password" required>
-      <input type="password" name="confirmPassword" placeholder="Confirm Password" required>
-      <button type="submit" class="btn-signup">SIGN UP</button>
+      <input type="email" name="email" placeholder="Email" required>
+      <input type="password" name="password" placeholder="Mật khẩu" required>
+      <input type="password" name="confirmPassword" placeholder="Xác nhận mật khẩu" required>
+      <button type="submit" class="btn-signup">ĐĂNG KÝ</button>
     </form>
     
     <div class="social-login">
@@ -51,7 +222,7 @@
       </a>
     </div>
     
-    <p class="login-link">Already have an account? <a href="/login">Log in</a></p>
+    <p class="login-link">Bạn đã có tài khoản? <a href="/login">Đăng nhập</a></p>
   </div>
 </body>
 </html>

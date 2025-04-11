@@ -1,10 +1,158 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PlannPlate - Profile</title>
+  <title>PlannPlate - Hồ Sơ</title>
   <link rel="stylesheet" href="/css/profile.css">
+  <link rel="icon" type="image/x-icon" href="/images/logo.png">
+  <style>
+    body {
+      background-image: url('/images/food-background.jpg');
+      background-size: cover;
+      background-position: center;
+      background-attachment: fixed;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+      padding: 0;
+    }
+    
+    .profile-container {
+      background-color: rgba(255, 255, 255, 0.95);
+      border-radius: 15px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+      padding: 40px;
+      max-width: 500px;
+      width: 90%;
+      margin: 80px auto;
+    }
+    
+    .logo-container {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    
+    .logo {
+      width: 80px;
+      height: auto;
+      margin-bottom: 10px;
+    }
+    
+    h1 {
+      font-size: 2rem;
+      color: #333;
+      margin-bottom: 0.5rem;
+    }
+    
+    .profile-info {
+      width: 100%;
+      padding: 20px;
+      border: 1px solid #eee;
+      border-radius: 8px;
+      margin-bottom: 30px;
+      background-color: #fff;
+    }
+    
+    .profile-info h2 {
+      font-size: 1.5rem;
+      color: #333;
+      margin-bottom: 20px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid #eee;
+    }
+    
+    .profile-info p {
+      font-size: 1rem;
+      color: #555;
+      margin-bottom: 15px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .profile-info p:last-child {
+      margin-bottom: 0;
+    }
+    
+    .profile-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      width: 100%;
+    }
+    
+    .btn {
+      padding: 12px;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: bold;
+      text-align: center;
+      text-decoration: none;
+      transition: all 0.3s ease;
+      cursor: pointer;
+    }
+    
+    .btn-primary {
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+    }
+    
+    .btn-primary:hover {
+      background-color: #45a049;
+    }
+    
+    .btn-logout {
+      background-color: white;
+      color: #d32f2f;
+      border: 1px solid #d32f2f;
+    }
+    
+    .btn-logout:hover {
+      background-color: #d32f2f;
+      color: white;
+    }
+    
+    .btn-admin {
+      background-color: #2196F3;
+      color: white;
+      border: none;
+      margin-top: 10px;
+    }
+    
+    .btn-admin:hover {
+      background-color: #0b7dda;
+    }
+    
+    .social-badge {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: bold;
+      color: white;
+      margin-left: 10px;
+    }
+    
+    .github-badge {
+      background-color: #333;
+    }
+    
+    .google-badge {
+      background-color: #DB4437;
+    }
+    
+    @media (max-width: 768px) {
+      .profile-container {
+        max-width: 90%;
+        padding: 30px;
+      }
+    }
+  </style>
 </head>
 <body>
   <div class="profile-container">
@@ -14,22 +162,50 @@
     </div>
     
     <div class="profile-info">
-      <h2>Welcome, <%= name %></h2>
-      <p><strong>Email:</strong> <span><%= email %></span></p>
-      <p><strong>Role:</strong> <span><%= user.VaiTro %></span></p>
-      <p><strong>Member since:</strong> <span><%= new Date(user.NgayTao).toLocaleDateString() %></span></p>
+      <h2>Xin chào, <%= typeof user.TenNguoiDung !== 'undefined' ? user.TenNguoiDung : (user.displayName || user.username || 'Người dùng') %></h2>
+      <p>
+        <strong>Email:</strong> 
+        <span>
+          <%= typeof user.Email !== 'undefined' ? user.Email : (user.emails && user.emails[0] ? user.emails[0].value : 'Không có email') %>
+          <% if (user.provider || user.Provider) { %>
+            <span class="social-badge <%= (user.provider || user.Provider).toLowerCase() %>-badge"><%= user.provider || user.Provider %></span>
+          <% } %>
+        </span>
+      </p>
+      <p><strong>Vai trò:</strong> <span><%= typeof user.VaiTro !== 'undefined' ? user.VaiTro : 'Người dùng' %></span></p>
+      <p>
+        <strong>Thành viên từ:</strong> 
+        <span>
+          <% 
+          try {
+            let dateValue = user.NgayTao || user.created_at || user._json?.created_at;
+            const date = dateValue ? new Date(dateValue) : null;
+            if (date && !isNaN(date.getTime())) {
+              %><%= date.toLocaleDateString('vi-VN') %><%
+            } else {
+              %>Hôm nay<%
+            }
+          } catch (e) {
+            %>Hôm nay<%
+          }
+          %>
+        </span>
+      </p>
     </div>
     
     <div class="profile-actions">
-      <a href="/" class="btn">Dashboard</a>
-      <a href="/logout" class="btn btn-logout">Logout</a>
-      <!-- Add this button in your profile.ejs file where appropriate -->
+      <a href="/" class="btn btn-primary">Trang Chủ</a>
       <% if (isAdmin) { %>
-        <div class="mt-4">
-          <a href="/admin" class="btn btn-primary">Admin Dashboard</a>
-        </div>
+        <a href="/admin" class="btn btn-admin">Quản Trị Viên</a>
       <% } %>
+      <a href="/logout" class="btn btn-logout">Đăng Xuất</a>
     </div>
   </div>
+  
+  <script>
+    // Debug information
+    const userData = <%- JSON.stringify(user) %>;
+    console.log('User data:', userData);
+  </script>
 </body>
 </html>

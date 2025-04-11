@@ -5,7 +5,7 @@ document.addEventListener('DOMContentLoaded', function() {
     let currentPage = 1;
     const productsPerPage = 9; // Show 9 products per page (3x3 grid)
     
-    // Prevent default action for cart and account buttons to avoid navigation
+    // Remove cart sidebar functionality
     const cartBtn = document.getElementById('cartBtn');
     const accountBtn = document.getElementById('accountBtn');
     
@@ -238,7 +238,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 .then(response => response.json())
                 .then(results => {
                     if (results.length === 0) {
-                        searchResults.innerHTML = '<div class="p-3">No products found</div>';
+                        searchResults.innerHTML = '<div class="p-3">Không tìm thấy sản phẩm</div>';
                     } else {
                         searchResults.innerHTML = results.map(product => `
                             <div class="search-item" data-product-id="${product.IDSanPham}">
@@ -255,7 +255,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         document.querySelectorAll('.search-item').forEach(item => {
                             item.addEventListener('click', () => {
                                 const productId = item.getAttribute('data-product-id');
-                                window.location.href = `/product/${productId}`;
+                                window.location.href = `/product-detail.html?id=${productId}`;
                             });
                         });
                     }
@@ -264,7 +264,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 })
                 .catch(error => {
                     console.error('Search error:', error);
-                    searchResults.innerHTML = '<div class="p-3 text-danger">Error searching products</div>';
+                    searchResults.innerHTML = '<div class="p-3 text-danger">Lỗi tìm kiếm sản phẩm</div>';
                     searchResults.classList.remove('d-none');
                 });
         }, 300));
@@ -472,30 +472,33 @@ document.addEventListener('DOMContentLoaded', function() {
         productContainer.innerHTML = '';
         
         if (products.length === 0) {
-            productContainer.innerHTML = '<div class="col-12 text-center py-5"><p>No products found in this category.</p></div>';
+            productContainer.innerHTML = '<div class="col-12 text-center py-5"><p>Không tìm thấy sản phẩm trong danh mục này.</p></div>';
             return;
         }
         
         products.forEach(product => {
             const isOutOfStock = product.SoLuongTon <= 0;
+            const isNew = isProductNew(product);
             const productCard = document.createElement('div');
             productCard.className = 'col-md-4 mb-4';
             productCard.innerHTML = `
                 <div class="product-card ${isOutOfStock ? 'out-of-stock' : ''}">
-                    ${isOutOfStock ? '<div class="out-of-stock-label">Out of Stock</div>' : ''}
+                    ${isOutOfStock ? '<div class="out-of-stock-label">Hết hàng</div>' : ''}
+                    ${isNew ? '<div class="product-badge badge-new">Mới</div>' : ''}
+                    ${product.GiamGia ? `<div class="product-badge badge-sale">-${product.GiamGia}%</div>` : ''}
                     <div class="product-img-container">
                         <img src="${product.HinhAnhSanPham || 'images/placeholder.png'}" alt="${product.TenSanPham}" onerror="this.src='images/placeholder.png'">
                     </div>
                     <div class="product-info">
                         <h5 class="product-title">${product.TenSanPham}</h5>
                         <div class="product-price">₫${product.Gia.toLocaleString('vi-VN')}</div>
-                        <div class="product-unit">${product.DonViBan || 'unit'}</div>
+                        <div class="product-unit">${product.DonViBan || 'Đơn vị'}</div>
                         <div class="d-flex justify-content-between mt-3">
-                            <a href="/product-detail.html?id=${product.IDSanPham}" class="btn btn-outline-primary btn-sm">View</a>
-                            <button class="btn btn-primary btn-sm ${isOutOfStock ? 'disabled' : ''}" 
+                            <a href="/product-detail.html?id=${product.IDSanPham}" class="btn btn-outline-success btn-sm">Chi tiết</a>
+                            <button class="btn btn-success btn-sm ${isOutOfStock ? 'disabled' : ''}" 
                                 ${isOutOfStock ? 'disabled' : ''} 
                                 onclick="addToCartHandler(${JSON.stringify(product).replace(/"/g, '&quot;')})">
-                                Add to Cart
+                                Thêm vào giỏ hàng
                             </button>
                         </div>
                     </div>
@@ -518,42 +521,53 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Add product to cart
+    // Modify the addToCart function to reload the page after adding to cart
     function addToCart(product) {
-        // Get cart from localStorage
-        let cartItems = JSON.parse(localStorage.getItem('cartItems')) || [];
-        
-        // Check if product already in cart
-        const existingItemIndex = cartItems.findIndex(item => item.id === product.IDSanPham);
-        
-        if (existingItemIndex > -1) {
-            cartItems[existingItemIndex].quantity += 1;
-        } else {
-            // Calculate final price considering discounts
-            const finalPrice = product.GiamGia ? 
-                product.Gia - (product.Gia * product.GiamGia / 100) : 
-                product.Gia;
-                
-            cartItems.push({
-                id: product.IDSanPham,
-                name: product.TenSanPham,
-                price: finalPrice,
-                originalPrice: product.Gia,
-                discount: product.GiamGia || 0,
-                image: product.HinhAnhSanPham,
-                category: product.categoryName,
-                unit: product.DonViBan || 'Unit',
-                quantity: 1
-            });
+        try {
+            // Get cart from localStorage
+            let cartItems = JSON.parse(localStorage.getItem('cartItems')) || [];
+            
+            // Check if product already in cart
+            const existingItemIndex = cartItems.findIndex(item => item.id === product.IDSanPham);
+            
+            if (existingItemIndex > -1) {
+                cartItems[existingItemIndex].quantity += 1;
+            } else {
+                // Calculate final price considering discounts
+                const finalPrice = product.GiamGia ? 
+                    product.Gia - (product.Gia * product.GiamGia / 100) : 
+                    product.Gia;
+                    
+                cartItems.push({
+                    id: product.IDSanPham,
+                    name: product.TenSanPham,
+                    price: finalPrice,
+                    originalPrice: product.Gia,
+                    discount: product.GiamGia || 0,
+                    image: product.HinhAnhSanPham,
+                    category: product.categoryName,
+                    unit: product.DonViBan || 'Unit',
+                    quantity: 1
+                });
+            }
+            
+            // Save to localStorage
+            localStorage.setItem('cartItems', JSON.stringify(cartItems));
+            
+            // Update cart count
+            updateCartCount();
+            
+            // Show toast notification
+            showToast(`${product.TenSanPham} đã được thêm vào giỏ hàng!`);
+            
+            // Reload the page after a short delay to allow the toast to be seen
+            setTimeout(() => {
+                window.location.reload();
+            }, 1000);
+        } catch (error) {
+            console.error('Error adding to cart:', error);
+            showToast('Có lỗi xảy ra khi thêm sản phẩm vào giỏ hàng', 'error');
         }
-        
-        // Save to localStorage
-        localStorage.setItem('cartItems', JSON.stringify(cartItems));
-        
-        // Update cart count
-        updateCartCount();
-        
-        // Show toast notification
-        showToast(`${product.TenSanPham} added to cart!`);
     }
     
     // Show toast notification
@@ -632,10 +646,148 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
+    // Add this function to render cart items in the sidebar
+    function renderCartItems() {
+        const cartItemsContainer = document.getElementById('cartItems');
+        const cartSubtotal = document.getElementById('cartSubtotal');
+        const cartTotal = document.getElementById('cartTotal');
+        
+        if (!cartItemsContainer || !cartSubtotal || !cartTotal) {
+            console.error('Cart elements not found in the DOM');
+            return;
+        }
+        
+        // Get cart items from localStorage
+        const cartItems = JSON.parse(localStorage.getItem('cartItems')) || [];
+        
+        // Clear container
+        cartItemsContainer.innerHTML = '';
+        
+        if (cartItems.length === 0) {
+            cartItemsContainer.innerHTML = '<div class="empty-cart-message">Giỏ hàng của bạn đang trống</div>';
+            cartSubtotal.textContent = '₫0';
+            cartTotal.textContent = '₫0';
+            return;
+        }
+        
+        let subtotal = 0;
+        
+        cartItems.forEach((item, index) => {
+            const price = parseFloat(item.price);
+            const itemTotal = price * item.quantity;
+            subtotal += itemTotal;
+            
+            const cartItemElement = document.createElement('div');
+            cartItemElement.className = 'cart-item';
+            cartItemElement.innerHTML = `
+                <div class="cart-item-image">
+                    <img src="${item.image || 'images/placeholder.png'}" alt="${item.name}" 
+                         onerror="this.src='images/placeholder.png'">
+                </div>
+                <div class="cart-item-details">
+                    <div class="cart-item-name">${item.name}</div>
+                    <div class="cart-item-category">${item.category || 'Sản phẩm'}</div>
+                    <div class="cart-item-price">₫${price.toLocaleString('vi-VN')}</div>
+                    <div class="cart-item-quantity">
+                        <button class="quantity-btn minus-btn" data-index="${index}">-</button>
+                        <input type="text" class="quantity-input" value="${item.quantity}" readonly>
+                        <button class="quantity-btn plus-btn" data-index="${index}">+</button>
+                    </div>
+                    <a href="#" class="cart-item-remove" data-index="${index}">Xóa</a>
+                </div>
+            `;
+            
+            cartItemsContainer.appendChild(cartItemElement);
+        });
+        
+        // Format subtotal with Vietnamese locale
+        cartSubtotal.textContent = '₫' + subtotal.toLocaleString('vi-VN');
+        cartTotal.textContent = '₫' + subtotal.toLocaleString('vi-VN');
+        
+        // Add event listeners for quantity buttons and remove links
+        document.querySelectorAll('.minus-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const index = parseInt(this.getAttribute('data-index'));
+                if (cartItems[index].quantity > 1) {
+                    cartItems[index].quantity -= 1;
+                    localStorage.setItem('cartItems', JSON.stringify(cartItems));
+                    updateCartCount();
+                    renderCartItems();
+                }
+            });
+        });
+        
+        document.querySelectorAll('.plus-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const index = parseInt(this.getAttribute('data-index'));
+                cartItems[index].quantity += 1;
+                localStorage.setItem('cartItems', JSON.stringify(cartItems));
+                updateCartCount();
+                renderCartItems();
+            });
+        });
+        
+        document.querySelectorAll('.cart-item-remove').forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                const index = parseInt(this.getAttribute('data-index'));
+                cartItems.splice(index, 1);
+                localStorage.setItem('cartItems', JSON.stringify(cartItems));
+                updateCartCount();
+                renderCartItems();
+            });
+        });
+    }
+    
+    // Add these functions to open and close the cart sidebar
+    function openCartSidebar() {
+        const cartSidebar = document.getElementById('cartSidebar');
+        const cartSidebarOverlay = document.getElementById('cartSidebarOverlay');
+        
+        if (cartSidebar && cartSidebarOverlay) {
+            cartSidebar.classList.add('open');
+            cartSidebarOverlay.classList.add('open');
+            document.body.classList.add('sidebar-open');
+        }
+    }
+    
+    function closeCartSidebar() {
+        const cartSidebar = document.getElementById('cartSidebar');
+        const cartSidebarOverlay = document.getElementById('cartSidebarOverlay');
+        
+        if (cartSidebar && cartSidebarOverlay) {
+            cartSidebar.classList.remove('open');
+            cartSidebarOverlay.classList.remove('open');
+            document.body.classList.remove('sidebar-open');
+        }
+    }
+    
+    // Add event listener for close cart button
+    const closeCartBtn = document.getElementById('closeCartBtn');
+    if (closeCartBtn) {
+        closeCartBtn.addEventListener('click', function() {
+            closeCartSidebar();
+        });
+    }
+    
+    // Add event listener for cart overlay
+    const cartSidebarOverlay = document.getElementById('cartSidebarOverlay');
+    if (cartSidebarOverlay) {
+        cartSidebarOverlay.addEventListener('click', function() {
+            closeCartSidebar();
+        });
+    }
+    
+    // Remove all sidebar-related functions
+    // Remove renderCartItems function
+    // Remove openCartSidebar function
+    // Remove closeCartSidebar function
+    
     // Initialize
     loadCategories();
     updateCartCount();
     setupHeaderButtons();
+    renderCartItems(); // Render cart items on page load
     
     // Make addToCart function available globally
     window.addToCartHandler = function(product) {

@@ -1,16 +1,17 @@
 
 Table name: TaiKhoan
-IDTaiKhoan 	TenNguoiDung 	Email 	MatKhau 	VaiTro 	NgayTao
-1 	Nguyễn Thái Thịt 	thit@example.com 	12345 	Admin 	3/30/2025 2:25:28 PM
-2 	Nguyễn Duy Thằng Ân 	an@example.com 	12345 	Admin 	3/30/2025 2:25:28 PM
-3 	Nguyễn Văn A 	a@example.com 	111 	NguoiDung 	3/30/2025 2:25:28 PM
-4 	Trần Văn B 	b@example.com 	222 	NguoiDung 	3/30/2025 2:25:28 PM
-5 	Lê Thị C 	c@example.com 	333 	NguoiDung 	3/30/2025 2:25:28 PM
-6 	Phạm Thanh D 	d@example.com 	444 	NguoiDung 	3/30/2025 2:25:28 PM
-7 	Bùi Quang E 	e@example.com 	555 	NguoiDung 	3/30/2025 2:25:28 PM
-8 	Đỗ Hoàng F 	f@example.com 	666 	NguoiDung 	3/30/2025 2:25:28 PM
-9 	Lý Minh G 	g@example.com 	777 	NguoiDung 	3/30/2025 2:25:28 PM
-10 	Nguyễn Thái Triệu 	nguyenthaitrieu2302@gmail.com 	$2b$10$X7t9PVpndhqNdJl0IlvB/Ou/ft5pl3sOPH7MT5oAja5QbnG1JmxAy 	NguoiDung 	3/30/2025 1:58:52 PM 
+IDTaiKhoan 	TenNguoiDung 	Email 	MatKhau 	VaiTro 	NgayTao 	Provider 	ProviderId
+1 	Nguyễn Thái Triệu 	thit@example.com 	$2b$10$GCNWfPu.AfRDwXhYF0OZwu.pfXiUZ2/oIrxo1nQcrnC0nruvh.AdW 	Admin 	3/30/2025 2:25:28 PM 		
+2 	Nguyễn Duy Thằng Ân 	an@example.com 	12345 	Admin 	3/30/2025 2:25:28 PM 		
+3 	Nguyễn Văn A 	a@example.com 	$2b$10$GnlmgqPNMLFUxReTu6E5aeOXArE/4gZW8YB8Iu5h6yDQtBz0xQBd6 	NguoiDung 	3/30/2025 2:25:28 PM 		
+4 	Trần Văn B 	b@example.com 	222 	NguoiDung 	3/30/2025 2:25:28 PM 		
+5 	Lê Thị C 	c@example.com 	333 	NguoiDung 	3/30/2025 2:25:28 PM 		
+6 	Phạm Thanh D 	d@example.com 	444 	NguoiDung 	3/30/2025 2:25:28 PM 		
+7 	Bùi Quang E 	e@example.com 	555 	NguoiDung 	3/30/2025 2:25:28 PM 		
+8 	Đỗ Hoàng F 	f@example.com 	666 	NguoiDung 	3/30/2025 2:25:28 PM 		
+9 	Lý Minh G 	g@example.com 	777 	NguoiDung 	3/30/2025 2:25:28 PM 		
+10 	Nguyễn Thái Triệu 	nguyenthaitrieu2302@gmail.com 	$2b$10$X7t9PVpndhqNdJl0IlvB/Ou/ft5pl3sOPH7MT5oAja5QbnG1JmxAy 	NguoiDung 	3/30/2025 1:58:52 PM 		
+11 	Admin User 	admin@admin.a 	$2b$10$XbbjSNa3hnYy9e.YRY3XueZG5Sk6eCSJ1JLae9ThhfTPca/HN69Xy 	Admin 	3/30/2025 4:12:34 PM 		
 
 Table name: QuanLyDanhMuc
 IDDanhMuc 	TenDanhMuc 	HinhAnhSanPham
@@ -137,3 +138,6 @@ IDThanhToan 	IDDonHang 	PhuongThucThanhToan 	TrangThaiThanhToan 	NgayThanhToan
 14 	8 	ChuyenKhoan 	ChuaThanhToan 	
 15 	9 	ViDienTu 	HoanTien 	3/9/2025 12:00:00 AM
 16 	10 	TienMat 	DaThanhToan 	3/10/2025 12:00:00 AM 
+
+Table name: AuditLog
+IDAuditLog 	IDTaiKhoan 	TenNguoiDung 	HanhDong 	MoTa 	LoaiDoiTuong 	IDDoiTuong 	ThoiGian 	DiaChiIP 	DuLieuCu 	DuLieuMoi 
