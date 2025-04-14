@@ -1,214 +1,248 @@
 document.addEventListener('DOMContentLoaded', function() {
-    const accountBtn = document.getElementById('accountBtn');
-    const accountSidebar = document.getElementById('accountSidebar');
-    const closeSidebarBtn = document.getElementById('closeSidebarBtn');
-    const accountSidebarOverlay = document.getElementById('accountSidebarOverlay');
-    const returnToStoreBtn = document.getElementById('returnToStoreBtn');
-    
+    // Cart sidebar functionality
     const cartBtn = document.getElementById('cartBtn');
     const cartSidebar = document.getElementById('cartSidebar');
-    const closeCartBtn = document.getElementById('closeCartBtn');
     const cartSidebarOverlay = document.getElementById('cartSidebarOverlay');
-    const cartItemsContainer = document.getElementById('cartItems');
+    const closeCartBtn = document.getElementById('closeCartBtn');
+    const cartItems = document.getElementById('cartItems');
     const cartSubtotal = document.getElementById('cartSubtotal');
     const cartTotal = document.getElementById('cartTotal');
+    const cartNotes = document.getElementById('cartNotes');
     const checkoutBtn = document.getElementById('checkoutBtn');
-    const cartCount = document.getElementById('cartCount');
     
-    let cartItems = JSON.parse(localStorage.getItem('cartItems')) || [];
+    // Account sidebar functionality
+    const accountBtn = document.getElementById('accountBtn');
+    const accountSidebar = document.getElementById('accountSidebar');
+    const accountSidebarOverlay = document.getElementById('accountSidebarOverlay');
+    const closeSidebarBtn = document.getElementById('closeSidebarBtn');
+    const returnToStoreBtn = document.getElementById('returnToStoreBtn');
     
-    function openSidebar() {
-        if (cartSidebar.classList.contains('active')) {
-            closeCartSidebar();
-        }
-        accountSidebar.classList.add('active');
-        accountSidebarOverlay.style.display = 'block';
-        document.body.style.overflow = 'hidden';
-    }
-    
-    function closeSidebar() {
-        accountSidebar.classList.remove('active');
-        accountSidebarOverlay.style.display = 'none';
-        document.body.style.overflow = '';
-    }
-    
-    function openCartSidebar() {
-        if (accountSidebar.classList.contains('active')) {
-            closeSidebar();
-        }
-        cartSidebar.classList.add('active');
-        cartSidebarOverlay.style.display = 'block';
-        document.body.style.overflow = 'hidden';
-        renderCartItems();
-    }
-    
-    function closeCartSidebar() {
-        cartSidebar.classList.remove('active');
-        cartSidebarOverlay.style.display = 'none';
-        document.body.style.overflow = '';
-    }
-    
-    function checkAuthStatus() {
-        return fetch('/auth/check', {
-            method: 'GET',
-            credentials: 'same-origin',
-            headers: {
-                'Accept': 'application/json'
-            }
-        })
-        .then(response => response.json())
-        .catch(error => {
-            console.error('Authentication check failed:', error);
-            return { authenticated: false };
-        });
-    }
-    
+    // Render cart items
     function renderCartItems() {
-        cartItemsContainer.innerHTML = '';
+        if (!cartItems) return;
         
-        if (cartItems.length === 0) {
-            cartItemsContainer.innerHTML = '<p class="text-center my-5">Your cart is empty</p>';
-            cartSubtotal.textContent = '₫0';
-            cartTotal.textContent = '₫0';
-            return;
-        }
+        const items = window.cartService ? window.cartService.getItems() : [];
         
-        let subtotal = 0;
-        
-        cartItems.forEach((item, index) => {
-            const itemTotal = item.price * item.quantity;
-            subtotal += itemTotal;
-            
-            const cartItemElement = document.createElement('div');
-            cartItemElement.className = 'cart-item';
-            cartItemElement.innerHTML = `
-                <div class="cart-item-image">
-                    <img src="${item.image || 'images/placeholder.png'}" alt="${item.name}" onerror="this.src='images/placeholder.png'">
-                </div>
-                <div class="cart-item-details">
-                    <div class="cart-item-name">${item.name}</div>
-                    <div class="cart-item-type">${item.category || 'Product'}</div>
-                    <div class="cart-item-total">Total: ₫${(itemTotal).toLocaleString('vi-VN')}</div>
-                    <div class="cart-item-quantity">
-                        <button class="quantity-btn minus-btn" data-index="${index}">-</button>
-                        <input type="text" class="quantity-input" value="${item.quantity}" readonly>
-                        <button class="quantity-btn plus-btn" data-index="${index}">+</button>
-                    </div>
-                    <a href="#" class="cart-item-remove" data-index="${index}">Remove</a>
+        if (items.length === 0) {
+            cartItems.innerHTML = `
+                <div class="empty-cart text-center py-4">
+                    <i class="bi bi-cart-x" style="font-size: 3rem; color: #ccc;"></i>
+                    <p class="mt-3">Giỏ hàng của bạn đang trống</p>
+                    <a href="/product-listing.html" class="btn btn-outline-primary mt-2">Tiếp tục mua sắm</a>
                 </div>
             `;
+        } else {
+            let itemsHTML = '';
             
-            cartItemsContainer.appendChild(cartItemElement);
-        });
-        
-        cartSubtotal.textContent = '₫' + subtotal.toLocaleString('vi-VN');
-        cartTotal.textContent = '₫' + subtotal.toLocaleString('vi-VN');
-
-        document.querySelectorAll('.minus-btn').forEach(btn => {
-            btn.addEventListener('click', function() {
-                const index = parseInt(this.getAttribute('data-index'));
-                if (cartItems[index].quantity > 1) {
-                    cartItems[index].quantity -= 1;
-                    updateCart();
-                }
+            items.forEach(item => {
+                itemsHTML += `
+                    <div class="cart-item" data-product-id="${item.id}">
+                        <div class="cart-item-image">
+                            <img src="${item.image || 'images/placeholder.png'}" alt="${item.name}" 
+                                 onerror="this.src='images/placeholder.png'">
+                        </div>
+                        <div class="cart-item-details">
+                            <div class="cart-item-name">${item.name}</div>
+                            <div class="cart-item-category">${item.category || 'Sản phẩm'}</div>
+                            <div class="cart-item-price">₫${item.price.toLocaleString('vi-VN')}</div>
+                            <div class="cart-item-quantity">
+                                <button class="quantity-btn minus-btn" data-id="${item.id}">-</button>
+                                <input type="text" class="quantity-input" value="${item.quantity}" readonly>
+                                <button class="quantity-btn plus-btn" data-id="${item.id}">+</button>
+                            </div>
+                            <a href="#" class="cart-item-remove" data-id="${item.id}">Xóa</a>
+                        </div>
+                    </div>
+                `;
             });
-        });
-        
-        document.querySelectorAll('.plus-btn').forEach(btn => {
-            btn.addEventListener('click', function() {
-                const index = parseInt(this.getAttribute('data-index'));
-                cartItems[index].quantity += 1;
-                updateCart();
+            
+            cartItems.innerHTML = itemsHTML;
+            
+            // Add event listeners for quantity buttons and remove links
+            document.querySelectorAll('.minus-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const id = this.getAttribute('data-id');
+                    const item = items.find(item => item.id === id);
+                    if (item && item.quantity > 1 && window.cartService) {
+                        window.cartService.updateItemQuantity(id, item.quantity - 1);
+                        renderCartItems();
+                        updateCartTotals();
+                    }
+                });
             });
-        });
-        
-        document.querySelectorAll('.cart-item-remove').forEach(link => {
-            link.addEventListener('click', function(e) {
-                e.preventDefault();
-                const index = parseInt(this.getAttribute('data-index'));
-                cartItems.splice(index, 1);
-                updateCart();
+            
+            document.querySelectorAll('.plus-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const id = this.getAttribute('data-id');
+                    const item = items.find(item => item.id === id);
+                    if (item && window.cartService) {
+                        window.cartService.updateItemQuantity(id, item.quantity + 1);
+                        renderCartItems();
+                        updateCartTotals();
+                    }
+                });
             });
-        });
-    }
-    
-    function updateCart() {
-        localStorage.setItem('cartItems', JSON.stringify(cartItems));
-        updateCartCount();
-        renderCartItems();
-    }
-    
-    function updateCartCount() {
-        const totalItems = cartItems.reduce((total, item) => total + item.quantity, 0);
-        if (cartCount) {
-            cartCount.textContent = totalItems;
+            
+            document.querySelectorAll('.cart-item-remove').forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const id = this.getAttribute('data-id');
+                    if (window.cartService) {
+                        window.cartService.removeItem(id);
+                        renderCartItems();
+                        updateCartTotals();
+                    }
+                });
+            });
         }
     }
     
-    if (accountBtn) {
-        accountBtn.addEventListener('click', function(e) {
-            e.preventDefault();
-            
-            checkAuthStatus().then(data => {
-                if (data.authenticated) {
-                    window.location.href = '/profile';
-                } else {
-                    openSidebar();
-                }
-            });
+    // Update cart totals
+    function updateCartTotals() {
+        if (!window.cartService) return;
+        
+        if (cartSubtotal) {
+            cartSubtotal.textContent = window.cartService.formatPrice(window.cartService.getSubtotal());
+        }
+        
+        if (cartTotal) {
+            cartTotal.textContent = window.cartService.formatPrice(window.cartService.getTotal());
+        }
+    }
+    
+    // Update cart notes
+    function updateCartNotes() {
+        if (!cartNotes || !window.cartService) return;
+        
+        cartNotes.value = window.cartService.getNotes();
+        
+        // Save notes when changed
+        cartNotes.addEventListener('change', () => {
+            window.cartService.setNotes(cartNotes.value);
         });
     }
     
-    if (closeSidebarBtn) {
-        closeSidebarBtn.addEventListener('click', closeSidebar);
-    }
-    
-    if (accountSidebarOverlay) {
-        accountSidebarOverlay.addEventListener('click', closeSidebar);
-    }
-    
-    if (returnToStoreBtn) {
-        returnToStoreBtn.addEventListener('click', function(e) {
-            e.preventDefault();
-            closeSidebar();
-        });
-    }
-    
+    // Open cart sidebar
     if (cartBtn) {
         cartBtn.addEventListener('click', function(e) {
             e.preventDefault();
-            openCartSidebar();
+            if (cartSidebar) {
+                cartSidebar.classList.add('active');
+                document.body.classList.add('sidebar-open');
+                renderCartItems();
+                updateCartTotals();
+                updateCartNotes();
+            }
         });
     }
     
+    // Close cart sidebar
     if (closeCartBtn) {
-        closeCartBtn.addEventListener('click', closeCartSidebar);
+        closeCartBtn.addEventListener('click', function() {
+            if (cartSidebar) {
+                cartSidebar.classList.remove('active');
+                document.body.classList.remove('sidebar-open');
+            }
+        });
     }
     
+    // Close cart sidebar when clicking overlay
     if (cartSidebarOverlay) {
-        cartSidebarOverlay.addEventListener('click', closeCartSidebar);
+        cartSidebarOverlay.addEventListener('click', function() {
+            if (cartSidebar) {
+                cartSidebar.classList.remove('active');
+                document.body.classList.remove('sidebar-open');
+            }
+        });
     }
     
+    // Checkout button
     if (checkoutBtn) {
         checkoutBtn.addEventListener('click', function() {
-            if (cartItems.length === 0) {
-                alert('Your cart is empty');
-            } else {
-                window.location.href = '/checkout.html';
+            window.location.href = '/checkout.html';
+        });
+    }
+    
+    // Account sidebar functionality
+    if (accountBtn) {
+        accountBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            if (accountSidebar) {
+                accountSidebar.classList.add('active');
+                document.body.classList.add('sidebar-open');
             }
         });
     }
     
-    document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape') {
-            if (accountSidebar && accountSidebar.classList.contains('active')) {
-                closeSidebar();
+    // Close account sidebar
+    if (closeSidebarBtn) {
+        closeSidebarBtn.addEventListener('click', function() {
+            if (accountSidebar) {
+                accountSidebar.classList.remove('active');
+                document.body.classList.remove('sidebar-open');
             }
-            if (cartSidebar && cartSidebar.classList.contains('active')) {
-                closeCartSidebar();
+        });
+    }
+    
+    // Close account sidebar when clicking overlay
+    if (accountSidebarOverlay) {
+        accountSidebarOverlay.addEventListener('click', function() {
+            if (accountSidebar) {
+                accountSidebar.classList.remove('active');
+                document.body.classList.remove('sidebar-open');
+            }
+        });
+    }
+    
+    // Return to store button
+    if (returnToStoreBtn) {
+        returnToStoreBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            if (accountSidebar) {
+                accountSidebar.classList.remove('active');
+                document.body.classList.remove('sidebar-open');
+            }
+        });
+    }
+    
+    // Listen for cart updates
+    document.addEventListener('cartUpdated', function() {
+        renderCartItems();
+        updateCartTotals();
+        
+        // Update cart count badge
+        const cartCountElement = document.getElementById('cartCount');
+        if (cartCountElement && window.cartService) {
+            const count = window.cartService.getCount();
+            cartCountElement.textContent = count;
+            
+            // Show/hide badge based on count
+            if (count > 0) {
+                cartCountElement.classList.remove('d-none');
+            } else {
+                cartCountElement.classList.add('d-none');
             }
         }
     });
     
-    updateCartCount();
+    // Initial render if cart sidebar is visible
+    if (cartSidebar && cartSidebar.classList.contains('active')) {
+        renderCartItems();
+        updateCartTotals();
+        updateCartNotes();
+    }
+    
+    // Initial cart count update
+    const cartCountElement = document.getElementById('cartCount');
+    if (cartCountElement && window.cartService) {
+        const count = window.cartService.getCount();
+        cartCountElement.textContent = count;
+        
+        // Show/hide badge based on count
+        if (count > 0) {
+            cartCountElement.classList.remove('d-none');
+        } else {
+            cartCountElement.classList.add('d-none');
+        }
+    }
 });

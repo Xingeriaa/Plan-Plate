@@ -5,22 +5,6 @@ document.addEventListener('DOMContentLoaded', function() {
     let currentPage = 1;
     const productsPerPage = 9; // Show 9 products per page (3x3 grid)
     
-    // Remove cart sidebar functionality
-    const cartBtn = document.getElementById('cartBtn');
-    const accountBtn = document.getElementById('accountBtn');
-    
-    if (cartBtn) {
-        cartBtn.addEventListener('click', function(e) {
-            e.preventDefault();
-        });
-    }
-    
-    if (accountBtn) {
-        accountBtn.addEventListener('click', function(e) {
-            e.preventDefault();
-        });
-    }
-    
     // Check URL parameters for category and page
     function getUrlParameter(name) {
         const urlParams = new URLSearchParams(window.location.search);
@@ -42,183 +26,135 @@ document.addEventListener('DOMContentLoaded', function() {
     // Load categories
     function loadCategories() {
         fetch('/api/categories')
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Network response was not ok');
-                }
-                return response.json();
-            })
+            .then(response => response.json())
             .then(data => {
                 categories = data;
                 renderCategories();
                 loadAllProducts();
-                
-                // Set active category based on URL parameter
-                if (urlCategory && urlCategory !== 'all') {
-                    const categoryElement = document.querySelector(`.category-item[data-category-id="${urlCategory}"]`);
-                    if (categoryElement) {
-                        document.querySelectorAll('.category-item').forEach(item => {
-                            item.classList.remove('active');
-                        });
-                        categoryElement.classList.add('active');
-                        
-                        // Update breadcrumb
-                        const category = categories.find(c => c.IDDanhMuc == urlCategory);
-                        if (category) {
-                            document.getElementById('categoryBreadcrumb').textContent = category.TenDanhMuc;
-                        }
-                    }
-                }
             })
-            .catch(error => {
-                console.error('Error loading categories:', error);
-                document.getElementById('categoryList').innerHTML += 
-                    '<div class="alert alert-danger mt-3">Failed to load categories. Please try again later.</div>';
-            });
+            .catch(error => console.error('Error loading categories:', error));
     }
     
     // Render categories in sidebar
     function renderCategories() {
         const categoryList = document.getElementById('categoryList');
-        const existingAll = categoryList.querySelector('[data-category-id="all"]');
+        if (!categoryList) return;
+        
+        // Keep the "All" category
+        let html = `
+            <div class="category-item ${currentCategoryId === 'all' ? 'active' : ''}" data-category-id="all">
+                Tất Cả (<span id="allProductCount">0</span>)
+            </div>
+        `;
         
         categories.forEach(category => {
-            const categoryItem = document.createElement('div');
-            categoryItem.className = 'category-item';
-            categoryItem.setAttribute('data-category-id', category.IDDanhMuc);
-            categoryItem.innerHTML = `${category.TenDanhMuc} (<span id="category-${category.IDDanhMuc}-count">0</span>)`;
-            
-            categoryItem.addEventListener('click', () => {
-                document.querySelectorAll('.category-item').forEach(item => {
-                    item.classList.remove('active');
-                });
-                categoryItem.classList.add('active');
-                currentCategoryId = category.IDDanhMuc;
-                currentPage = 1; // Reset to first page when changing category
-                filterProducts();
-                
-                // Update URL with new category
-                updateUrlParams();
-                
-                // Update breadcrumb
-                document.getElementById('categoryBreadcrumb').textContent = category.TenDanhMuc;
-                
-                // Scroll to top on category change
-                window.scrollTo({
-                    top: 0,
-                    behavior: 'smooth'
-                });
-            });
-            
-            categoryList.appendChild(categoryItem);
+            html += `
+                <div class="category-item ${currentCategoryId === category.IDDanhMuc ? 'active' : ''}" 
+                     data-category-id="${category.IDDanhMuc}">
+                    ${category.TenDanhMuc} (<span id="category-${category.IDDanhMuc}-count">0</span>)
+                </div>
+            `;
         });
         
-        // Add click event to "All" category
-        if (existingAll) {
-            existingAll.addEventListener('click', () => {
-                document.querySelectorAll('.category-item').forEach(item => {
-                    item.classList.remove('active');
-                });
-                existingAll.classList.add('active');
-                currentCategoryId = 'all';
+        categoryList.innerHTML = html;
+        
+        // Add event listeners to category items
+        document.querySelectorAll('.category-item').forEach(item => {
+            item.addEventListener('click', function() {
+                const categoryId = this.getAttribute('data-category-id');
+                currentCategoryId = categoryId;
                 currentPage = 1; // Reset to first page when changing category
-                filterProducts();
                 
-                // Update URL with new category
-                updateUrlParams();
+                // Update active class
+                document.querySelectorAll('.category-item').forEach(el => {
+                    el.classList.remove('active');
+                });
+                this.classList.add('active');
                 
                 // Update breadcrumb
-                document.getElementById('categoryBreadcrumb').textContent = 'All Products';
+                updateBreadcrumb();
                 
-                // Scroll to top on category change
-                window.scrollTo({
-                    top: 0,
-                    behavior: 'smooth'
-                });
+                // Update URL parameters
+                updateUrlParams();
+                
+                // Filter and render products
+                filterProducts();
             });
-        }
+        });
     }
     
     // Update URL parameters without reloading the page
     function updateUrlParams() {
         const url = new URL(window.location);
         
-        // Update category parameter
         if (currentCategoryId === 'all') {
             url.searchParams.delete('category');
         } else {
             url.searchParams.set('category', currentCategoryId);
         }
         
-        // Update page parameter
         if (currentPage === 1) {
             url.searchParams.delete('page');
         } else {
             url.searchParams.set('page', currentPage);
         }
         
-        // Update URL without reloading the page
         window.history.pushState({}, '', url);
+    }
+    
+    // Update breadcrumb based on current category
+    function updateBreadcrumb() {
+        const breadcrumb = document.getElementById('categoryBreadcrumb');
+        if (!breadcrumb) return;
+        
+        if (currentCategoryId === 'all') {
+            breadcrumb.textContent = 'Tất Cả Sản Phẩm';
+        } else {
+            const category = categories.find(c => c.IDDanhMuc === currentCategoryId);
+            if (category) {
+                breadcrumb.textContent = category.TenDanhMuc;
+            }
+        }
     }
     
     // Load all products from all categories
     function loadAllProducts() {
-        // Show loading state
-        document.getElementById('productContainer').innerHTML = 
-            '<div class="col-12 text-center py-5"><div class="spinner-border text-success" role="status"></div><p class="mt-3">Loading products...</p></div>';
-        
-        const productPromises = categories.map(category => 
-            fetch(`/api/products/${category.IDDanhMuc}`)
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error(`Error fetching products for category ${category.IDDanhMuc}`);
-                    }
-                    return response.json();
-                })
-                .then(products => {
-                    // Update category product count
-                    const countElement = document.getElementById(`category-${category.IDDanhMuc}-count`);
-                    if (countElement) {
-                        countElement.textContent = products.length;
-                    }
-                    
-                    // Add category info to each product
-                    return products.map(product => ({
-                        ...product,
-                        categoryName: category.TenDanhMuc,
-                        categoryId: category.IDDanhMuc
-                    }));
-                })
-                .catch(error => {
-                    console.error(`Error loading products for category ${category.IDDanhMuc}:`, error);
-                    return [];
-                })
-        );
-        
-        Promise.all(productPromises)
-            .then(productsArrays => {
-                allProducts = productsArrays.flat();
+        fetch('/api/products')
+            .then(response => response.json())
+            .then(data => {
+                allProducts = data;
                 
-                // Update total product count
-                document.getElementById('allProductCount').textContent = allProducts.length;
-                
-                // Initial render
-                filterProducts();
-                
-                // Set up sort functionality
-                document.getElementById('sortSelect').addEventListener('change', () => {
-                    currentPage = 1; // Reset to first page when sorting
-                    filterProducts();
-                });
+                // Update category counts
+                updateCategoryCounts();
                 
                 // Set up search functionality
                 setupSearch();
+                
+                // Filter and render products
+                filterProducts();
+                
+                // Update breadcrumb
+                updateBreadcrumb();
             })
-            .catch(error => {
-                console.error('Error loading products:', error);
-                document.getElementById('productContainer').innerHTML = 
-                    '<div class="col-12 text-center py-5"><div class="alert alert-danger">Failed to load products. Please try again later.</div></div>';
-            });
+            .catch(error => console.error('Error loading products:', error));
+    }
+    
+    // Update category counts
+    function updateCategoryCounts() {
+        // Update all products count
+        const allProductCount = document.getElementById('allProductCount');
+        if (allProductCount) {
+            allProductCount.textContent = allProducts.length;
+        }
+        
+        // Update individual category counts
+        categories.forEach(category => {
+            const count = allProducts.filter(product => product.IDDanhMuc === category.IDDanhMuc).length;
+            const countElement = document.getElementById(`category-${category.IDDanhMuc}-count`);
+            if (countElement) {
+                countElement.textContent = count;
+            }
+        });
     }
     
     // Set up search functionality
@@ -226,60 +162,48 @@ document.addEventListener('DOMContentLoaded', function() {
         const searchInput = document.getElementById('searchInput');
         const searchResults = document.getElementById('searchResults');
         
+        if (!searchInput || !searchResults) return;
+        
         searchInput.addEventListener('input', debounce(function() {
-            const query = searchInput.value.trim();
+            const query = this.value.trim().toLowerCase();
             
-            if (query.length < 3) {
+            if (query.length < 2) {
+                searchResults.innerHTML = '';
                 searchResults.classList.add('d-none');
                 return;
             }
             
-            fetch(`/api/search?q=${encodeURIComponent(query)}`)
-                .then(response => response.json())
-                .then(results => {
-                    if (results.length === 0) {
-                        searchResults.innerHTML = '<div class="p-3">Không tìm thấy sản phẩm</div>';
-                    } else {
-                        searchResults.innerHTML = results.map(product => `
-                            <div class="search-item" data-product-id="${product.IDSanPham}">
-                                <img src="${product.HinhAnhSanPham || 'images/placeholder.png'}" alt="${product.TenSanPham}" class="search-item-img">
-                                <div class="search-item-info">
-                                    <div class="search-item-title">${product.TenSanPham}</div>
-                                    <div class="search-item-category">${product.TenDanhMuc}</div>
-                                    <div class="search-item-price">${new Intl.NumberFormat('vi-VN').format(product.Gia)}₫</div>
-                                </div>
+            const filteredProducts = allProducts.filter(product => 
+                product.TenSanPham.toLowerCase().includes(query)
+            ).slice(0, 5); // Limit to 5 results
+            
+            if (filteredProducts.length === 0) {
+                searchResults.innerHTML = '<div class="p-3">Không tìm thấy sản phẩm nào</div>';
+            } else {
+                let html = '';
+                filteredProducts.forEach(product => {
+                    html += `
+                        <a href="/product-detail.html?id=${product.IDSanPham}" class="search-result-item">
+                            <div class="search-result-img">
+                                <img src="${product.HinhAnhSanPham || 'images/placeholder.png'}" alt="${product.TenSanPham}">
                             </div>
-                        `).join('');
-                        
-                        // Add click event to search results
-                        document.querySelectorAll('.search-item').forEach(item => {
-                            item.addEventListener('click', () => {
-                                const productId = item.getAttribute('data-product-id');
-                                window.location.href = `/product-detail.html?id=${productId}`;
-                            });
-                        });
-                    }
-                    
-                    searchResults.classList.remove('d-none');
-                })
-                .catch(error => {
-                    console.error('Search error:', error);
-                    searchResults.innerHTML = '<div class="p-3 text-danger">Lỗi tìm kiếm sản phẩm</div>';
-                    searchResults.classList.remove('d-none');
+                            <div class="search-result-info">
+                                <div class="search-result-name">${product.TenSanPham}</div>
+                                <div class="search-result-price">₫${product.Gia.toLocaleString('vi-VN')}</div>
+                            </div>
+                        </a>
+                    `;
                 });
+                searchResults.innerHTML = html;
+            }
+            
+            searchResults.classList.remove('d-none');
         }, 300));
         
         // Hide search results when clicking outside
-        document.addEventListener('click', function(event) {
-            if (!searchInput.contains(event.target) && !searchResults.contains(event.target)) {
+        document.addEventListener('click', function(e) {
+            if (!searchInput.contains(e.target) && !searchResults.contains(e.target)) {
                 searchResults.classList.add('d-none');
-            }
-        });
-        
-        // Show search results when focusing on search input
-        searchInput.addEventListener('focus', function() {
-            if (searchInput.value.trim().length >= 3) {
-                searchResults.classList.remove('d-none');
             }
         });
     }
@@ -287,52 +211,56 @@ document.addEventListener('DOMContentLoaded', function() {
     // Debounce function to limit API calls
     function debounce(func, wait) {
         let timeout;
-        return function() {
-            const context = this;
-            const args = arguments;
+        return function(...args) {
             clearTimeout(timeout);
-            timeout = setTimeout(() => {
-                func.apply(context, args);
-            }, wait);
+            timeout = setTimeout(() => func.apply(this, args), wait);
         };
     }
     
     // Filter and sort products based on current category and sort option
     function filterProducts() {
-        let filteredProducts = allProducts;
+        let filteredProducts = [...allProducts];
         
         // Filter by category if not "all"
         if (currentCategoryId !== 'all') {
-            filteredProducts = allProducts.filter(product => product.categoryId == currentCategoryId);
+            filteredProducts = filteredProducts.filter(product => product.IDDanhMuc === currentCategoryId);
+        }
+        
+        // Get sort option
+        const sortSelect = document.getElementById('sortSelect');
+        if (sortSelect) {
+            const sortOption = sortSelect.value;
+            
+            // Sort products based on selected option
+            switch (sortOption) {
+                case 'name-asc':
+                    filteredProducts.sort((a, b) => a.TenSanPham.localeCompare(b.TenSanPham));
+                    break;
+                case 'name-desc':
+                    filteredProducts.sort((a, b) => b.TenSanPham.localeCompare(a.TenSanPham));
+                    break;
+                case 'price-asc':
+                    filteredProducts.sort((a, b) => a.Gia - b.Gia);
+                    break;
+                case 'price-desc':
+                    filteredProducts.sort((a, b) => b.Gia - a.Gia);
+                    break;
+            }
         }
         
         // Update product count
-        document.getElementById('productCount').textContent = filteredProducts.length;
-        
-        // Sort products
-        const sortOption = document.getElementById('sortSelect').value;
-        switch (sortOption) {
-            case 'name-asc':
-                filteredProducts.sort((a, b) => a.TenSanPham.localeCompare(b.TenSanPham));
-                break;
-            case 'name-desc':
-                filteredProducts.sort((a, b) => b.TenSanPham.localeCompare(a.TenSanPham));
-                break;
-            case 'price-asc':
-                filteredProducts.sort((a, b) => a.Gia - b.Gia);
-                break;
-            case 'price-desc':
-                filteredProducts.sort((a, b) => b.Gia - a.Gia);
-                break;
+        const productCountElement = document.getElementById('productCount');
+        if (productCountElement) {
+            productCountElement.textContent = filteredProducts.length;
         }
         
         // Calculate pagination
-        const totalProducts = filteredProducts.length;
-        const totalPages = Math.ceil(totalProducts / productsPerPage);
+        const totalPages = Math.ceil(filteredProducts.length / productsPerPage);
         
         // Adjust current page if it's out of bounds
         if (currentPage > totalPages) {
-            currentPage = Math.max(1, totalPages);
+            currentPage = totalPages > 0 ? totalPages : 1;
+            updateUrlParams();
         }
         
         // Get products for current page
@@ -343,169 +271,174 @@ document.addEventListener('DOMContentLoaded', function() {
         // Render products and pagination
         renderProducts(paginatedProducts);
         renderPagination(totalPages);
-        
-        // Update URL parameters
-        updateUrlParams();
     }
     
     // Render pagination controls
     function renderPagination(totalPages) {
         const paginationContainer = document.getElementById('paginationContainer');
-        paginationContainer.innerHTML = '';
+        if (!paginationContainer) return;
         
         if (totalPages <= 1) {
-            return; // Don't show pagination if there's only one page
+            paginationContainer.innerHTML = '';
+            return;
         }
+        
+        let html = '';
         
         // Previous button
-        const prevLi = document.createElement('li');
-        prevLi.className = `page-item ${currentPage === 1 ? 'disabled' : ''}`;
-        prevLi.innerHTML = `<a class="page-link" href="#" aria-label="Previous">
-            <span aria-hidden="true">&laquo;</span>
-        </a>`;
-        
-        if (currentPage > 1) {
-            prevLi.addEventListener('click', (e) => {
-                e.preventDefault();
-                currentPage--;
-                filterProducts();
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-            });
-        }
-        
-        paginationContainer.appendChild(prevLi);
+        html += `
+            <li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
+                <a class="page-link" href="#" data-page="${currentPage - 1}" aria-label="Previous">
+                    <span aria-hidden="true">&laquo;</span>
+                </a>
+            </li>
+        `;
         
         // Page numbers
-        const maxVisiblePages = 5; // Maximum number of page links to show
+        const maxVisiblePages = 5;
         let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
         let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
         
-        // Adjust start page if we're near the end
-        if (endPage - startPage + 1 < maxVisiblePages) {
+        // Adjust start page if end page is at max
+        if (endPage === totalPages) {
             startPage = Math.max(1, endPage - maxVisiblePages + 1);
         }
         
-        // First page link if not visible
+        // First page if not visible
         if (startPage > 1) {
-            const firstLi = document.createElement('li');
-            firstLi.className = 'page-item';
-            firstLi.innerHTML = '<a class="page-link" href="#">1</a>';
-            firstLi.addEventListener('click', (e) => {
-                e.preventDefault();
-                currentPage = 1;
-                filterProducts();
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-            });
-            paginationContainer.appendChild(firstLi);
+            html += `
+                <li class="page-item">
+                    <a class="page-link" href="#" data-page="1">1</a>
+                </li>
+            `;
             
-            // Ellipsis if needed
             if (startPage > 2) {
-                const ellipsisLi = document.createElement('li');
-                ellipsisLi.className = 'page-item disabled';
-                ellipsisLi.innerHTML = '<a class="page-link" href="#">...</a>';
-                paginationContainer.appendChild(ellipsisLi);
+                html += `
+                    <li class="page-item disabled">
+                        <a class="page-link" href="#">...</a>
+                    </li>
+                `;
             }
         }
         
-        // Page numbers
+        // Visible page numbers
         for (let i = startPage; i <= endPage; i++) {
-            const pageLi = document.createElement('li');
-            pageLi.className = `page-item ${i === currentPage ? 'active' : ''}`;
-            pageLi.innerHTML = `<a class="page-link" href="#">${i}</a>`;
-            
-            if (i !== currentPage) {
-                pageLi.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    currentPage = i;
-                    filterProducts();
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                });
-            }
-            
-            paginationContainer.appendChild(pageLi);
+            html += `
+                <li class="page-item ${i === currentPage ? 'active' : ''}">
+                    <a class="page-link" href="#" data-page="${i}">${i}</a>
+                </li>
+            `;
         }
         
-        // Last page link if not visible
+        // Last page if not visible
         if (endPage < totalPages) {
-            // Ellipsis if needed
             if (endPage < totalPages - 1) {
-                const ellipsisLi = document.createElement('li');
-                ellipsisLi.className = 'page-item disabled';
-                ellipsisLi.innerHTML = '<a class="page-link" href="#">...</a>';
-                paginationContainer.appendChild(ellipsisLi);
+                html += `
+                    <li class="page-item disabled">
+                        <a class="page-link" href="#">...</a>
+                    </li>
+                `;
             }
             
-            const lastLi = document.createElement('li');
-            lastLi.className = 'page-item';
-            lastLi.innerHTML = `<a class="page-link" href="#">${totalPages}</a>`;
-            lastLi.addEventListener('click', (e) => {
-                e.preventDefault();
-                currentPage = totalPages;
-                filterProducts();
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-            });
-            paginationContainer.appendChild(lastLi);
+            html += `
+                <li class="page-item">
+                    <a class="page-link" href="#" data-page="${totalPages}">${totalPages}</a>
+                </li>
+            `;
         }
         
         // Next button
-        const nextLi = document.createElement('li');
-        nextLi.className = `page-item ${currentPage === totalPages ? 'disabled' : ''}`;
-        nextLi.innerHTML = `<a class="page-link" href="#" aria-label="Next">
-            <span aria-hidden="true">&raquo;</span>
-        </a>`;
+        html += `
+            <li class="page-item ${currentPage === totalPages ? 'disabled' : ''}">
+                <a class="page-link" href="#" data-page="${currentPage + 1}" aria-label="Next">
+                    <span aria-hidden="true">&raquo;</span>
+                </a>
+            </li>
+        `;
         
-        if (currentPage < totalPages) {
-            nextLi.addEventListener('click', (e) => {
+        paginationContainer.innerHTML = html;
+        
+        // Add event listeners to pagination links
+        document.querySelectorAll('.page-link').forEach(link => {
+            link.addEventListener('click', function(e) {
                 e.preventDefault();
-                currentPage++;
-                filterProducts();
-                window.scrollTo({ top: 0, behavior: 'smooth' });
+                
+                if (this.parentElement.classList.contains('disabled')) {
+                    return;
+                }
+                
+                const page = parseInt(this.getAttribute('data-page'));
+                if (!isNaN(page)) {
+                    currentPage = page;
+                    
+                    // Update URL parameters
+                    updateUrlParams();
+                    
+                    // Filter and render products
+                    filterProducts();
+                    
+                    // Scroll to top of product container
+                    const productContainer = document.getElementById('productContainer');
+                    if (productContainer) {
+                        productContainer.scrollIntoView({ behavior: 'smooth' });
+                    }
+                }
             });
-        }
-        
-        paginationContainer.appendChild(nextLi);
+        });
     }
     
     // Render products to the product container
     function renderProducts(products) {
         const productContainer = document.getElementById('productContainer');
-        productContainer.innerHTML = '';
+        if (!productContainer) return;
         
         if (products.length === 0) {
             productContainer.innerHTML = '<div class="col-12 text-center py-5"><p>Không tìm thấy sản phẩm trong danh mục này.</p></div>';
             return;
         }
         
+        let html = '';
+        
         products.forEach(product => {
             const isOutOfStock = product.SoLuongTon <= 0;
             const isNew = isProductNew(product);
-            const productCard = document.createElement('div');
-            productCard.className = 'col-md-4 mb-4';
-            productCard.innerHTML = `
-                <div class="product-card ${isOutOfStock ? 'out-of-stock' : ''}">
-                    ${isOutOfStock ? '<div class="out-of-stock-label">Hết hàng</div>' : ''}
-                    ${isNew ? '<div class="product-badge badge-new">Mới</div>' : ''}
-                    ${product.GiamGia ? `<div class="product-badge badge-sale">-${product.GiamGia}%</div>` : ''}
-                    <div class="product-img-container">
-                        <img src="${product.HinhAnhSanPham || 'images/placeholder.png'}" alt="${product.TenSanPham}" onerror="this.src='images/placeholder.png'">
-                    </div>
-                    <div class="product-info">
-                        <h5 class="product-title">${product.TenSanPham}</h5>
-                        <div class="product-price">₫${product.Gia.toLocaleString('vi-VN')}</div>
-                        <div class="product-unit">${product.DonViBan || 'Đơn vị'}</div>
-                        <div class="d-flex justify-content-between mt-3">
-                            <a href="/product-detail.html?id=${product.IDSanPham}" class="btn btn-outline-success btn-sm">Chi tiết</a>
-                            <button class="btn btn-success btn-sm ${isOutOfStock ? 'disabled' : ''}" 
-                                ${isOutOfStock ? 'disabled' : ''} 
-                                onclick="addToCartHandler(${JSON.stringify(product).replace(/"/g, '&quot;')})">
-                                Thêm vào giỏ hàng
-                            </button>
+            const discountedPrice = product.GiamGia ? 
+                product.Gia - (product.Gia * product.GiamGia / 100) : 
+                product.Gia;
+            
+            html += `
+                <div class="col-md-4 mb-4">
+                    <div class="product-card ${isOutOfStock ? 'out-of-stock' : ''}">
+                        ${isOutOfStock ? '<div class="out-of-stock-label">Hết hàng</div>' : ''}
+                        ${isNew ? '<div class="product-badge badge-new">Mới</div>' : ''}
+                        ${product.GiamGia ? `<div class="product-badge badge-sale">-${product.GiamGia}%</div>` : ''}
+                        <div class="product-img-container">
+                            <img src="${product.HinhAnhSanPham || 'images/placeholder.png'}" alt="${product.TenSanPham}" 
+                                 onerror="this.src='images/placeholder.png'">
+                        </div>
+                        <div class="product-info">
+                            <h5 class="product-title">${product.TenSanPham}</h5>
+                            <div class="product-price">
+                                ${product.GiamGia ? 
+                                    `<span class="original-price">₫${product.Gia.toLocaleString('vi-VN')}</span>` : ''}
+                                <span class="current-price">₫${discountedPrice.toLocaleString('vi-VN')}</span>
+                            </div>
+                            <div class="product-unit">${product.DonViBan || 'Đơn vị'}</div>
+                            <div class="d-flex justify-content-between mt-3">
+                                <a href="/product-detail.html?id=${product.IDSanPham}" class="btn btn-outline-success btn-sm">Chi tiết</a>
+                                <button class="btn btn-success btn-sm ${isOutOfStock ? 'disabled' : ''}" 
+                                    ${isOutOfStock ? 'disabled' : ''} 
+                                    onclick="addToCart(${JSON.stringify(product).replace(/"/g, '&quot;')})">
+                                    Thêm vào giỏ hàng
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
             `;
-            productContainer.appendChild(productCard);
         });
+        
+        productContainer.innerHTML = html;
     }
     
     // Check if product is new (added within last 30 days)
@@ -513,284 +446,126 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!product.NgayThem) return false;
         
         const addedDate = new Date(product.NgayThem);
-        const today = new Date();
-        const diffTime = Math.abs(today - addedDate);
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        const currentDate = new Date();
+        const diffTime = currentDate - addedDate;
+        const diffDays = diffTime / (1000 * 60 * 60 * 24);
         
         return diffDays <= 30;
     }
     
     // Add product to cart
-    // Modify the addToCart function to reload the page after adding to cart
     function addToCart(product) {
-        try {
-            // Get cart from localStorage
-            let cartItems = JSON.parse(localStorage.getItem('cartItems')) || [];
+        if (window.cartService) {
+            // Calculate final price considering discounts
+            const finalPrice = product.GiamGia ? 
+                product.Gia - (product.Gia * product.GiamGia / 100) : 
+                product.Gia;
             
-            // Check if product already in cart
-            const existingItemIndex = cartItems.findIndex(item => item.id === product.IDSanPham);
+            // Convert product to cart item format
+            const cartItem = {
+                id: product.IDSanPham,
+                name: product.TenSanPham,
+                price: finalPrice,
+                originalPrice: product.Gia,
+                discount: product.GiamGia || 0,
+                image: product.HinhAnhSanPham || '/images/placeholder.png',
+                category: getCategoryName(product.IDDanhMuc),
+                unit: product.DonViBan || 'Đơn vị',
+            };
             
-            if (existingItemIndex > -1) {
-                cartItems[existingItemIndex].quantity += 1;
-            } else {
-                // Calculate final price considering discounts
-                const finalPrice = product.GiamGia ? 
-                    product.Gia - (product.Gia * product.GiamGia / 100) : 
-                    product.Gia;
-                    
-                cartItems.push({
-                    id: product.IDSanPham,
-                    name: product.TenSanPham,
-                    price: finalPrice,
-                    originalPrice: product.Gia,
-                    discount: product.GiamGia || 0,
-                    image: product.HinhAnhSanPham,
-                    category: product.categoryName,
-                    unit: product.DonViBan || 'Unit',
-                    quantity: 1
-                });
-            }
-            
-            // Save to localStorage
-            localStorage.setItem('cartItems', JSON.stringify(cartItems));
-            
-            // Update cart count
-            updateCartCount();
+            window.cartService.addItem(cartItem, 1);
             
             // Show toast notification
             showToast(`${product.TenSanPham} đã được thêm vào giỏ hàng!`);
-            
-            // Reload the page after a short delay to allow the toast to be seen
-            setTimeout(() => {
-                window.location.reload();
-            }, 1000);
-        } catch (error) {
-            console.error('Error adding to cart:', error);
+        } else {
+            console.error('Cart service not found. Make sure cart-service.js is loaded before product-listing.js');
             showToast('Có lỗi xảy ra khi thêm sản phẩm vào giỏ hàng', 'error');
         }
     }
     
+    // Get category name by ID
+    function getCategoryName(categoryId) {
+        const category = categories.find(c => c.IDDanhMuc === categoryId);
+        return category ? category.TenDanhMuc : '';
+    }
+    
     // Show toast notification
-    function showToast(message) {
-        // Check if toast container exists, if not create it
-        let toastContainer = document.getElementById('toast-container');
+    function showToast(message, type = 'success') {
+        // Create toast container if it doesn't exist
+        let toastContainer = document.getElementById('toastContainer');
         if (!toastContainer) {
             toastContainer = document.createElement('div');
-            toastContainer.id = 'toast-container';
-            toastContainer.className = 'toast-container';
+            toastContainer.id = 'toastContainer';
+            toastContainer.className = 'toast-container position-fixed bottom-0 end-0 p-3';
             document.body.appendChild(toastContainer);
         }
         
-        // Create toast element
         const toastId = 'toast-' + Date.now();
-        const toast = document.createElement('div');
-        toast.className = 'toast show';
-        toast.id = toastId;
-        toast.setAttribute('role', 'alert');
-        toast.setAttribute('aria-live', 'assertive');
-        toast.setAttribute('aria-atomic', 'true');
-        
-        toast.innerHTML = `
-            <div class="toast-header bg-success text-white">
-                <strong class="me-auto">PlannPlate</strong>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button>
-            </div>
-            <div class="toast-body">
-                ${message}
+        const toastHTML = `
+            <div id="${toastId}" class="toast ${type === 'error' ? 'bg-danger text-white' : ''}" role="alert" aria-live="assertive" aria-atomic="true">
+                <div class="toast-header">
+                    <strong class="me-auto">PlannPlate</strong>
+                    <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
+                <div class="toast-body">
+                    ${message}
+                </div>
             </div>
         `;
         
-        // Add toast to container
-        toastContainer.appendChild(toast);
+        toastContainer.insertAdjacentHTML('beforeend', toastHTML);
         
-        // Auto remove after 3 seconds
-        setTimeout(() => {
-            const toastElement = document.getElementById(toastId);
-            if (toastElement) {
-                toastElement.remove();
-            }
-        }, 3000);
+        const toastElement = document.getElementById(toastId);
+        const toast = new bootstrap.Toast(toastElement, { delay: 3000 });
+        toast.show();
         
-        // Add close button functionality
-        const closeBtn = toast.querySelector('.btn-close');
-        if (closeBtn) {
-            closeBtn.addEventListener('click', () => {
-                toast.remove();
-            });
-        }
-    }
-    
-    // Update cart count from localStorage
-    function updateCartCount() {
-        const cartItems = JSON.parse(localStorage.getItem('cartItems')) || [];
-        const totalItems = cartItems.reduce((total, item) => total + item.quantity, 0);
-        document.getElementById('cartCount').textContent = totalItems;
-    }
-    
-    // Add event listeners for header buttons
-    function setupHeaderButtons() {
-        // Cart button
-        const cartBtn = document.getElementById('cartBtn');
-        if (cartBtn) {
-            cartBtn.addEventListener('click', (e) => {
-                e.preventDefault();
-            });
-        }
-        
-        // Account button
-        const accountBtn = document.getElementById('accountBtn');
-        if (accountBtn) {
-            accountBtn.addEventListener('click', (e) => {
-                e.preventDefault();
-            });
-        }
-    }
-    
-    // Add this function to render cart items in the sidebar
-    function renderCartItems() {
-        const cartItemsContainer = document.getElementById('cartItems');
-        const cartSubtotal = document.getElementById('cartSubtotal');
-        const cartTotal = document.getElementById('cartTotal');
-        
-        if (!cartItemsContainer || !cartSubtotal || !cartTotal) {
-            console.error('Cart elements not found in the DOM');
-            return;
-        }
-        
-        // Get cart items from localStorage
-        const cartItems = JSON.parse(localStorage.getItem('cartItems')) || [];
-        
-        // Clear container
-        cartItemsContainer.innerHTML = '';
-        
-        if (cartItems.length === 0) {
-            cartItemsContainer.innerHTML = '<div class="empty-cart-message">Giỏ hàng của bạn đang trống</div>';
-            cartSubtotal.textContent = '₫0';
-            cartTotal.textContent = '₫0';
-            return;
-        }
-        
-        let subtotal = 0;
-        
-        cartItems.forEach((item, index) => {
-            const price = parseFloat(item.price);
-            const itemTotal = price * item.quantity;
-            subtotal += itemTotal;
-            
-            const cartItemElement = document.createElement('div');
-            cartItemElement.className = 'cart-item';
-            cartItemElement.innerHTML = `
-                <div class="cart-item-image">
-                    <img src="${item.image || 'images/placeholder.png'}" alt="${item.name}" 
-                         onerror="this.src='images/placeholder.png'">
-                </div>
-                <div class="cart-item-details">
-                    <div class="cart-item-name">${item.name}</div>
-                    <div class="cart-item-category">${item.category || 'Sản phẩm'}</div>
-                    <div class="cart-item-price">₫${price.toLocaleString('vi-VN')}</div>
-                    <div class="cart-item-quantity">
-                        <button class="quantity-btn minus-btn" data-index="${index}">-</button>
-                        <input type="text" class="quantity-input" value="${item.quantity}" readonly>
-                        <button class="quantity-btn plus-btn" data-index="${index}">+</button>
-                    </div>
-                    <a href="#" class="cart-item-remove" data-index="${index}">Xóa</a>
-                </div>
-            `;
-            
-            cartItemsContainer.appendChild(cartItemElement);
-        });
-        
-        // Format subtotal with Vietnamese locale
-        cartSubtotal.textContent = '₫' + subtotal.toLocaleString('vi-VN');
-        cartTotal.textContent = '₫' + subtotal.toLocaleString('vi-VN');
-        
-        // Add event listeners for quantity buttons and remove links
-        document.querySelectorAll('.minus-btn').forEach(btn => {
-            btn.addEventListener('click', function() {
-                const index = parseInt(this.getAttribute('data-index'));
-                if (cartItems[index].quantity > 1) {
-                    cartItems[index].quantity -= 1;
-                    localStorage.setItem('cartItems', JSON.stringify(cartItems));
-                    updateCartCount();
-                    renderCartItems();
-                }
-            });
-        });
-        
-        document.querySelectorAll('.plus-btn').forEach(btn => {
-            btn.addEventListener('click', function() {
-                const index = parseInt(this.getAttribute('data-index'));
-                cartItems[index].quantity += 1;
-                localStorage.setItem('cartItems', JSON.stringify(cartItems));
-                updateCartCount();
-                renderCartItems();
-            });
-        });
-        
-        document.querySelectorAll('.cart-item-remove').forEach(link => {
-            link.addEventListener('click', function(e) {
-                e.preventDefault();
-                const index = parseInt(this.getAttribute('data-index'));
-                cartItems.splice(index, 1);
-                localStorage.setItem('cartItems', JSON.stringify(cartItems));
-                updateCartCount();
-                renderCartItems();
-            });
+        // Remove toast after it's hidden
+        toastElement.addEventListener('hidden.bs.toast', function() {
+            toastElement.remove();
         });
     }
     
-    // Add these functions to open and close the cart sidebar
-    function openCartSidebar() {
-        const cartSidebar = document.getElementById('cartSidebar');
-        const cartSidebarOverlay = document.getElementById('cartSidebarOverlay');
-        
-        if (cartSidebar && cartSidebarOverlay) {
-            cartSidebar.classList.add('open');
-            cartSidebarOverlay.classList.add('open');
-            document.body.classList.add('sidebar-open');
-        }
-    }
-    
-    function closeCartSidebar() {
-        const cartSidebar = document.getElementById('cartSidebar');
-        const cartSidebarOverlay = document.getElementById('cartSidebarOverlay');
-        
-        if (cartSidebar && cartSidebarOverlay) {
-            cartSidebar.classList.remove('open');
-            cartSidebarOverlay.classList.remove('open');
-            document.body.classList.remove('sidebar-open');
-        }
-    }
-    
-    // Add event listener for close cart button
-    const closeCartBtn = document.getElementById('closeCartBtn');
-    if (closeCartBtn) {
-        closeCartBtn.addEventListener('click', function() {
-            closeCartSidebar();
+    // Add event listener to sort select
+    const sortSelect = document.getElementById('sortSelect');
+    if (sortSelect) {
+        sortSelect.addEventListener('change', function() {
+            filterProducts();
         });
     }
     
-    // Add event listener for cart overlay
-    const cartSidebarOverlay = document.getElementById('cartSidebarOverlay');
-    if (cartSidebarOverlay) {
-        cartSidebarOverlay.addEventListener('click', function() {
-            closeCartSidebar();
-        });
-    }
-    
-    // Remove all sidebar-related functions
-    // Remove renderCartItems function
-    // Remove openCartSidebar function
-    // Remove closeCartSidebar function
+    // Make addToCart function available globally
+    window.addToCart = addToCart;
     
     // Initialize
     loadCategories();
-    updateCartCount();
-    setupHeaderButtons();
-    renderCartItems(); // Render cart items on page load
     
-    // Make addToCart function available globally
-    window.addToCartHandler = function(product) {
-        addToCart(product);
-    };
+    // Update cart count when cart is updated
+    document.addEventListener('cartUpdated', function() {
+        const cartCountElement = document.getElementById('cartCount');
+        if (cartCountElement && window.cartService) {
+            const count = window.cartService.getCount();
+            cartCountElement.textContent = count;
+            
+            // Show/hide badge based on count
+            if (count > 0) {
+                cartCountElement.classList.remove('d-none');
+            } else {
+                cartCountElement.classList.add('d-none');
+            }
+        }
+    });
+    
+    // Initial cart count update
+    const cartCountElement = document.getElementById('cartCount');
+    if (cartCountElement && window.cartService) {
+        const count = window.cartService.getCount();
+        cartCountElement.textContent = count;
+        
+        // Show/hide badge based on count
+        if (count > 0) {
+            cartCountElement.classList.remove('d-none');
+        } else {
+            cartCountElement.classList.add('d-none');
+        }
+    }
 });
