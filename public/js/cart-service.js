@@ -1,159 +1,146 @@
-/**
- * Cart Service - Centralized cart management for PlannPlate
- */
-class CartService {
-    constructor() {
-        this.cartItems = [];
-        this.cartNotes = '';
-        this.loadCart();
-        
-        // Custom event for cart updates
-        this.cartUpdateEvent = new CustomEvent('cartUpdated');
-    }
+// Cart Service - Manages shopping cart functionality
+window.cartService = (function() {
+    // Initialize cart from localStorage or create empty cart
+    let cart = JSON.parse(localStorage.getItem('cart')) || [];
     
-    // Load cart from localStorage
-    loadCart() {
-        try {
-            const savedCart = localStorage.getItem('cartItems');
-            if (savedCart) {
-                this.cartItems = JSON.parse(savedCart);
-            }
+    // Update cart badge count
+    function updateCartBadge() {
+        const cartBadge = document.getElementById('cartBadge');
+        if (cartBadge) {
+            const itemCount = cart.reduce((total, item) => total + item.quantity, 0);
+            cartBadge.textContent = itemCount;
             
-            const savedNotes = localStorage.getItem('cartNotes');
-            if (savedNotes) {
-                this.cartNotes = savedNotes;
+            if (itemCount > 0) {
+                cartBadge.classList.remove('d-none');
+            } else {
+                cartBadge.classList.add('d-none');
             }
-        } catch (error) {
-            console.error('Error loading cart from localStorage:', error);
-            this.cartItems = [];
-            this.cartNotes = '';
         }
     }
     
     // Save cart to localStorage
-    saveCart() {
-        try {
-            localStorage.setItem('cartItems', JSON.stringify(this.cartItems));
-            localStorage.setItem('cartNotes', this.cartNotes);
-            
-            // Dispatch custom event
-            document.dispatchEvent(this.cartUpdateEvent);
-        } catch (error) {
-            console.error('Error saving cart to localStorage:', error);
-        }
+    function saveCart() {
+        localStorage.setItem('cart', JSON.stringify(cart));
+        updateCartBadge();
     }
     
-    // Get all cart items
-    getItems() {
-        return [...this.cartItems];
-    }
-    
-    // Get cart notes
-    getNotes() {
-        return this.cartNotes;
-    }
-    
-    // Set cart notes
-    setNotes(notes) {
-        this.cartNotes = notes;
-        this.saveCart();
+    // Format price in VND
+    function formatPrice(price) {
+        return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(price);
     }
     
     // Add item to cart
-    addItem(product, quantity = 1) {
+    function addItem(product, quantity = 1) {
         // Check if product already exists in cart
-        const existingItemIndex = this.cartItems.findIndex(item => item.id === product.id);
+        const existingItemIndex = cart.findIndex(item => item.id === product.id);
         
-        if (existingItemIndex >= 0) {
-            // Update quantity if product already exists
-            this.cartItems[existingItemIndex].quantity += quantity;
+        if (existingItemIndex !== -1) {
+            // Update quantity if product already in cart
+            cart[existingItemIndex].quantity += quantity;
         } else {
-            // Add new product to cart
-            this.cartItems.push({
+            // Add new item to cart
+            cart.push({
                 id: product.id,
                 name: product.name,
                 price: product.price,
-                originalPrice: product.originalPrice || product.price,
-                discount: product.discount || 0,
                 image: product.image,
-                category: product.category || '',
-                unit: product.unit || '',
+                unit: product.unit,
                 quantity: quantity
             });
         }
         
-        this.saveCart();
-    }
-    
-    // Update item quantity
-    updateItemQuantity(productId, quantity) {
-        const itemIndex = this.cartItems.findIndex(item => item.id === productId);
-        
-        if (itemIndex >= 0) {
-            if (quantity > 0) {
-                this.cartItems[itemIndex].quantity = quantity;
-            } else {
-                // Remove item if quantity is 0 or negative
-                this.cartItems.splice(itemIndex, 1);
-            }
-            
-            this.saveCart();
-            return true;
-        }
-        
-        return false;
+        saveCart();
+        showAddToCartToast(product.name, quantity);
     }
     
     // Remove item from cart
-    removeItem(productId) {
-        const itemIndex = this.cartItems.findIndex(item => item.id === productId);
+    function removeItem(productId) {
+        cart = cart.filter(item => item.id !== productId);
+        saveCart();
+    }
+    
+    // Update item quantity
+    function updateQuantity(productId, quantity) {
+        const itemIndex = cart.findIndex(item => item.id === productId);
         
-        if (itemIndex >= 0) {
-            this.cartItems.splice(itemIndex, 1);
-            this.saveCart();
-            return true;
+        if (itemIndex !== -1) {
+            if (quantity > 0) {
+                cart[itemIndex].quantity = quantity;
+            } else {
+                // Remove item if quantity is 0 or negative
+                cart.splice(itemIndex, 1);
+            }
+            
+            saveCart();
         }
-        
-        return false;
     }
     
-    // Clear cart
-    clearCart() {
-        this.cartItems = [];
-        this.cartNotes = '';
-        this.saveCart();
-    }
-    
-    // Get cart count
-    getCount() {
-        return this.cartItems.reduce((total, item) => total + item.quantity, 0);
+    // Get all items in cart
+    function getItems() {
+        return cart;
     }
     
     // Get cart subtotal
-    getSubtotal() {
-        return this.cartItems.reduce((total, item) => total + (item.price * item.quantity), 0);
+    function getSubtotal() {
+        return cart.reduce((total, item) => total + (item.price * item.quantity), 0);
     }
     
-    // Calculate tax (10%)
-    getTax() {
-        return this.getSubtotal() * 0.1;
+    // Clear cart
+    function clearCart() {
+        cart = [];
+        saveCart();
     }
     
-    // Get shipping cost (fixed at 30,000₫)
-    getShipping() {
-        return this.cartItems.length > 0 ? 30000 : 0;
+    // Show toast notification when adding to cart
+    function showAddToCartToast(productName, quantity) {
+        // Create toast container if it doesn't exist
+        let toastContainer = document.getElementById('toastContainer');
+        if (!toastContainer) {
+            toastContainer = document.createElement('div');
+            toastContainer.id = 'toastContainer';
+            toastContainer.className = 'toast-container position-fixed bottom-0 end-0 p-3';
+            document.body.appendChild(toastContainer);
+        }
+        
+        const toastId = 'toast-' + Date.now();
+        const toastHTML = `
+            <div id="${toastId}" class="toast bg-success text-white" role="alert" aria-live="assertive" aria-atomic="true">
+                <div class="toast-header">
+                    <strong class="me-auto">Giỏ Hàng</strong>
+                    <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
+                <div class="toast-body">
+                    Đã thêm ${quantity} ${productName} vào giỏ hàng.
+                    <div class="mt-2">
+                        <a href="/checkout.html" class="btn btn-sm btn-light">Thanh Toán</a>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        toastContainer.insertAdjacentHTML('beforeend', toastHTML);
+        
+        const toastElement = document.getElementById(toastId);
+        const toast = new bootstrap.Toast(toastElement, { delay: 3000 });
+        toast.show();
+        
+        // Remove toast after it's hidden
+        toastElement.addEventListener('hidden.bs.toast', function() {
+            toastElement.remove();
+        });
     }
     
-    // Get cart total
-    getTotal() {
-        return this.getSubtotal() + this.getTax() + this.getShipping();
-    }
+    // Initialize cart badge on page load
+    document.addEventListener('DOMContentLoaded', updateCartBadge);
     
-    // Format price with Vietnamese currency
-    formatPrice(price) {
-        return '₫' + price.toLocaleString('vi-VN');
-    }
-}
-
-// Create a global cart instance
-window.cartService = new CartService();
+    // Public API
+    return {
+        addItem,
+        removeItem,
+        updateQuantity,
+        getItems,
+        getSubtotal,
+        clearCart,
+        formatPrice
+    };
+})();

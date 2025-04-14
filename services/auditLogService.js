@@ -76,7 +76,11 @@ async function getAllLogs(page = 1, limit = 20, filters = {}) {
     let query = `
       SELECT 
         IDAuditLog,
-        TenNguoiDung as user,
+        CASE 
+          WHEN TenNguoiDung IS NULL OR TenNguoiDung = '' THEN 
+            (SELECT TenNguoiDung FROM TaiKhoan WHERE IDTaiKhoan = AuditLog.IDTaiKhoan)
+          ELSE TenNguoiDung 
+        END as user,
         HanhDong as action,
         MoTa as description,
         LoaiDoiTuong as entityType,

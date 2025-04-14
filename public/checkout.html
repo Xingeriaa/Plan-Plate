@@ -171,6 +171,20 @@
     </div>
 </div>
 
+<!-- Add this near the top of your content -->
+<div id="authPrompt" class="container mt-4 d-none">
+    <div class="alert alert-warning">
+        <h4 class="alert-heading">Bạn cần đăng nhập</h4>
+        <p>Vui lòng đăng nhập để tiếp tục thanh toán.</p>
+        <hr>
+        <div class="d-flex justify-content-between">
+            <a href="/login?redirect=/checkout.html" class="btn btn-primary">Đăng nhập</a>
+            <a href="/signup" class="btn btn-secondary">Đăng ký</a>
+        </div>
+    </div>
+</div>
+
+<!-- Add this before the closing body tag -->
 <div class="modal fade" id="orderConfirmationModal" tabindex="-1" aria-labelledby="orderConfirmationModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -211,8 +225,9 @@
     </div>
 </footer>
 
-<!-- Add this before other scripts -->
-<script src="/js/cart-service.js"></script>
-<script src="/js/checkout.js"></script>
+<!-- Add this at the end of your checkout.html file, just before the closing </body> tag -->
+<script src="js/cart-service.js"></script>
+<script src="js/checkout.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

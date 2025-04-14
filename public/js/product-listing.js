@@ -120,7 +120,19 @@ document.addEventListener('DOMContentLoaded', function() {
     // Load all products from all categories
     function loadAllProducts() {
         fetch('/api/products')
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.text().then(text => {
+                    try {
+                        return JSON.parse(text);
+                    } catch (err) {
+                        console.error('Failed to parse JSON:', text);
+                        throw new Error('Invalid JSON response');
+                    }
+                });
+            })
             .then(data => {
                 allProducts = data;
                 
@@ -136,7 +148,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Update breadcrumb
                 updateBreadcrumb();
             })
-            .catch(error => console.error('Error loading products:', error));
+            .catch(error => {
+                console.error('Error loading products:', error);
+                showToast('Không thể tải danh sách sản phẩm. Vui lòng thử lại sau.', 'error');
+            });
     }
     
     // Update category counts

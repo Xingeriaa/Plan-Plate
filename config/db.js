@@ -151,6 +151,13 @@ async function cachedQuery(sqlQuery, params = [], cacheKey = null, ttl = 60000) 
   }
 }
 
+async function getPool() {
+  if (!pool.connected) {
+    await connectDB();
+  }
+  return pool;
+}
+
 // Admin dashboard functions
 
 // Function to clear relevant caches when data changes
@@ -1848,74 +1855,123 @@ async function getBestSellingProducts(limit = 10) {
   }
 }
 
-async function createOrder(orderData) {
+// ... existing code ...
+
+// Create new order
+async function createOrder(userId, items, subtotal, shipping, tax, total, paymentMethod, shippingInfo) {
+  const transaction = new sql.Transaction(pool);
+  
   try {
-      // Start a transaction
-      const transaction = new sql.Transaction(pool);
-      await transaction.begin();
-      
-      try {
-          // Insert into DonHang table
-          const orderResult = await transaction.request()
-              .input('IDTaiKhoan', sql.Int, orderData.userId || null)
-              .input('NgayDatHang', sql.DateTime, new Date())
-              .input('TrangThai', sql.NVarChar, 'ChoXuLy')
-              .query(`
-                  INSERT INTO DonHang (IDTaiKhoan, NgayDatHang, TrangThai)
-                  OUTPUT INSERTED.IDDonHang
-                  VALUES (@IDTaiKhoan, @NgayDatHang, @TrangThai)
-              `);
-          
-          const orderId = orderResult.recordset[0].IDDonHang;
-          
-          // Insert order items into ChiTietDonHang table
-          for (const item of orderData.items) {
-              await transaction.request()
-                  .input('IDDonHang', sql.Int, orderId)
-                  .input('IDSanPham', sql.Int, item.id)
-                  .input('SoLuong', sql.Int, item.quantity)
-                  .input('Gia', sql.Decimal(10, 2), item.price)
-                  .query(`
-                      INSERT INTO ChiTietDonHang (IDDonHang, IDSanPham, SoLuong, Gia)
-                      VALUES (@IDDonHang, @IDSanPham, @SoLuong, @Gia)
-                  `);
-              
-              // Update inventory
-              await transaction.request()
-                  .input('IDSanPham', sql.Int, item.id)
-                  .input('SoLuong', sql.Int, item.quantity)
-                  .query(`
-                      UPDATE QuanLyKhoHang
-                      SET SoLuongTon = SoLuongTon - @SoLuong
-                      WHERE IDSanPham = @IDSanPham
-                  `);
-          }
-          
-          // Insert payment information
-          await transaction.request()
-              .input('IDDonHang', sql.Int, orderId)
-              .input('PhuongThucThanhToan', sql.NVarChar, orderData.paymentMethod)
-              .input('TrangThaiThanhToan', sql.NVarChar, orderData.paymentMethod === 'TienMat' ? 'ChuaThanhToan' : 'DaThanhToan')
-              .input('NgayThanhToan', sql.DateTime, orderData.paymentMethod === 'TienMat' ? null : new Date())
-              .query(`
-                  INSERT INTO ThanhToan (IDDonHang, PhuongThucThanhToan, TrangThaiThanhToan, NgayThanhToan)
-                  VALUES (@IDDonHang, @PhuongThucThanhToan, @TrangThaiThanhToan, @NgayThanhToan)
-              `);
-          
-          // Commit the transaction
-          await transaction.commit();
-          
-          return orderId;
-      } catch (error) {
-          // If there's an error, roll back the transaction
-          await transaction.rollback();
-          throw error;
-      }
+    // Validate required shipping information
+    if (!shippingInfo || 
+        !shippingInfo.email || 
+        !shippingInfo.phone || 
+        !shippingInfo.firstName || 
+        !shippingInfo.lastName || 
+        !shippingInfo.address || 
+        !shippingInfo.city || 
+        !shippingInfo.province || 
+        !shippingInfo.postalCode || 
+        !shippingInfo.country) {
+      throw new Error('Missing required shipping information');
+    }
+
+    // Validate items
+    if (!items || !Array.isArray(items) || items.length === 0) {
+      throw new Error('Order must contain at least one item');
+    }
+
+    await transaction.begin();
+    
+    // 1. Create order in DonHang table
+    const orderResult = await transaction.request()
+        .input('userId', sql.Int, userId)
+        .input('orderDate', sql.DateTime, new Date())
+        .input('status', sql.NVarChar, 'ChoXuLy')
+        .query(`
+            INSERT INTO DonHang (IDTaiKhoan, NgayDatHang, TrangThai)
+            OUTPUT INSERTED.IDDonHang
+            VALUES (@userId, @orderDate, @status)
+        `);
+    
+    const orderId = orderResult.recordset[0].IDDonHang;
+    
+    // 2. Add order items to ChiTietDonHang table
+    for (const item of items) {
+        await transaction.request()
+            .input('orderId', sql.Int, orderId)
+            .input('productId', sql.Int, item.id)
+            .input('quantity', sql.Int, item.quantity)
+            .input('price', sql.Money, item.price)
+            .query(`
+                INSERT INTO ChiTietDonHang (IDDonHang, IDSanPham, SoLuong, Gia)
+                VALUES (@orderId, @productId, @quantity, @price)
+            `);
+            
+        // 3. Update inventory in QuanLyKhoHang table
+        await transaction.request()
+            .input('productId', sql.Int, item.id)
+            .input('quantity', sql.Int, item.quantity)
+            .query(`
+                UPDATE QuanLyKhoHang
+                SET SoLuongTon = SoLuongTon - @quantity
+                WHERE IDSanPham = @productId
+            `);
+    }
+    
+    // 4. Add payment information to ThanhToan table
+    await transaction.request()
+        .input('orderId', sql.Int, orderId)
+        .input('paymentMethod', sql.NVarChar, paymentMethod)
+        .input('status', sql.NVarChar, paymentMethod === 'TienMat' ? 'ChuaThanhToan' : 'DaThanhToan')
+        .input('paymentDate', sql.DateTime, paymentMethod === 'TienMat' ? null : new Date())
+        .query(`
+            INSERT INTO ThanhToan (IDDonHang, PhuongThucThanhToan, TrangThaiThanhToan, NgayThanhToan)
+            VALUES (@orderId, @paymentMethod, @status, @paymentDate)
+        `);
+    
+    // 5. Add shipping information to ThongTinGiaoHang table
+    // Ensure all required fields are provided with default empty string for optional fields
+    await transaction.request()
+        .input('orderId', sql.Int, orderId)
+        .input('email', sql.NVarChar, shippingInfo.email)
+        .input('phone', sql.NVarChar, shippingInfo.phone)
+        .input('firstName', sql.NVarChar, shippingInfo.firstName)
+        .input('lastName', sql.NVarChar, shippingInfo.lastName)
+        .input('address', sql.NVarChar, shippingInfo.address)
+        .input('addressLine2', sql.NVarChar, shippingInfo.addressLine2 || '')
+        .input('city', sql.NVarChar, shippingInfo.city)
+        .input('province', sql.NVarChar, shippingInfo.province)
+        .input('postalCode', sql.NVarChar, shippingInfo.postalCode)
+        .input('country', sql.NVarChar, shippingInfo.country)
+        .input('deliveryNotes', sql.NVarChar, shippingInfo.deliveryNotes || '')
+        .query(`
+            INSERT INTO ThongTinGiaoHang (
+                IDDonHang, Email, Phone, FirstName, LastName, 
+                Address, AddressLine2, City, Province, PostalCode, 
+                Country, DeliveryNotes
+            )
+            VALUES (
+                @orderId, @email, @phone, @firstName, @lastName,
+                @address, @addressLine2, @city, @province, @postalCode,
+                @country, @deliveryNotes
+            )
+        `);
+    
+    // Commit transaction
+    await transaction.commit();
+    
+    return orderId;
   } catch (error) {
-      console.error('Error creating order:', error);
-      throw error;
+    // Rollback transaction on error
+    await transaction.rollback();
+    console.error('Error creating order:', error);
+    throw error;
   }
 }
+
+
+// ... rest of the existing code ...
 
 async function getCategoriesWithProductCounts() {
   const cacheKey = 'categories_with_counts';
@@ -2532,5 +2588,6 @@ module.exports = {
   logUserLogin,
   logUserLogout,
   getAuditLogs,
-  logAction
+  logAction,
+  getPool
 };

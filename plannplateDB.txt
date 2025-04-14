@@ -141,3 +141,6 @@ IDThanhToan 	IDDonHang 	PhuongThucThanhToan 	TrangThaiThanhToan 	NgayThanhToan
 
 Table name: AuditLog
 IDAuditLog 	IDTaiKhoan 	TenNguoiDung 	HanhDong 	MoTa 	LoaiDoiTuong 	IDDoiTuong 	ThoiGian 	DiaChiIP 	DuLieuCu 	DuLieuMoi 
+
+Table name: ThongTinGiaoHang
+IDThongTinGiaoHang 	IDDonHang 	Email 	Phone 	FirstName 	LastName 	Address 	AddressLine2 	City 	Province 	PostalCode 	Country 	DeliveryNotes 

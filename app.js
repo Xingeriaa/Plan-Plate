@@ -8,6 +8,7 @@ const LocalStrategy = require('passport-local').Strategy;
 const db = require('./config/db');
 const sql = require('mssql');
 
+
 dotenv.config();
 
 const config = {
@@ -48,6 +49,7 @@ app.use(express.urlencoded({ extended: true }));
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
+
 const authRoutes = require('./routes/auth');
 
 app.use('/', authRoutes);
@@ -64,6 +66,22 @@ app.get('/profile', (req, res) => {
   });
 });
 
+app.get('/api/products', async (req, res) => {
+  try {
+      const pool = await db.getPool();
+      const result = await pool.request()
+          .query(`
+              SELECT s.*, k.SoLuongTon 
+              FROM QuanLySanPham s
+              LEFT JOIN QuanLyKhoHang k ON s.IDSanPham = k.IDSanPham
+          `);
+      
+      res.json(result.recordset);
+  } catch (error) {
+      console.error('Error fetching products:', error);
+      res.status(500).json({ error: 'Failed to fetch products' });
+  }
+});
 // Remove the entire complex root route and replace with these separate routes
 
 // Serve static files
@@ -76,13 +94,16 @@ app.get('/', (req, res) => {
 
 // API endpoint for categories
 app.get('/api/categories', async (req, res) => {
-    try {
-        const categories = await db.getAllCategories();
-        res.json(categories);
-    } catch (error) {
-        console.error('Error fetching categories:', error);
-        res.status(500).json({ error: 'Failed to fetch categories' });
-    }
+  try {
+      const pool = await db.getPool();
+      const result = await pool.request()
+          .query('SELECT * FROM QuanLyDanhMuc');
+      
+      res.json(result.recordset);
+  } catch (error) {
+      console.error('Error fetching categories:', error);
+      res.status(500).json({ error: 'Failed to fetch categories' });
+  }
 });
 
 // Add search products API endpoint
@@ -127,18 +148,21 @@ app.get('/api/product/:productId', async (req, res) => {
     }
 });
 
+// Find this route in your app.js file
 app.get('/login', (req, res) => {
   if (req.isAuthenticated()) {
     return res.redirect('/profile');
   }
-  res.render('login');
+  // Remove the layout: false parameter
+  res.render('login', { error: req.query.error });
 });
 
 app.get('/signup', (req, res) => {
   if (req.isAuthenticated()) {
     return res.redirect('/profile');
   }
-  res.render('signup');
+  // Remove the layout: false parameter
+  res.render('signup', { error: req.query.error });
 });
 
 app.get('/logout', (req, res) => {
@@ -287,6 +311,7 @@ const isAdmin = (req, res, next) => {
 // Add these admin routes after your existing routes
 // Update the admin dashboard route to include the required data
 // Admin dashboard route
+
 app.get('/admin', isAdmin, async (req, res) => {
   try {
     // Get dashboard stats
@@ -1085,29 +1110,58 @@ app.get('/bestsellers', async (req, res) => {
 
 // Add this API endpoint for placing orders
 app.post('/api/orders', async (req, res) => {
-    try {
-        // Check if user is authenticated
-        const userId = req.user ? req.user.IDTaiKhoan : null;
-        
-        // Get order data from request body
-        const orderData = req.body;
-        
-        // Create order in database
-        const orderId = await db.createOrder({
-            userId: userId,
-            items: orderData.items,
-            shippingAddress: orderData.shippingAddress,
-            paymentMethod: orderData.paymentMethod,
-            total: orderData.total
-        });
-        
-        res.json({ 
-            success: true, 
-            message: 'Order placed successfully', 
-            orderId: orderId 
-        });
-    } catch (error) {
-        console.error('Error placing order:', error);
-        res.status(500).json({ error: 'Failed to place order' });
-    }
+  try {
+      // Check if user is authenticated
+      if (!req.isAuthenticated()) {
+          return res.status(401).json({ error: 'You must be logged in to place an order' });
+      }
+      
+      const userId = req.user.IDTaiKhoan;
+      const { items, subtotal, shipping, tax, total, paymentMethod, shippingInfo } = req.body;
+      
+      // Validate order data
+      if (!items || !items.length) {
+          return res.status(400).json({ error: 'No items in cart' });
+      }
+      
+      if (!shippingInfo || !shippingInfo.email || !shippingInfo.phone || !shippingInfo.firstName || 
+          !shippingInfo.lastName || !shippingInfo.address || !shippingInfo.city || 
+          !shippingInfo.province || !shippingInfo.postalCode || !shippingInfo.country) {
+          return res.status(400).json({ error: 'Missing required shipping information' });
+      }
+      
+      if (!paymentMethod) {
+          return res.status(400).json({ error: 'Payment method is required' });
+      }
+      
+      // Create order in database
+      const orderId = await db.createOrder(userId, items, subtotal, shipping, tax, total, paymentMethod, shippingInfo);
+      
+      // Return success response
+      res.status(201).json({ 
+          success: true, 
+          message: 'Order created successfully', 
+          orderId: orderId 
+      });
+  } catch (error) {
+      console.error('Error creating order:', error);
+      res.status(500).json({ error: error.message || 'Failed to create order' });
+  }
 });
+
+// ... existing code ...
+
+// Add this API endpoint after your other API routes
+app.get('/api/auth/status', (req, res) => {
+  res.json({
+      isAuthenticated: req.isAuthenticated(),
+      user: req.isAuthenticated() ? {
+          id: req.user.IDTaiKhoan,
+          name: req.user.TenNguoiDung,
+          email: req.user.Email,
+          role: req.user.VaiTro
+      } : null
+  });
+});
+
+// ... rest of existing code ...

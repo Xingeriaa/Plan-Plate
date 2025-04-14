@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sales Reports - PlannPlate Admin</title>
+  <title>Báo Cáo Bán Hàng - PlannPlate Admin</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -44,30 +44,33 @@
       <div class="collapse navbar-collapse" id="navbarNav">
         <ul class="navbar-nav me-auto">
           <li class="nav-item">
-            <a class="nav-link" href="/admin">Dashboard</a>
+            <a class="nav-link" href="/admin">Bảng Điều Khiển</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link" href="/admin/users">Users</a>
+            <a class="nav-link" href="/admin/users">Người Dùng</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link" href="/admin/products">Products</a>
+            <a class="nav-link" href="/admin/products">Sản Phẩm</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link" href="/admin/orders">Orders</a>
+            <a class="nav-link" href="/admin/orders">Đơn Hàng</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link" href="/admin/categories">Categories</a>
+            <a class="nav-link" href="/admin/categories">Danh Mục</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link active" href="/admin/reports">Reports</a>
+            <a class="nav-link active" href="/admin/reports">Báo Cáo</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="/admin/audit-logs">Nhật Ký Hệ Thống</a>
           </li>
         </ul>
         <ul class="navbar-nav">
           <li class="nav-item">
-            <a class="nav-link" href="/profile">Back to Profile</a>
+            <a class="nav-link" href="/profile">Quay Lại Hồ Sơ</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link" href="/logout">Logout</a>
+            <a class="nav-link" href="/logout">Đăng Xuất</a>
           </li>
         </ul>
       </div>
@@ -78,34 +81,35 @@
     <div class="row">
       <div class="col-md-3 col-lg-2 d-md-block sidebar p-3">
         <div class="list-group">
-          <a href="/admin" class="list-group-item list-group-item-action">Dashboard</a>
-          <a href="/admin/users" class="list-group-item list-group-item-action">Users</a>
-          <a href="/admin/products" class="list-group-item list-group-item-action">Products</a>
-          <a href="/admin/orders" class="list-group-item list-group-item-action">Orders</a>
-          <a href="/admin/categories" class="list-group-item list-group-item-action">Categories</a>
-          <a href="/admin/reports" class="list-group-item list-group-item-action active">Reports</a>
+          <a href="/admin" class="list-group-item list-group-item-action">Bảng Điều Khiển</a>
+          <a href="/admin/users" class="list-group-item list-group-item-action">Người Dùng</a>
+          <a href="/admin/products" class="list-group-item list-group-item-action">Sản Phẩm</a>
+          <a href="/admin/orders" class="list-group-item list-group-item-action">Đơn Hàng</a>
+          <a href="/admin/categories" class="list-group-item list-group-item-action">Danh Mục</a>
+          <a href="/admin/reports" class="list-group-item list-group-item-action active">Báo Cáo</a>
+          <a href="/admin/audit-logs" class="list-group-item list-group-item-action">Nhật Ký Hệ Thống</a>
         </div>
       </div>
       <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 py-4">
         <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-          <h1 class="h2">Sales Reports</h1>
+          <h1 class="h2">Báo Cáo Bán Hàng</h1>
           <div class="btn-toolbar mb-2 mb-md-0">
             <div class="btn-group me-2">
               <button type="button" class="btn btn-sm btn-outline-secondary" onclick="printReport()">
-                <i class="bi bi-printer"></i> Print
+                <i class="bi bi-printer"></i> In
               </button>
               <button type="button" class="btn btn-sm btn-outline-secondary" onclick="exportCSV()">
-                <i class="bi bi-file-earmark-excel"></i> Export
+                <i class="bi bi-file-earmark-excel"></i> Xuất
               </button>
             </div>
             <div class="dropdown">
               <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                <i class="bi bi-calendar3"></i> Time Period
+                <i class="bi bi-calendar3"></i> Khoảng Thời Gian
               </button>
               <ul class="dropdown-menu">
-                <li><a class="dropdown-item" href="#" onclick="showChart('week')">Last 7 Days</a></li>
-                <li><a class="dropdown-item" href="#" onclick="showChart('month')">Last 30 Days</a></li>
-                <li><a class="dropdown-item" href="#" onclick="showChart('year')">Last 12 Months</a></li>
+                <li><a class="dropdown-item" href="#" onclick="showChart('week')">7 Ngày Qua</a></li>
+                <li><a class="dropdown-item" href="#" onclick="showChart('month')">30 Ngày Qua</a></li>
+                <li><a class="dropdown-item" href="#" onclick="showChart('year')">12 Tháng Qua</a></li>
               </ul>
             </div>
           </div>
@@ -116,7 +120,7 @@
           <div class="col-12">
             <div class="card">
               <div class="card-header">
-                <h5 class="card-title mb-0">Sales Overview</h5>
+                <h5 class="card-title mb-0">Tổng Quan Doanh Số</h5>
               </div>
               <div class="card-body">
                 <canvas id="salesChart" height="100"></canvas>
@@ -130,16 +134,16 @@
           <div class="col-md-6">
             <div class="card">
               <div class="card-header">
-                <h5 class="card-title mb-0">Top Selling Products</h5>
+                <h5 class="card-title mb-0">Sản Phẩm Bán Chạy</h5>
               </div>
               <div class="card-body">
                 <div class="table-responsive">
                   <table class="table table-striped">
                     <thead>
                       <tr>
-                        <th>Product</th>
-                        <th>Quantity</th>
-                        <th>Revenue</th>
+                        <th>Sản Phẩm</th>
+                        <th>Số Lượng</th>
+                        <th>Doanh Thu</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -164,7 +168,7 @@
                         <% }); %>
                       <% } else { %>
                         <tr>
-                          <td colspan="3" class="text-center">No data available</td>
+                          <td colspan="3" class="text-center">Không có dữ liệu</td>
                         </tr>
                       <% } %>
                     </tbody>
@@ -178,7 +182,7 @@
           <div class="col-md-6">
             <div class="card">
               <div class="card-header">
-                <h5 class="card-title mb-0">Sales by Category</h5>
+                <h5 class="card-title mb-0">Doanh Số Theo Danh Mục</h5>
               </div>
               <div class="card-body">
                 <canvas id="categoryChart" height="300"></canvas>
@@ -192,17 +196,17 @@
           <div class="col-12">
             <div class="card">
               <div class="card-header">
-                <h5 class="card-title mb-0">Category Performance</h5>
+                <h5 class="card-title mb-0">Hiệu Suất Danh Mục</h5>
               </div>
               <div class="card-body">
                 <div class="table-responsive">
                   <table class="table table-striped">
                     <thead>
                       <tr>
-                        <th>Category</th>
-                        <th>Orders</th>
-                        <th>Items Sold</th>
-                        <th>Revenue</th>
+                        <th>Danh Mục</th>
+                        <th>Đơn Hàng</th>
+                        <th>Sản Phẩm Đã Bán</th>
+                        <th>Doanh Thu</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -217,7 +221,7 @@
                         <% }); %>
                       <% } else { %>
                         <tr>
-                          <td colspan="4" class="text-center">No data available</td>
+                          <td colspan="4" class="text-center">Không có dữ liệu</td>
                         </tr>
                       <% } %>
                     </tbody>
@@ -280,13 +284,13 @@
       
       if (period === 'week') {
         data = weekData;
-        title = 'Last 7 Days Sales';
+        title = '7 Ngày Qua';
       } else if (period === 'month') {
         data = monthData;
-        title = 'Last 30 Days Sales';
+        title = '30 Ngày Qua';
       } else {
         data = yearData;
-        title = 'Last 12 Months Sales';
+        title = '12 Tháng Qua';
       }
       
       salesChart = new Chart(ctx, {
@@ -294,7 +298,7 @@
         data: {
           labels: data.labels,
           datasets: [{
-            label: 'Sales (VND)',
+            label: 'Doanh Số (VND)',
             data: data.values,
             backgroundColor: 'rgba(54, 162, 235, 0.2)',
             borderColor: 'rgba(54, 162, 235, 1)',
@@ -307,7 +311,7 @@
           plugins: {
             title: {
               display: true,
-              text: title
+              text: 'Doanh Số ' + title
             },
             legend: {
               position: 'top',
@@ -363,7 +367,7 @@
             },
             title: {
               display: true,
-              text: 'Revenue by Category'
+              text: 'Doanh Thu Theo Danh Mục'
             },
             tooltip: {
               callbacks: {

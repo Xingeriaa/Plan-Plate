@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Order Management - PlannPlate Admin</title>
+  <title>Quản Lý Đơn Hàng - PlannPlate Admin</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
   <link rel="icon" type="image/x-icon" href="/images/logo.png">
@@ -93,30 +93,33 @@
       <div class="collapse navbar-collapse" id="navbarNav">
         <ul class="navbar-nav me-auto">
           <li class="nav-item">
-            <a class="nav-link" href="/admin">Dashboard</a>
+            <a class="nav-link" href="/admin">Bảng Điều Khiển</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link" href="/admin/users">Users</a>
+            <a class="nav-link" href="/admin/users">Người Dùng</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link" href="/admin/products">Products</a>
+            <a class="nav-link" href="/admin/products">Sản Phẩm</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link active" href="/admin/orders">Orders</a>
+            <a class="nav-link active" href="/admin/orders">Đơn Hàng</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link" href="/admin/categories">Categories</a>
+            <a class="nav-link" href="/admin/categories">Danh Mục</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link" href="/admin/reports">Reports</a>
+            <a class="nav-link" href="/admin/reports">Báo Cáo</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="/admin/audit-logs">Nhật Ký Hệ Thống</a>
           </li>
         </ul>
         <ul class="navbar-nav">
           <li class="nav-item">
-            <a class="nav-link" href="/profile">Back to Profile</a>
+            <a class="nav-link" href="/profile">Quay Lại Hồ Sơ</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link" href="/logout">Logout</a>
+            <a class="nav-link" href="/logout">Đăng Xuất</a>
           </li>
         </ul>
       </div>
@@ -127,24 +130,25 @@
     <div class="row">
       <div class="col-md-3 col-lg-2 d-md-block sidebar p-3">
         <div class="list-group">
-          <a href="/admin" class="list-group-item list-group-item-action">Dashboard</a>
-          <a href="/admin/users" class="list-group-item list-group-item-action">Users</a>
-          <a href="/admin/products" class="list-group-item list-group-item-action">Products</a>
-          <a href="/admin/orders" class="list-group-item list-group-item-action active">Orders</a>
-          <a href="/admin/categories" class="list-group-item list-group-item-action">Categories</a>
-          <a href="/admin/reports" class="list-group-item list-group-item-action">Reports</a>
+          <a href="/admin" class="list-group-item list-group-item-action">Bảng Điều Khiển</a>
+          <a href="/admin/users" class="list-group-item list-group-item-action">Người Dùng</a>
+          <a href="/admin/products" class="list-group-item list-group-item-action">Sản Phẩm</a>
+          <a href="/admin/orders" class="list-group-item list-group-item-action active">Đơn Hàng</a>
+          <a href="/admin/categories" class="list-group-item list-group-item-action">Danh Mục</a>
+          <a href="/admin/reports" class="list-group-item list-group-item-action">Báo Cáo</a>
+          <a href="/admin/audit-logs" class="list-group-item list-group-item-action">Nhật Ký Hệ Thống</a>
         </div>
       </div>
       <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 py-4">
         <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-          <h1>Order Management</h1>
+          <h1>Quản Lý Đơn Hàng</h1>
         </div>
         
         <!-- Search and Filter -->
         <div class="row mb-4">
           <div class="col-md-6">
             <div class="input-group">
-              <input type="text" class="form-control" id="searchOrder" placeholder="Search orders..." value="<%= search %>">
+              <input type="text" class="form-control" id="searchOrder" placeholder="Tìm kiếm đơn hàng..." value="<%= search %>">
               <button class="btn btn-outline-secondary" type="button" id="searchButton">
                 <i class="bi bi-search"></i>
               </button>
@@ -152,17 +156,17 @@
           </div>
           <div class="col-md-3">
             <select class="form-select" id="statusFilter">
-              <option value="">All Statuses</option>
-              <option value="ChoXuLy" <%= status === 'ChoXuLy' ? 'selected' : '' %>>Pending</option>
-              <option value="DangGiao" <%= status === 'DangGiao' ? 'selected' : '' %>>Shipping</option>
-              <option value="HoanThanh" <%= status === 'HoanThanh' ? 'selected' : '' %>>Completed</option>
-              <option value="Huy" <%= status === 'Huy' ? 'selected' : '' %>>Cancelled</option>
+              <option value="">Tất Cả Trạng Thái</option>
+              <option value="ChoXuLy" <%= status === 'ChoXuLy' ? 'selected' : '' %>>Chờ Xử Lý</option>
+              <option value="DangGiao" <%= status === 'DangGiao' ? 'selected' : '' %>>Đang Giao</option>
+              <option value="HoanThanh" <%= status === 'HoanThanh' ? 'selected' : '' %>>Hoàn Thành</option>
+              <option value="Huy" <%= status === 'Huy' ? 'selected' : '' %>>Hủy</option>
             </select>
           </div>
           <div class="col-md-3">
             <select class="form-select" id="sortOrders">
-              <option value="newest" <%= sort === 'newest' ? 'selected' : '' %>>Newest First</option>
-              <option value="oldest" <%= sort === 'oldest' ? 'selected' : '' %>>Oldest First</option>
+              <option value="newest" <%= sort === 'newest' ? 'selected' : '' %>>Mới Nhất</option>
+              <option value="oldest" <%= sort === 'oldest' ? 'selected' : '' %>>Cũ Nhất</option>
             </select>
           </div>
         </div>
@@ -174,13 +178,13 @@
               <table class="table table-striped table-hover">
                 <thead>
                   <tr>
-                    <th>Order ID</th>
-                    <th>Customer</th>
-                    <th>Date</th>
-                    <th>Items</th>
-                    <th>Total</th>
-                    <th>Status</th>
-                    <th>Actions</th>
+                    <th>Mã Đơn Hàng</th>
+                    <th>Khách Hàng</th>
+                    <th>Ngày Đặt</th>
+                    <th>Số Lượng</th>
+                    <th>Tổng Tiền</th>
+                    <th>Trạng Thái</th>
+                    <th>Thao Tác</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -193,17 +197,17 @@
                           <small class="text-muted"><%= order.Email %></small>
                         </td>
                         <td><%= new Date(order.NgayDatHang).toLocaleDateString('vi-VN') %></td>
-                        <td><%= order.SoLuongSanPham %> items</td>
+                        <td><%= order.SoLuongSanPham %> sản phẩm</td>
                         <td class="price-column"><%= order.TongTien ? order.TongTien.toLocaleString('vi-VN') : 0 %> đ</td>
                         <td>
                           <% if (order.TrangThai === 'ChoXuLy') { %>
-                            <span class="badge status-ChoXuLy">Pending</span>
+                            <span class="badge status-ChoXuLy">Chờ Xử Lý</span>
                           <% } else if (order.TrangThai === 'DangGiao') { %>
-                            <span class="badge status-DangGiao">Shipping</span>
+                            <span class="badge status-DangGiao">Đang Giao</span>
                           <% } else if (order.TrangThai === 'HoanThanh') { %>
-                            <span class="badge status-HoanThanh">Completed</span>
+                            <span class="badge status-HoanThanh">Hoàn Thành</span>
                           <% } else if (order.TrangThai === 'Huy') { %>
-                            <span class="badge status-Huy">Cancelled</span>
+                            <span class="badge status-Huy">Hủy</span>
                           <% } %>
                         </td>
                         <td>
