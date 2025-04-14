@@ -903,6 +903,10 @@ async function getProducts(options = {}) {
       orderBy = 'p.Gia ASC';
     } else if (sort === 'newest') {
       orderBy = 'p.IDSanPham DESC';
+    } else if (sort === 'quantity_high') {
+      orderBy = 'k.SoLuongTon DESC';
+    } else if (sort === 'quantity_low') {
+      orderBy = 'k.SoLuongTon ASC';
     }
     
     let whereClause = '';
@@ -944,9 +948,11 @@ async function getProducts(options = {}) {
         p.IDDanhMuc, 
         p.HinhAnhSanPham, 
         p.DonViBan,
-        c.TenDanhMuc AS CategoryName
+        c.TenDanhMuc AS CategoryName,
+        ISNULL(k.SoLuongTon, 0) as SoLuongTon
       FROM QuanLySanPham p
       LEFT JOIN QuanLyDanhMuc c ON p.IDDanhMuc = c.IDDanhMuc
+      LEFT JOIN QuanLyKhoHang k ON p.IDSanPham = k.IDSanPham
       ${whereClause}
       ORDER BY ${orderBy}
       OFFSET ${offset} ROWS
@@ -984,7 +990,7 @@ async function getAllProducts(page = 1, pageSize = 10, search = '', category = '
     const offset = (page - 1) * pageSize;
     
     let query = `
-      SELECT p.*, c.TenDanhMuc, k.SoLuongTon, k.DonViBan
+      SELECT p.*, c.TenDanhMuc, ISNULL(k.SoLuongTon, 0) as SoLuongTon, k.DonViBan
       FROM QuanLySanPham p
       LEFT JOIN QuanLyDanhMuc c ON p.IDDanhMuc = c.IDDanhMuc
       LEFT JOIN QuanLyKhoHang k ON p.IDSanPham = k.IDSanPham
@@ -1076,7 +1082,8 @@ async function getProductById(productId) {
         SELECT 
           p.*,
           c.TenDanhMuc,
-          k.SoLuongTon
+          ISNULL(k.SoLuongTon, 0) as SoLuongTon,
+          k.DonViBan
         FROM QuanLySanPham p
         LEFT JOIN QuanLyDanhMuc c ON p.IDDanhMuc = c.IDDanhMuc
         LEFT JOIN QuanLyKhoHang k ON p.IDSanPham = k.IDSanPham

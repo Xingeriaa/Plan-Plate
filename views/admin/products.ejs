@@ -152,6 +152,8 @@
               <option value="name" <%= sort === 'name' ? 'selected' : '' %>>Tên (A-Z)</option>
               <option value="price_high" <%= sort === 'price_high' ? 'selected' : '' %>>Giá (Cao đến Thấp)</option>
               <option value="price_low" <%= sort === 'price_low' ? 'selected' : '' %>>Giá (Thấp đến Cao)</option>
+              <option value="quantity_high" <%= sort === 'quantity_high' ? 'selected' : '' %>>Số Lượng (Cao đến Thấp)</option>
+              <option value="quantity_low" <%= sort === 'quantity_low' ? 'selected' : '' %>>Số Lượng (Thấp đến Cao)</option>
               <option value="newest" <%= sort === 'newest' ? 'selected' : '' %>>Mới Nhất Trước</option>
             </select>
           </div>
@@ -169,6 +171,7 @@
                     <th>Danh Mục</th>
                     <th class="price-column">Giá</th>
                     <th>Đơn Vị</th>
+                    <th>Số Lượng</th>
                     <th>Thao Tác</th>
                   </tr>
                 </thead>
@@ -183,6 +186,7 @@
                         <td><%= product.CategoryName %></td>
                         <td class="price-column"><%= product.Gia.toLocaleString('vi-VN') %> đ</td>
                         <td><%= product.DonViBan %></td>
+                        <td><%= product.SoLuongTon || 0 %></td>
                         <td>
                           <div class="btn-group btn-group-sm">
                             <button class="btn btn-outline-primary" onclick="editProduct('<%= product.IDSanPham %>')">
@@ -334,6 +338,10 @@
                   <label for="editUnit" class="form-label">Đơn Vị</label>
                   <input type="text" class="form-control" id="editUnit" name="unit" placeholder="vd: Bịch 1kg">
                 </div>
+                <div class="mb-3">
+                  <label for="editQuantity" class="form-label">Số Lượng</label>
+                  <input type="number" class="form-control" id="editQuantity" name="quantity" min="0" required>
+                </div>
               </div>
               <div class="col-md-6">
                 <div class="mb-3">
@@ -390,6 +398,7 @@
           document.getElementById('editUnit').value = product.DonViBan || '';
           document.getElementById('editImageUrl').value = product.HinhAnhSanPham || '';
           document.getElementById('editDescription').value = product.MoTa || '';
+          document.getElementById('editQuantity').value = product.SoLuongTon || 0;
           
           // Show the modal
           const modal = new bootstrap.Modal(document.getElementById('editProductModal'));

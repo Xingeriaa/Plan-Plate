@@ -628,66 +628,16 @@
 <script src="/js/sidebar.js"></script>
 <script>
   document.addEventListener('DOMContentLoaded', function() {
-    // Cart functionality
-    const cartBtn = document.getElementById('cartBtn');
-    const closeCartBtn = document.getElementById('closeCartBtn');
-    const cartSidebar = document.getElementById('cartSidebar');
-    const cartItems = document.getElementById('cartItems');
-    const cartTotal = document.getElementById('cartTotal');
-    const cartCount = document.getElementById('cartCount');
-    const checkoutBtn = document.getElementById('checkoutBtn');
-    
-    // Open cart sidebar
-    cartBtn.addEventListener('click', function(e) {
-      e.preventDefault();
-      cartSidebar.classList.add('active');
-      updateCartItems();
-    });
-    
-    // Close cart sidebar
-    closeCartBtn.addEventListener('click', function() {
-      cartSidebar.classList.remove('active');
-    });
-    
-    // Close cart when clicking outside
-    document.addEventListener('click', function(e) {
-      if (!cartSidebar.contains(e.target) && e.target !== cartBtn && !cartBtn.contains(e.target)) {
-        cartSidebar.classList.remove('active');
-      }
-    });
-    
-    // Checkout button
-    checkoutBtn.addEventListener('click', function() {
-      const cart = JSON.parse(localStorage.getItem('cart')) || [];
-      if (cart.length === 0) {
-        alert('Giỏ hàng của bạn đang trống!');
-        return;
-      }
-      window.location.href = '/checkout';
-    });
-    
-    // Add to cart functionality
-    const addToCartButtons = document.querySelectorAll('.add-to-cart-btn');
-    
-    addToCartButtons.forEach(button => {
-      button.addEventListener('click', function() {
-        const productId = this.getAttribute('data-product-id');
-        addToCart(productId, 1);
-        
-        // Add animation effect when adding to cart
-        this.innerHTML = '<i class="bi bi-check-lg"></i> Đã thêm';
-        this.classList.add('bg-success');
-        
-        setTimeout(() => {
-          this.innerHTML = '<i class="bi bi-cart-plus"></i> Thêm vào giỏ';
-          this.classList.remove('bg-success');
-        }, 1500);
-      });
-    });
+    // Initialize cart count
+    const cartBadge = document.getElementById('cartCount');
+    if (cartBadge && window.cartService) {
+      const cart = window.cartService.getItems();
+      const itemCount = cart.reduce((total, item) => total + item.quantity, 0);
+      cartBadge.textContent = itemCount;
+    }
     
     // Filter functionality
     const filterButtons = document.querySelectorAll('.filter-btn');
-    
     filterButtons.forEach(button => {
       button.addEventListener('click', function() {
         // Remove active class from all buttons
@@ -708,251 +658,32 @@
       });
     });
     
-    // Function to add product to cart
-    function addToCart(productId, quantity) {
-      // Get current cart from localStorage
-      let cart = JSON.parse(localStorage.getItem('cart')) || [];
-      
-      // Check if product already exists in cart
-      const existingProductIndex = cart.findIndex(item => item.id === productId);
-      
-      if (existingProductIndex > -1) {
-        // Update quantity if product already in cart
-        cart[existingProductIndex].quantity += quantity;
-        
-        // Save updated cart to localStorage
-        localStorage.setItem('cart', JSON.stringify(cart));
-        
-        // Update cart count
-        updateCartCount();
-        
-        // Show cart sidebar
-        cartSidebar.classList.add('active');
-        
-        // Update cart items in sidebar
-        updateCartItems();
-      } else {
-        // Add new product to cart
-        fetch(`/api/product/${productId}`)
-          .then(response => response.json())
-          .then(product => {
-            cart.push({
-              id: productId,
-              name: product.TenSanPham,
-              price: product.Gia,
-              image: product.HinhAnhSanPham,
-              quantity: quantity,
-              unit: product.DonViBan
-            });
-            
-            // Save updated cart to localStorage
-            localStorage.setItem('cart', JSON.stringify(cart));
-            
-            // Update cart count
-            updateCartCount();
-            
-            // Show cart sidebar
-            cartSidebar.classList.add('active');
-            
-            // Update cart items in sidebar
-            updateCartItems();
-          })
-          .catch(error => {
-            console.error('Lỗi khi lấy thông tin sản phẩm:', error);
-          });
-      }
-    }
+    // Add to cart functionality
+    const addToCartButtons = document.querySelectorAll('.add-to-cart-btn');
     
-    // Update cart count
-    function updateCartCount() {
-      const cart = JSON.parse(localStorage.getItem('cart')) || [];
-      const totalItems = cart.reduce((total, item) => total + item.quantity, 0);
-      cartCount.textContent = totalItems;
-    }
-    
-    // Update cart items in sidebar
-    function updateCartItems() {
-      const cart = JSON.parse(localStorage.getItem('cart')) || [];
-      
-      if (cart.length === 0) {
-        cartItems.innerHTML = `
-          <div class="cart-empty">
-            <i class="bi bi-cart-x"></i>
-            <p>Giỏ hàng của bạn đang trống</p>
-            <a href="/product-listing.html" class="btn btn-outline-success mt-3">Tiếp tục mua sắm</a>
-          </div>
-        `;
-        cartTotal.textContent = '0 đ';
-        return;
-      }
-      
-      let totalPrice = 0;
-      let cartHTML = '';
-      
-      cart.forEach(item => {
-        const itemTotal = item.price * item.quantity;
-        totalPrice += itemTotal;
+    addToCartButtons.forEach(button => {
+      button.addEventListener('click', function() {
+        const productId = this.getAttribute('data-product-id');
+        const product = {
+          id: productId,
+          name: this.closest('.bestseller-card').querySelector('h3').textContent,
+          price: parseInt(this.closest('.product-price-cart').querySelector('.product-price').textContent.replace('₫', '').replace(/,/g, '')),
+          image: this.closest('.bestseller-card').querySelector('.bestseller-image img').src,
+          unit: this.closest('.bestseller-card').querySelector('.product-unit').textContent.replace('', '').trim()
+        };
         
-        cartHTML += `
-          <div class="cart-item" data-id="${item.id}">
-            <img src="${item.image}" alt="${item.name}" class="cart-item-image">
-            <div class="cart-item-details">
-              <div class="cart-item-name">${item.name}</div>
-              <div class="cart-item-price">${item.price.toLocaleString('vi-VN')} đ</div>
-              <div class="cart-item-quantity">
-                <button class="quantity-btn decrease-btn" data-id="${item.id}">-</button>
-                <input type="number" class="quantity-input" value="${item.quantity}" min="1" data-id="${item.id}">
-                <button class="quantity-btn increase-btn" data-id="${item.id}">+</button>
-                <button class="btn btn-sm btn-outline-danger ms-2 remove-btn" data-id="${item.id}">
-                                  <button class="btn btn-sm btn-outline-danger ms-2 remove-btn" data-id="${item.id}">
-                  <i class="bi bi-trash"></i>
-                </button>
-              </div>
-            </div>
-          </div>
-        `;
+        // Use cartService to add item
+        window.cartService.addItem(product, 1);
+        
+        // Add animation effect when adding to cart
+        this.innerHTML = '<i class="bi bi-check-lg"></i> Đã thêm';
+        this.classList.add('bg-success');
+        
+        setTimeout(() => {
+          this.innerHTML = '<i class="bi bi-cart-plus"></i> Thêm vào giỏ';
+          this.classList.remove('bg-success');
+        }, 1500);
       });
-      
-      cartItems.innerHTML = cartHTML;
-      cartTotal.textContent = totalPrice.toLocaleString('vi-VN') + ' đ';
-      
-      // Add event listeners to quantity buttons
-      document.querySelectorAll('.decrease-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-          const id = this.getAttribute('data-id');
-          updateItemQuantity(id, -1);
-        });
-      });
-      
-      document.querySelectorAll('.increase-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-          const id = this.getAttribute('data-id');
-          updateItemQuantity(id, 1);
-        });
-      });
-      
-      document.querySelectorAll('.quantity-input').forEach(input => {
-        input.addEventListener('change', function() {
-          const id = this.getAttribute('data-id');
-          const newQuantity = parseInt(this.value);
-          
-          if (newQuantity < 1) {
-            this.value = 1;
-            updateItemQuantity(id, 0, 1);
-          } else {
-            updateItemQuantity(id, 0, newQuantity);
-          }
-        });
-      });
-      
-      document.querySelectorAll('.remove-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-          const id = this.getAttribute('data-id');
-          removeItem(id);
-        });
-      });
-    }
-    
-    // Update item quantity
-    function updateItemQuantity(id, change, newQuantity = null) {
-      let cart = JSON.parse(localStorage.getItem('cart')) || [];
-      const index = cart.findIndex(item => item.id === id);
-      
-      if (index > -1) {
-        if (newQuantity !== null) {
-          cart[index].quantity = newQuantity;
-        } else {
-          cart[index].quantity += change;
-          
-          if (cart[index].quantity < 1) {
-            cart[index].quantity = 1;
-          }
-        }
-        
-        localStorage.setItem('cart', JSON.stringify(cart));
-        updateCartCount();
-        updateCartItems();
-      }
-    }
-    
-    // Remove item from cart
-    function removeItem(id) {
-      let cart = JSON.parse(localStorage.getItem('cart')) || [];
-      cart = cart.filter(item => item.id !== id);
-      
-      localStorage.setItem('cart', JSON.stringify(cart));
-      updateCartCount();
-      updateCartItems();
-    }
-    
-    // Initialize cart count
-    updateCartCount();
-    
-    // Search functionality
-    const searchInput = document.getElementById('searchInput');
-    const searchResults = document.getElementById('searchResults');
-    
-    searchInput.addEventListener('input', function() {
-      const query = this.value.trim();
-      
-      if (query.length < 2) {
-        searchResults.classList.add('d-none');
-        return;
-      }
-      
-      fetch(`/api/search?q=${encodeURIComponent(query)}`)
-        .then(response => response.json())
-        .then(data => {
-          if (data.length > 0) {
-            let resultsHTML = '';
-            
-            data.forEach(product => {
-              resultsHTML += `
-                <a href="/product/${product.IDSanPham}" class="search-result-item">
-                  <div class="d-flex align-items-center p-2">
-                    <img src="${product.HinhAnhSanPham}" alt="${product.TenSanPham}" class="search-result-image">
-                    <div class="ms-3">
-                      <div class="search-result-name">${product.TenSanPham}</div>
-                      <div class="search-result-price">${product.Gia.toLocaleString('vi-VN')} đ</div>
-                    </div>
-                  </div>
-                </a>
-              `;
-            });
-            
-            searchResults.innerHTML = resultsHTML;
-            searchResults.classList.remove('d-none');
-          } else {
-            searchResults.innerHTML = '<div class="p-3 text-center">Không tìm thấy sản phẩm nào</div>';
-            searchResults.classList.remove('d-none');
-          }
-        })
-        .catch(error => {
-          console.error('Lỗi khi tìm kiếm:', error);
-          searchResults.classList.add('d-none');
-        });
-    });
-    
-    // Hide search results when clicking outside
-    document.addEventListener('click', function(e) {
-      if (!searchInput.contains(e.target) && !searchResults.contains(e.target)) {
-        searchResults.classList.add('d-none');
-      }
-    });
-    
-    // Submit search on Enter key
-    searchInput.addEventListener('keydown', function(e) {
-      if (e.key === 'Enter') {
-        e.preventDefault();
-        const query = this.value.trim();
-        
-        if (query.length > 0) {
-          window.location.href = `/search?q=${encodeURIComponent(query)}`;
-        }
-      }
     });
   });
 </script>
-
-</body>
-</html>
